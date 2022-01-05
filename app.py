@@ -8,8 +8,9 @@ import plotly.express as px
 import pandas as pd
 from sqlalchemy import create_engine
 from os import getenv
+import dash_bootstrap_components as dbc
 
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # postgresql://admin:admin@localhost:5432/ibnse
 engine = create_engine(getenv('PGSQL_CONNECT'))
@@ -19,23 +20,37 @@ df = pd.read_sql_query('SELECT id, status, "Form"."isDeleted" FROM "default$defa
 
 # breakpoint()
 bsdd = df[df['isDeleted'] == False].count()[0]
-status_order = ['bla', 'DRAFT']
 fig = px.bar(df.groupby(by='status').count().sort_values(['id'], ascending=True), x='id', title="Répartition des BSDD "
                                                                                                 "par statut")
 
 app.layout = html.Div(children=[
-    html.H1(children='Hello Dash'),
+    html.H1(children='Quantité de déchets traités'),
 
-    html.Div(children='''
-        Dash: A web application framework for your data.
-    '''),
+    dbc.Container(fluid=True, children=[
+        dbc.Row(
+            [
+                dbc.Col(
+                    dcc.Graph(
+                        id='example-graph',
+                        figure=fig
+                    )
+                ),
+                dbc.Col(
+                    dcc.Graph(
+                        id='example-graph2',
+                        figure=fig
+                    )
+                )
+            ]
+        ),
+        dbc.Row(
+            [
+                html.P("Nombre total de BSDD " + str(bsdd))
+            ]
+        )
+    ]
+                  )
 
-    dcc.Graph(
-        id='example-graph',
-        figure=fig
-    ),
-
-    html.P("Nombre total de BSDD " + str(bsdd))
 ])
 
 if __name__ == '__main__':

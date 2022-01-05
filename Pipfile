@@ -9,6 +9,8 @@ plotly = "*"
 pandas = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
+matplotlib = "*"
+dash_bootstrap_components = "*"
 
 [dev-packages]
 
