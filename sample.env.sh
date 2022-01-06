@@ -1,1 +1,2 @@
-export PGSQL_CONNECT="postgresql://admin:admin@localhost:5432/ibnse"
+export DATABASE_URL="postgresql://admin:admin@localhost:5432/ibnse"
+export PORT=8050
