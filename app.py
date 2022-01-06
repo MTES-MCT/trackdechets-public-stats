@@ -18,7 +18,7 @@ theme = 'plotly_white'
 # postgresql://admin:admin@localhost:5432/ibnse
 engine = create_engine(getenv('DATABASE_URL'))
 
-df = pd.read_sql_query('SELECT id, status, "Form"."createdAt", "Form"."isDeleted" FROM "Form"',
+df = pd.read_sql_query('SELECT id, status, "Form"."createdAt", "Form"."isDeleted" FROM "default$default"."Form"',
                        con=engine)
 df = df.loc[(df['isDeleted'] == False) & (df['status'] != 'DRAFT')]
 
