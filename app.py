@@ -27,10 +27,10 @@ df_bsdd = pd.read_sql_query(
     con=engine)
 
 #  2020-10-26 14:52:54.995 ===> 2020-10-26
-for col in ['createdAt', 'processedAt']:
-    df_bsdd[col] = df_bsdd[col].dt.date
+df_bsdd['createdAt'] = df_bsdd['createdAt'].dt.date
+df_bsdd['processedAt'] = df_bsdd['processedAt'].dt.date
 
-bsdd_created = df_bsdd[['id','createdAt']].groupby('createdAt').count()
+bsdd_created = df_bsdd[['id', 'createdAt']].groupby('createdAt').count()
 bsdd_created_daily = px.bar(bsdd_created, y='id', title="Nombre de BSDD créés par jour",
                             labels={'id': 'Bordereaux de suivi de déchets dangereux',
                                     'createdAt': 'Date de création du bordereau'})
