@@ -9,7 +9,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from os import getenv
 import dash_bootstrap_components as dbc
-from datetime import date
+from datetime import datetime, timedelta
 
 external_scripts = ['https://cdn.plot.ly/plotly-locale-fr-latest.js']
 config = {'locale': 'fr'}
@@ -21,32 +21,36 @@ pio.templates.default = "simple_white"
 engine = create_engine(getenv('DATABASE_URL'))
 
 df_bsdd = pd.read_sql_query(
-    'SELECT id, status, CAST("Form"."createdAt" as date), "Form"."isDeleted", CAST("Form"."processedAt" as date), "Form"."quantityReceived" FROM "default$default"."Form" '
-    'WHERE "Form"."createdAt" >= CAST((CAST(now() AS timestamp) + (INTERVAL \'-30 day\'))AS date) AND '
-    '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\'',
+    'SELECT id, status, cast("Form"."createdAt" as date), "Form"."isDeleted", cast("Form"."processedAt" as date), '
+    '"Form"."quantityReceived" FROM "default$default"."Form" '
+    'WHERE "Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\'',
     con=engine)
 
 #  2020-10-26 14:52:54.995 ===> 2020-10-26
 # df_bsdd['createdAt'] = df_bsdd['createdAt'].dt.date
 # df_bsdd['processedAt'] = df_bsdd['processedAt'].dt.date
 
-bsdd_created = df_bsdd[['id', 'createdAt']].groupby('createdAt').count()
-bsdd_created_daily = px.bar(bsdd_created, y='id', title="Nombre de BSDD créés par jour",
+date_n_days_ago = datetime.date(datetime.today() - timedelta(30))
+
+df_bsdd_created = df_bsdd[['id', 'createdAt']]
+df_bsdd_created = df_bsdd_created[df_bsdd_created['createdAt'] >= date_n_days_ago]
+bsdd_created_daily = px.bar(df_bsdd_created.groupby('createdAt').count(), y='id', title="Nombre de BSDD créés par jour",
                             labels={'id': 'Bordereaux de suivi de déchets dangereux',
-                                    'createdAt': 'Date de création du bordereau'})
-bsdd_created_total = df_bsdd['id'].count()
+                                    'createdAt': 'Date de création des bordereaux'})
+bsdd_created_total = df_bsdd_created.index.size
 
 # bsdd_status = px.bar(df_bsdd.groupby(by='status').count().sort_values(['id'], ascending=True), x='id',
 #              title="Répartition des BSDD par statut")
 
 # nb_sent = df_bsdd.query("status=='SENT'")
-quantity_processed = df_bsdd[['processedAt', 'quantityReceived']].groupby(by='processedAt').sum()
-quantity_processed_daily = px.bar(quantity_processed,
+df_bsdd_processed = df_bsdd[['id', 'processedAt', 'quantityReceived']]
+df_bsdd_processed = df_bsdd_processed[df_bsdd_processed['processedAt'] >= date_n_days_ago]
+quantity_processed_daily = px.bar(df_bsdd_processed.groupby(by='processedAt').sum(),
                                   title='Quantité de déchets traitée par jour',
                                   y='quantityReceived',
-                                  labels={'quantityReceived': 'Quantité traitée (tonnes)',
-                                          'processedAt': 'Date du traitement'})
-quantity_processed_total = quantity_processed['quantityReceived'].sum().round()
+                                  labels={'quantityReceived': 'Quantité de déchets traitée (tonnes)',
+                                          'processedAt': 'Date du traitement des déchets'})
+quantity_processed_total = df_bsdd_processed['quantityReceived'].sum().round()
 
 app.layout = html.Div(children=[
     dbc.Container(fluid=True, children=[
