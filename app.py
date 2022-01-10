@@ -21,14 +21,14 @@ pio.templates.default = "simple_white"
 engine = create_engine(getenv('DATABASE_URL'))
 
 df_bsdd = pd.read_sql_query(
-    'SELECT id, status, "Form"."createdAt", "Form"."isDeleted", "Form"."processedAt", "Form"."quantityReceived" FROM "default$default"."Form" '
+    'SELECT id, status, CAST("Form"."createdAt" as date), "Form"."isDeleted", CAST("Form"."processedAt" as date), "Form"."quantityReceived" FROM "default$default"."Form" '
     'WHERE "Form"."createdAt" >= CAST((CAST(now() AS timestamp) + (INTERVAL \'-30 day\'))AS date) AND '
     '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\'',
     con=engine)
 
 #  2020-10-26 14:52:54.995 ===> 2020-10-26
-df_bsdd['createdAt'] = df_bsdd['createdAt'].dt.date
-df_bsdd['processedAt'] = df_bsdd['processedAt'].dt.date
+# df_bsdd['createdAt'] = df_bsdd['createdAt'].dt.date
+# df_bsdd['processedAt'] = df_bsdd['processedAt'].dt.date
 
 bsdd_created = df_bsdd[['id', 'createdAt']].groupby('createdAt').count()
 bsdd_created_daily = px.bar(bsdd_created, y='id', title="Nombre de BSDD créés par jour",
