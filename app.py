@@ -30,16 +30,23 @@ df_bsdd = pd.read_sql_query(
 for col in ['createdAt', 'processedAt']:
     df_bsdd[col] = df_bsdd[col].dt.date
 
-bsdd = df_bsdd.count()[0]
-fig = px.bar(df_bsdd.groupby(by='status').count().sort_values(['id'], ascending=True), x='id',
-             title="Répartition des BSDD "
-                   "par statut")
-nb_sent = df_bsdd.query("status=='SENT'")
+bsdd_created = df_bsdd[['id','createdAt']].groupby('createdAt').count()
+bsdd_created_daily = px.bar(bsdd_created, y='id', title="Nombre de BSDD créés par jour",
+                            labels={'id': 'Bordereaux de suivi de déchets dangereux',
+                                    'createdAt': 'Date de création du bordereau'})
+bsdd_created_total = df_bsdd['id'].count()
+
+# bsdd_status = px.bar(df_bsdd.groupby(by='status').count().sort_values(['id'], ascending=True), x='id',
+#              title="Répartition des BSDD par statut")
+
+# nb_sent = df_bsdd.query("status=='SENT'")
 quantity_processed = df_bsdd[['processedAt', 'quantityReceived']].groupby(by='processedAt').sum()
 quantity_processed_daily = px.bar(quantity_processed,
+                                  title='Quantité de déchets traitée par jour',
                                   y='quantityReceived',
                                   labels={'quantityReceived': 'Quantité traitée (tonnes)',
                                           'processedAt': 'Date du traitement'})
+quantity_processed_total = quantity_processed['quantityReceived'].sum().round()
 
 app.layout = html.Div(children=[
     dbc.Container(fluid=True, children=[
@@ -65,11 +72,21 @@ app.layout = html.Div(children=[
                     ), width=6
                 ),
                 dbc.Col(
+                    html.P(f"Total sur la période : {bsdd_created_total} bordereaux"), width=6, align='center'
+                )
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(
                     dcc.Graph(
                         id='example-graph2',
-                        figure=fig,
+                        figure=bsdd_created_daily,
                         config=config
                     ), width=6
+                ),
+                dbc.Col(
+                    html.P(f"Total sur la période : {quantity_processed_total} tonnes"), width=6, align='center'
                 )
             ]
         )
