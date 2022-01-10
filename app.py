@@ -34,7 +34,7 @@ date_n_days_ago = datetime.date(datetime.today() - timedelta(30))
 
 df_bsdd_created = df_bsdd[['id', 'createdAt']]
 df_bsdd_created = df_bsdd_created[df_bsdd_created['createdAt'] >= date_n_days_ago]
-bsdd_created_daily = px.bar(df_bsdd_created.groupby('createdAt').count(), y='id', title="Nombre de BSDD créés par jour",
+bsdd_created_daily = px.line(df_bsdd_created.groupby('createdAt').count(), y='id', title="Nombre de BSDD créés par jour",
                             labels={'id': 'Bordereaux de suivi de déchets dangereux',
                                     'createdAt': 'Date de création des bordereaux'})
 bsdd_created_total = df_bsdd_created.index.size
@@ -45,7 +45,7 @@ bsdd_created_total = df_bsdd_created.index.size
 # nb_sent = df_bsdd.query("status=='SENT'")
 df_bsdd_processed = df_bsdd[['id', 'processedAt', 'quantityReceived']]
 df_bsdd_processed = df_bsdd_processed[df_bsdd_processed['processedAt'] >= date_n_days_ago]
-quantity_processed_daily = px.bar(df_bsdd_processed.groupby(by='processedAt').sum(),
+quantity_processed_daily = px.line(df_bsdd_processed.groupby(by='processedAt').sum(),
                                   title='Quantité de déchets traitée par jour',
                                   y='quantityReceived',
                                   labels={'quantityReceived': 'Quantité de déchets traitée (tonnes)',
@@ -76,7 +76,10 @@ app.layout = html.Div(children=[
                     ), width=6
                 ),
                 dbc.Col(
-                    html.P(f"Total sur la période : {bsdd_created_total} bordereaux"), width=6, align='center'
+                    html.P([
+                        "Total sur la période : ",
+                        html.Strong(f"{bsdd_created_total} bordereaux")
+                    ]), width=6, align='center'
                 )
             ]
         ),
@@ -90,7 +93,12 @@ app.layout = html.Div(children=[
                     ), width=6
                 ),
                 dbc.Col(
-                    html.P(f"Total sur la période : {quantity_processed_total} tonnes"), width=6, align='center'
+                    [
+                        html.P([
+                            "Total sur la période : ",
+                            html.Strong(f"{quantity_processed_total} tonnes")
+                        ])
+                    ], width=6, align='center'
                 )
             ]
         )
@@ -103,4 +111,4 @@ if __name__ == '__main__':
     port = getenv('PORT', 8050)
 
     # Scalingo requires 0.0.0.0 as host, instead of the default 127.0.0.1
-    app.run_server(debug=True, host='0.0.0.0', port=int(port))
+    app.run_server(debug=False, host='0.0.0.0', port=int(port))
