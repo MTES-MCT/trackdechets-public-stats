@@ -64,7 +64,7 @@ df_bsdd_created = df_bsdd[['id', 'createdAt']]
 df_bsdd_created = df_bsdd_created.loc[(datetime.date(datetime.today()) > df_bsdd_created['createdAt'])
                                       & (df_bsdd_created['createdAt'] >= date_n_days_ago)]
 bsdd_created_daily = px.line(df_bsdd_created.groupby('createdAt').count(), y='id',
-                             title="Nombre de BSDD créés par jour",
+                             title="Nombre de bordereaux de suivi de déchets dangereux (BSDD) créés par jour",
                              labels={'id': 'Bordereaux de suivi de déchets dangereux',
                                      'createdAt': 'Date de création des bordereaux'},
                              markers=True)
