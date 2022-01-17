@@ -66,7 +66,7 @@ df_bsdd_created = df_bsdd_created.loc[(datetime.date(datetime.today()) > df_bsdd
 bsdd_created_daily = px.line(df_bsdd_created.groupby('createdAt').count(), y='id',
                              title="Nombre de bordereaux de suivi de déchets dangereux (BSDD) créés par jour",
                              labels={'id': 'Bordereaux de suivi de déchets dangereux',
-                                     'createdAt': 'Date de création des bordereaux'},
+                                     'createdAt': 'Date de création'},
                              markers=True)
 bsdd_created_total = df_bsdd_created.index.size
 
@@ -81,7 +81,7 @@ quantity_processed_daily = px.line(df_bsdd_processed.groupby(by='processedAt').s
                                    title='Quantité de déchets traitée par jour',
                                    y='quantityReceived',
                                    labels={'quantityReceived': 'Quantité de déchets traitée (tonnes)',
-                                           'processedAt': 'Date du traitement des déchets'},
+                                           'processedAt': 'Date du traitement'},
                                    markers=True)
 quantity_processed_total = df_bsdd_processed['quantityReceived'].sum().round()
 
@@ -96,7 +96,7 @@ df_company_created = df_company_created.loc[(datetime.date(datetime.today()) > d
 company_created_daily = px.line(df_company_created.groupby('createdAt').count(), y='id',
                                 title="Établissements inscrits par jour",
                                 labels={'id': 'Établissements inscrits',
-                                        'createdAt': 'Date d\'inscription des établissements'},
+                                        'createdAt': 'Date d\'inscription'},
                                 markers=True)
 company_created_total = df_company_created.index.size
 
