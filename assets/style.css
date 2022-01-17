@@ -1,0 +1,20 @@
+@font-face{
+    font-family:'Marianne';
+    src:url("/assets/Marianne-Regular.woff2") format("woff2"),url("/assets/Marianne-Regular.woff") format("woff");
+    font-weight:400;
+    font-style:normal;
+}
+
+* {
+    font-family: 'Marianne'
+}
+
+.dash-graph {
+    border: solid 1px #ccc;
+    border-radius: 30px;
+    /* background-color: #f9f9f8;*/
+    box-shadow: 2px 2px 2px lightgrey;
+    margin: 10px;
+    padding: 0 25px 25px 25px;
+    padding-bottom: -15px;
+}
