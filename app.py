@@ -36,7 +36,8 @@ time_delta = 30
 date_n_days_ago = datetime.date(datetime.today() - timedelta(time_delta))
 
 df_bsdd_created = df_bsdd[['id', 'createdAt']]
-df_bsdd_created = df_bsdd_created[df_bsdd_created['createdAt'] >= date_n_days_ago]
+df_bsdd_created = df_bsdd_created.loc[(datetime.date(datetime.today()) > df_bsdd_created['createdAt'])
+                                      & (df_bsdd_created['createdAt'] >= date_n_days_ago)]
 bsdd_created_daily = px.line(df_bsdd_created.groupby('createdAt').count(), y='id',
                              title="Nombre de BSDD créés par jour",
                              labels={'id': 'Bordereaux de suivi de déchets dangereux',
@@ -49,7 +50,8 @@ bsdd_created_total = df_bsdd_created.index.size
 
 # nb_sent = df_bsdd.query("status=='SENT'")
 df_bsdd_processed = df_bsdd[['id', 'processedAt', 'quantityReceived']]
-df_bsdd_processed = df_bsdd_processed[df_bsdd_processed['processedAt'] >= date_n_days_ago]
+df_bsdd_processed = df_bsdd_processed[(datetime.date(datetime.today()) > df_bsdd_processed['processedAt'])
+                                      & (df_bsdd_processed['processedAt'] >= date_n_days_ago)]
 quantity_processed_daily = px.line(df_bsdd_processed.groupby(by='processedAt').sum(),
                                    title='Quantité de déchets traitée par jour',
                                    y='quantityReceived',
