@@ -11,6 +11,7 @@ sqlalchemy = "*"
 psycopg2-binary = "*"
 matplotlib = "*"
 dash_bootstrap_components = "*"
+flask_caching = "*"
 
 [dev-packages]
 

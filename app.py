@@ -1,8 +1,5 @@
-import datetime
-
 import dash
-from dash import dcc
-from dash import html
+from dash import html, dcc
 import plotly.express as px
 import plotly.io as pio
 import pandas as pd
@@ -10,6 +7,7 @@ from sqlalchemy import create_engine
 from os import getenv
 import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
+from flask_caching import Cache
 
 external_scripts = ['https://cdn.plot.ly/plotly-locale-fr-latest.js']
 config = {'locale': 'fr'}
@@ -19,14 +17,36 @@ app = dash.Dash("trackdechets-public-stats", title='Trackdéchets : statistiques
                 external_stylesheets=[dbc.themes.GRID], external_scripts=external_scripts)
 pio.templates.default = "none"
 
+# Flask cache https://dash.plotly.com/performance
+# timeout in seconds
+cache_timeout = int(getenv('CACHE_TIMEOUT_S'))
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'filesystem',
+    'CACHE_DIR': './cache'
+})
+
 # postgresql://admin:admin@localhost:5432/ibnse
 engine = create_engine(getenv('DATABASE_URL'))
 
-df_bsdd = pd.read_sql_query(
-    'SELECT id, status, cast("Form"."createdAt" as date), "Form"."isDeleted", cast("Form"."processedAt" as date), '
-    '"Form"."quantityReceived" FROM "default$default"."Form" '
-    'WHERE "Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\'',
-    con=engine)
+
+@cache.memoize(timeout=cache_timeout)
+def get_bsdd_data() -> pd.DataFrame:
+    df_bsdd_query = pd.read_sql_query(
+        'SELECT id, status, cast("Form"."createdAt" as date), "Form"."isDeleted", cast("Form"."processedAt" as date), '
+        '"Form"."quantityReceived" FROM "default$default"."Form" '
+        'WHERE "Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\'',
+        con=engine)
+    return df_bsdd_query
+
+
+@cache.memoize(timeout=cache_timeout)
+def get_company_data() -> pd.DataFrame:
+    df_company_query = pd.read_sql_query(
+        'SELECT id, "Company"."companyTypes", cast("Company"."createdAt" as date)'
+        'FROM "default$default"."Company" ',
+        con=engine)
+    return df_company_query
+
 
 #  2020-10-26 14:52:54.995 ===> 2020-10-26
 # df_bsdd['createdAt'] = df_bsdd['createdAt'].dt.date
@@ -35,6 +55,11 @@ df_bsdd = pd.read_sql_query(
 time_delta = 30
 date_n_days_ago = datetime.date(datetime.today() - timedelta(time_delta))
 
+# -----------
+# BSDD
+# -----------
+
+df_bsdd: pd.DataFrame = get_bsdd_data()
 df_bsdd_created = df_bsdd[['id', 'createdAt']]
 df_bsdd_created = df_bsdd_created.loc[(datetime.date(datetime.today()) > df_bsdd_created['createdAt'])
                                       & (df_bsdd_created['createdAt'] >= date_n_days_ago)]
@@ -59,6 +84,21 @@ quantity_processed_daily = px.line(df_bsdd_processed.groupby(by='processedAt').s
                                            'processedAt': 'Date du traitement des déchets'},
                                    markers=True)
 quantity_processed_total = df_bsdd_processed['quantityReceived'].sum().round()
+
+# -----------
+# Établissements
+# -----------
+
+df_company = get_company_data()
+df_company_created = df_company[['id', 'createdAt']]
+df_company_created = df_company_created.loc[(datetime.date(datetime.today()) > df_company_created['createdAt'])
+                                            & (df_company_created['createdAt'] >= date_n_days_ago)]
+company_created_daily = px.line(df_company_created.groupby('createdAt').count(), y='id',
+                                title="Établissements inscrits par jour",
+                                labels={'id': 'Établissements inscrits',
+                                        'createdAt': 'Date d\'inscription des établissements'},
+                                markers=True)
+company_created_total = df_company_created.index.size
 
 
 def add_figure(fig, total_on_period: int, unit: str, fig_id: str) -> dbc.Row:
@@ -100,7 +140,8 @@ app.layout = html.Div(children=[
             ]
         ),
         add_figure(quantity_processed_daily, quantity_processed_total, "tonnes", "bsdd_processed_daily"),
-        add_figure(bsdd_created_daily, bsdd_created_total, "bordereaux", "bsdd_created_daily")
+        add_figure(bsdd_created_daily, bsdd_created_total, "bordereaux", "bsdd_created_daily"),
+        add_figure(company_created_daily, company_created_total, "établissements", "company_created_daily"),
     ]
                   )
 
