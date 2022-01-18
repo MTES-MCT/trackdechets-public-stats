@@ -58,10 +58,6 @@ def get_user_data() -> pd.DataFrame:
     return df_user_query
 
 
-#  2020-10-26 14:52:54.995 ===> 2020-10-26
-# df_bsdd['createdAt'] = df_bsdd['createdAt'].dt.date
-# df_bsdd['processedAt'] = df_bsdd['processedAt'].dt.date
-
 time_delta = int(getenv('TIME_PERIOD_D'))
 date_n_days_ago = datetime.date(datetime.today() - timedelta(time_delta))
 
@@ -150,12 +146,13 @@ app.layout = html.Div(children=[
                         html.A("POP", href='https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop'),
                         ") produits, ainsi que les différentes étapes de leur traçabilité et ce, jusqu'au traitement "
                         "final."]),
-                html.P("Un borderau de suivi de déchet (BSD) est créé pour chaque conteneur (sac, baril, "
-                       "bidon, etc.) ou groupement de conteneurs. De nombreuses informations telles que le type de "
-                       "déchet, le poids, et les enteprises impliquées sont envoyées à Trackdéchets."),
-                html.P("Aujourd'hui, l'utilisation de Trackdéchets est obligatoire pour les déchets dangereux (DD) et "
-                       "les déchets d'amiante (DA)."),
-                html.P("Le contenu de cette page est amené à s'enrichir régulièrement avec de nouvelles statistiques.")
+                html.P("Un borderau de suivi de déchet (BSD) est créé pour chaque déchet et il contient de nombreuses "
+                       "informations (acteurs, déchets, poids, traitement réalisé etc.). Ces informations sont "
+                       "transmises à Trackdéchets par un usage direct ou par API. "),
+                html.P("Depuis le 1er janvier, l'utilisation de Trackdéchets est obligatoire pour les déchets "
+                       "dangereux (DD) et les déchets d'amiante (DA)."),
+                html.P("Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir "
+                       "régulièrement avec de nouvelles statistiques.")
             ]
         ),
         add_figure(quantity_processed_daily, [{'total': quantity_processed_total, 'unit': "tonnes"}],
