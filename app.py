@@ -145,9 +145,11 @@ app.layout = html.Div(children=[
     dbc.Container(fluid=True, children=[
         dbc.Row(
             [
-                html.P("L'application Trackdéchets est utilisée en France par des milliers de professionnels du "
-                       "déchet pour déclarer les déchets produits, ainsi que les différentes manipulations, jusqu'au "
-                       "traitement final."),
+                html.P(["L'application Trackdéchets est utilisée en France par des milliers de professionnels du "
+                        "déchet pour tracer les déchets (dangereux et/ou ",
+                        html.A("POP", href='https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop'),
+                        ") produits, ainsi que les différentes étapes de leur traçabilité et ce, jusqu'au traitement "
+                        "final."]),
                 html.P("Un borderau de suivi de déchet (BSD) est créé pour chaque conteneur (sac, baril, "
                        "bidon, etc.) ou groupement de conteneurs. De nombreuses informations telles que le type de "
                        "déchet, le poids, et les enteprises impliquées sont envoyées à Trackdéchets."),
