@@ -142,7 +142,7 @@ app.layout = html.Div(children=[
         dbc.Row(
             [
                 html.P(["L'application Trackdéchets est utilisée en France par des milliers de professionnels du "
-                        "déchet pour tracer les déchets (dangereux et/ou ",
+                        "déchet pour tracer les déchets dangereux et/ou polluants (",
                         html.A("POP", href='https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop'),
                         ") produits, ainsi que les différentes étapes de leur traçabilité et ce, jusqu'au traitement "
                         "final."]),
