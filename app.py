@@ -42,17 +42,27 @@ def get_bsdd_data() -> pd.DataFrame:
 @cache.memoize(timeout=cache_timeout)
 def get_company_data() -> pd.DataFrame:
     df_company_query = pd.read_sql_query(
-        'SELECT id, "Company"."companyTypes", cast("Company"."createdAt" as date)'
+        'SELECT id, cast("Company"."createdAt" as date)'
         'FROM "default$default"."Company" ',
         con=engine)
     return df_company_query
+
+
+@cache.memoize(timeout=cache_timeout)
+def get_user_data() -> pd.DataFrame:
+    df_user_query = pd.read_sql_query(
+        'SELECT id, cast("User"."createdAt" as date)'
+        'FROM "default$default"."User" '
+        'WHERE "User"."isActive" = True',
+        con=engine)
+    return df_user_query
 
 
 #  2020-10-26 14:52:54.995 ===> 2020-10-26
 # df_bsdd['createdAt'] = df_bsdd['createdAt'].dt.date
 # df_bsdd['processedAt'] = df_bsdd['processedAt'].dt.date
 
-time_delta = 30
+time_delta = int(getenv('TIME_PERIOD_D'))
 date_n_days_ago = datetime.date(datetime.today() - timedelta(time_delta))
 
 # -----------
@@ -86,22 +96,34 @@ quantity_processed_daily = px.line(df_bsdd_processed.groupby(by='processedAt').s
 quantity_processed_total = df_bsdd_processed['quantityReceived'].sum().round()
 
 # -----------
-# Établissements
+# Établissements et utilisateurs
 # -----------
 
 df_company = get_company_data()
-df_company_created = df_company[['id', 'createdAt']]
-df_company_created = df_company_created.loc[(datetime.date(datetime.today()) > df_company_created['createdAt'])
-                                            & (df_company_created['createdAt'] >= date_n_days_ago)]
-company_created_daily = px.line(df_company_created.groupby('createdAt').count(), y='id',
-                                title="Établissements inscrits par jour",
-                                labels={'id': 'Établissements inscrits',
-                                        'createdAt': 'Date d\'inscription'},
-                                markers=True)
+df_company['type'] = 'Établissements'
+df_user = get_user_data()
+df_user['type'] = 'Utilisateurs'
+df_company_created = df_company.loc[(datetime.date(datetime.today()) > df_company['createdAt'])
+                                    & (df_company['createdAt'] >= date_n_days_ago)]
+df_user_created = df_user.loc[(datetime.date(datetime.today()) > df_user['createdAt'])
+                              & (df_user['createdAt'] >= date_n_days_ago)]
+df_company_user_created = pd.concat([df_company_created, df_user_created], ignore_index=True)
+company_user_created_daily = px.line(df_company_user_created.groupby(['createdAt', 'type'], as_index=False).count(),
+                                     y='id', x='createdAt', color='type',
+                                     title="Établissements et utilisateurs inscrits par jour",
+                                     labels={'id': 'Inscriptions', 'createdAt': 'Date d\'inscription'},
+                                     markers=True)
 company_created_total = df_company_created.index.size
+user_created_total = df_user_created.index.size
 
 
-def add_figure(fig, total_on_period: int, unit: str, fig_id: str) -> dbc.Row:
+def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
+    def unroll_totals(totals: [dict]) -> list:
+        result = []
+        for dic in totals:
+            result += [html.Li(f"{dic['total']} {dic['unit']}")]
+        return [f"Total sur les {time_delta} derniers jours : ", html.Ul(result)]
+
     row = dbc.Row(
         [
             dbc.Col(
@@ -112,15 +134,10 @@ def add_figure(fig, total_on_period: int, unit: str, fig_id: str) -> dbc.Row:
                 ), width=8
             ),
             dbc.Col(
-                html.P([
-                    f"Total sur les {time_delta} derniers jours : ",
-                    html.Br(),
-                    html.Strong(f"{total_on_period} {unit}")
-                ]), width=4, align='center'
+                html.P(unroll_totals(totals_on_period)), width=4, align='center'
             )
         ]
     )
-
     return row
 
 
@@ -139,9 +156,12 @@ app.layout = html.Div(children=[
                 html.P("Le contenu de cette page est amené à s'enrichir régulièrement avec de nouvelles statistiques.")
             ]
         ),
-        add_figure(quantity_processed_daily, quantity_processed_total, "tonnes", "bsdd_processed_daily"),
-        add_figure(bsdd_created_daily, bsdd_created_total, "bordereaux", "bsdd_created_daily"),
-        add_figure(company_created_daily, company_created_total, "établissements", "company_created_daily"),
+        add_figure(quantity_processed_daily, [{'total': quantity_processed_total, 'unit': "tonnes"}],
+                   "bsdd_processed_daily"),
+        add_figure(bsdd_created_daily, [{'total': bsdd_created_total, 'unit': "bordereaux"}], "bsdd_created_daily"),
+        add_figure(company_user_created_daily, [{'total': company_created_total, 'unit': "établissements"},
+                                                {'total': user_created_total, 'unit': "utilisateurs"}],
+                   "company_user_created_daily"),
     ]
                   )
 
