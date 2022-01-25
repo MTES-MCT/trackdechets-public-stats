@@ -5,8 +5,16 @@
     font-style:normal;
 }
 
+body {
+    margin: 0
+}
+
 * {
     font-family: 'Marianne'
+}
+
+#react-entry-point {
+    width: 98%
 }
 
 .dash-graph {
