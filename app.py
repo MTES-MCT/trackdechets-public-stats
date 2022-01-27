@@ -47,6 +47,7 @@ def get_bsdd_data() -> pd.DataFrame:
         # To keep only dangerous waste at query level (not tested):
         # 'AND ("Form"."wasteDetailsCode" LIKE \'%*\' OR "Form"."wasteDetailsPop" = TRUE)'
         'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
+        'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
         # TODO Think of a bedrock starting date to limit number of results
         'ORDER BY date_trunc(\'week\', "default$default"."Form"."createdAt")',
         con=engine)
