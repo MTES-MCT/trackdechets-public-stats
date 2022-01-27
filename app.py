@@ -93,11 +93,9 @@ date_n_days_ago = today - timedelta(time_delta_d)
 # -----------
 # BSDD
 # -----------
-def set_dangerous(row):
-    if '*' in row['wasteDetailsCode'] or row['wasteDetailsPop'] is True:
-        return "Déchets dangereux"
-    else:
-        return "Déchets non-dangereux"
+def normalize_processing_operation(row) -> str:
+    string = row['recipientProcessingOperation']
+    return string.replace(' ', '')[:2].upper()
 
 
 # TODO Currenty only the get_blabla_data functions are cached, which means only the db calls are cached.
@@ -107,14 +105,14 @@ df_bsdd: pd.DataFrame = get_bsdd_data()
 df_bsdd = df_bsdd.loc[df_bsdd['createdAt'] >= date_n_days_ago]
 
 # TODO integrate these conversions in parse_dates
-df_bsdd['dangerous'] = df_bsdd.apply(lambda row: set_dangerous(row), axis=1)
+df_bsdd['recipientProcessingOperation'] = df_bsdd.apply(lambda row: normalize_processing_operation(row), axis=1)
 df_bsdd['createdAt'] = pd.to_datetime(df_bsdd['createdAt'], errors='coerce')
 df_bsdd['processedAt'] = pd.to_datetime(df_bsdd['processedAt'], errors='coerce')
 print(df_bsdd)
 
-df_bsdd_created_grouped = df_bsdd.groupby(by=['createdAt', 'dangerous'], as_index=False).count()
+df_bsdd_created_grouped = df_bsdd.groupby(by=['createdAt'], as_index=False).count()
 print(df_bsdd_created_grouped)
-bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt', color='dangerous',
+bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt',
                               title="Nombre de bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
                               labels={'count': 'Bordereaux de suivi de déchets dangereux',
                                       'createdAt': 'Date de création'},
@@ -126,7 +124,8 @@ bsdd_created_total = df_bsdd.index.size
 
 # nb_sent = df_bsdd.query("status=='SENT'")
 df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] >= date_n_days_ago) & (df_bsdd['status'] == 'PROCESSED')]
-df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'dangerous'], as_index=False).sum().round()
+df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'recipientProcessingOperation'],
+                                                      as_index=False).sum().round()
 
 # Codes processing à garder:
 # - R1 : combustion
@@ -141,14 +140,14 @@ df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'danger
 # - D12
 # - D5
 
-quantity_processed_weekly = px.line(df_bsdd_processed_grouped,
-                                    title='Quantité de déchets traitée par semaine',
-                                    color='dangerous',
-                                    y='quantityReceived',
-                                    x='processedAt',
-                                    labels={'quantityReceived': 'Quantité de déchets traitée (tonnes)',
-                                            'processedAt': 'Date du traitement'},
-                                    markers=True)
+quantity_processed_weekly = px.bar(df_bsdd_processed_grouped,
+                                   title='Quantité de déchets traitée par semaine',
+                                   color='recipientProcessingOperation',
+                                   y='quantityReceived',
+                                   x='processedAt',
+                                   labels={'quantityReceived': 'Quantité de déchets traitée (tonnes)',
+                                           'processedAt': 'Date du traitement',
+                                           'recipientProcessingOperation': 'Code de traitement'})
 quantity_processed_total = df_bsdd_processed_grouped['quantityReceived'].sum()
 
 # -----------
