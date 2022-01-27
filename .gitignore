@@ -1,4 +1,6 @@
-/env.sh
+*.sh
+!sample.env.sh
 *.csv
 .idea
 cache
+

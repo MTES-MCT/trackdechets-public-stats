@@ -27,11 +27,11 @@ body {
 }
 
 .side-total {
-    font-size: 2em;
     height: 100%;
 }
 
 .side-total p {
+    font-size: 1.8em;
     color: #777;
 }
 
@@ -39,5 +39,5 @@ body {
     list-style-type: none;
     padding: 0;
     margin: 12px 0 0 20px;
-    font-size: 0.75em;
+    font-size: 1.2em;
 }

@@ -40,7 +40,8 @@ def get_bsdd_data() -> pd.DataFrame:
         'date_trunc(\'week\', "default$default"."Form"."processedAt") AS "processedAt", '
         '"Form"."wasteDetailsPop", '
         '"Form"."wasteDetailsCode", '
-        '"Form"."quantityReceived" '
+        '"Form"."quantityReceived", '
+        '"Form"."recipientProcessingOperation" '
         'FROM "default$default"."Form" '
         'WHERE '
         '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
@@ -126,6 +127,19 @@ bsdd_created_total = df_bsdd.index.size
 # nb_sent = df_bsdd.query("status=='SENT'")
 df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] >= date_n_days_ago) & (df_bsdd['status'] == 'PROCESSED')]
 df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'dangerous'], as_index=False).sum().round()
+
+# Codes processing à garder:
+# - R1 : combustion
+# - R13 : stockage pour valorisation
+# - R12 : échangé pour valorisation
+# - D13 :
+# - D10
+# - R4
+# - R5
+# - D9
+# - R3
+# - D12
+# - D5
 
 quantity_processed_weekly = px.line(df_bsdd_processed_grouped,
                                     title='Quantité de déchets traitée par semaine',
@@ -213,8 +227,8 @@ app.layout = html.Div(children=[
         add_figure(quantity_processed_weekly, [{'total': quantity_processed_total, 'unit': "tonnes"}],
                    "bsdd_processed_weekly"),
         add_figure(bsdd_created_weekly, [{'total': bsdd_created_total, 'unit': "bordereaux"}], "bsdd_created_weekly"),
-        add_figure(company_user_created_weekly, [{'total': company_created_total, 'unit': "établissements"},
-                                                 {'total': user_created_total, 'unit': "utilisateurs"}],
+        add_figure(company_user_created_weekly, [{'total': company_created_total, 'unit': "établissements inscrits"},
+                                                 {'total': user_created_total, 'unit': "utilisateurs inscrits"}],
                    "company_user_created_weekly"),
     ]
                   )
