@@ -32,9 +32,12 @@ engine = create_engine(getenv('DATABASE_URL'))
 @cache.memoize(timeout=cache_timeout)
 def get_bsdd_created_data() -> pd.DataFrame:
     df_bsdd_created_query = pd.read_sql_query(
-        'SELECT date_trunc(\'week\', "default$default"."Form"."createdAt") AS "createdAt", count(*) AS "count" '
+        'SELECT date_trunc(\'week\', "default$default"."Form"."createdAt") AS "createdAt",  count(*) AS "count" '
         'FROM "default$default"."Form" '
         'WHERE "Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
+        # To keep only dangerous waste at query level (not tested):
+        # 'AND ("Form"."wasteDetailsCode" LIKE \'%*\' OR "Form"."wasteDetailsPop" = TRUE)'
+        'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
         'GROUP BY date_trunc(\'week\', "default$default"."Form"."createdAt") '
         'ORDER BY date_trunc(\'week\', "default$default"."Form"."createdAt")',
         con=engine)
@@ -48,6 +51,7 @@ def get_bsdd_processed_data() -> pd.DataFrame:
         'sum("default$default"."Form"."quantityReceived") AS "quantityReceived"  '
         'FROM "default$default"."Form" '
         'WHERE "Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\''
+        'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
         'GROUP BY date_trunc(\'week\', "default$default"."Form"."processedAt") '
         'ORDER BY date_trunc(\'week\', "default$default"."Form"."processedAt")',
         con=engine)
@@ -59,6 +63,7 @@ def get_company_data() -> pd.DataFrame:
     df_company_query = pd.read_sql_query(
         'SELECT date_trunc(\'week\', "default$default"."Company"."createdAt") AS "createdAt", count(*) as "count" '
         'FROM "default$default"."Company" '
+        'WHERE "default$default"."Company"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
         'GROUP BY date_trunc(\'week\', "default$default"."Company"."createdAt") '
         'ORDER BY date_trunc(\'week\', "default$default"."Company"."createdAt")',
         con=engine)
@@ -71,6 +76,7 @@ def get_user_data() -> pd.DataFrame:
         'SELECT date_trunc(\'week\', "default$default"."User"."createdAt") AS "createdAt", count(*) as "count" '
         'FROM "default$default"."User" '
         'WHERE "User"."isActive" = True '
+        'AND "default$default"."User"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
         'GROUP BY date_trunc(\'week\', "default$default"."User"."createdAt") '
         'ORDER BY date_trunc(\'week\', "default$default"."User"."createdAt")',
         con=engine)
@@ -90,8 +96,21 @@ date_n_days_ago = today - timedelta(time_delta_d)
 # BSDD
 # -----------
 
+# TODO Currenty only the get_blabla_data functions are cached, which means only the db calls are cached.
+# Not the dataframe postprocessing, which is always done. Dataframe postprocessing could be added to those functions.
+
 df_bsdd_created: pd.DataFrame = get_bsdd_created_data()
 # TODO integrate these conversions in parse_dates
+
+
+# def setPolluting(row):
+#     if row['wasteDetailsCode'].str.contains('*') or row['wasteDetailsPop'] is True:
+#         return True
+#     else:
+#         return False
+
+
+# df_bsdd_created['polluting'] = df_bsdd_created.apply(lambda row: setPolluting(row), axis=1)
 df_bsdd_created['createdAt'] = pd.to_datetime(df_bsdd_created['createdAt'], errors='coerce')
 
 df_bsdd_created = df_bsdd_created.loc[(today > df_bsdd_created['createdAt'])
@@ -150,11 +169,16 @@ user_created_total = df_company_user_created.loc[df_company_user_created['type']
 
 
 def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
+    def fn(input_number) -> str:
+        return '{:,.0f}'.format(input_number).replace(',', ' ')
+
     def unroll_totals(totals: [dict]) -> list:
-        result = []
+        result = [html.P(f"Total sur les {time_delta_m} derniers mois")]
+        ul_children = []
         for dic in totals:
-            result += [html.Li(f"{dic['total']} {dic['unit']}")]
-        return [f"Total sur les {time_delta_m} derniers mois : ", html.Ul(result)]
+            ul_children += [html.Li(f"{fn(dic['total'])} {dic['unit']}")]
+        result += [html.Ul(ul_children)]
+        return result
 
     row = dbc.Row(
         [
@@ -166,7 +190,8 @@ def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
                 ), width=8
             ),
             dbc.Col(
-                html.P(unroll_totals(totals_on_period)), width=4, align='center'
+                html.Div(unroll_totals(totals_on_period), className='side-total'),
+                width=4, align='center', className='d-flex'
             )
         ]
     )

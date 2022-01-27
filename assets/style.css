@@ -17,12 +17,27 @@ body {
     width: 98%
 }
 
-.dash-graph {
+.dash-graph, .side-total {
     border: solid 1px #ccc;
     border-radius: 30px;
     /* background-color: #f9f9f8;*/
     box-shadow: 2px 2px 2px lightgrey;
     margin: 10px;
     padding: 0 25px 25px 25px;
-    padding-bottom: -15px;
+}
+
+.side-total {
+    font-size: 2em;
+    height: 100%;
+}
+
+.side-total p {
+    color: #777;
+}
+
+.side-total ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 12px 0 0 20px;
+    font-size: 0.75em;
 }
