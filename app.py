@@ -95,7 +95,7 @@ date_n_days_ago = today - timedelta(time_delta_d)
 # -----------
 def normalize_processing_operation(row) -> str:
     string = row['recipientProcessingOperation']
-    return string.replace(' ', '')[:2].upper()
+    return string.replace(' ', '').replace('R0', 'R').replace('D0', 'D')[:3].upper()
 
 
 # TODO Currenty only the get_blabla_data functions are cached, which means only the db calls are cached.
