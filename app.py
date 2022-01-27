@@ -30,32 +30,27 @@ engine = create_engine(getenv('DATABASE_URL'))
 
 
 @cache.memoize(timeout=cache_timeout)
-def get_bsdd_created_data() -> pd.DataFrame:
-    df_bsdd_created_query = pd.read_sql_query(
-        'SELECT date_trunc(\'week\', "default$default"."Form"."createdAt") AS "createdAt",  count(*) AS "count" '
+def get_bsdd_data() -> pd.DataFrame:
+    df_bsdd_query = pd.read_sql_query(
+        'SELECT '
+        'id, '
+        'status, '
+        'date_trunc(\'week\', "default$default"."Form"."createdAt") AS "createdAt", '
+        '"Form"."isDeleted", '
+        'date_trunc(\'week\', "default$default"."Form"."processedAt") AS "processedAt", '
+        '"Form"."wasteDetailsPop", '
+        '"Form"."wasteDetailsCode", '
+        '"Form"."quantityReceived" '
         'FROM "default$default"."Form" '
-        'WHERE "Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
+        'WHERE '
+        '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
         # To keep only dangerous waste at query level (not tested):
         # 'AND ("Form"."wasteDetailsCode" LIKE \'%*\' OR "Form"."wasteDetailsPop" = TRUE)'
         'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-        'GROUP BY date_trunc(\'week\', "default$default"."Form"."createdAt") '
+        # TODO Think of a bedrock starting date to limit number of results
         'ORDER BY date_trunc(\'week\', "default$default"."Form"."createdAt")',
         con=engine)
-    return df_bsdd_created_query
-
-
-@cache.memoize(timeout=cache_timeout)
-def get_bsdd_processed_data() -> pd.DataFrame:
-    df_bsdd_processed_query = pd.read_sql_query(
-        'SELECT date_trunc(\'week\', "default$default"."Form"."processedAt") AS "processedAt", '
-        'sum("default$default"."Form"."quantityReceived") AS "quantityReceived"  '
-        'FROM "default$default"."Form" '
-        'WHERE "Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\''
-        'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-        'GROUP BY date_trunc(\'week\', "default$default"."Form"."processedAt") '
-        'ORDER BY date_trunc(\'week\', "default$default"."Form"."processedAt")',
-        con=engine)
-    return df_bsdd_processed_query
+    return df_bsdd_query
 
 
 @cache.memoize(timeout=cache_timeout)
@@ -92,56 +87,54 @@ except TypeError:
     today = datetime.today()
 date_n_days_ago = today - timedelta(time_delta_d)
 
+
 # -----------
 # BSDD
 # -----------
+def set_dangerous(row):
+    if '*' in row['wasteDetailsCode'] or row['wasteDetailsPop'] is True:
+        return "Déchets dangereux"
+    else:
+        return "Déchets non-dangereux"
+
 
 # TODO Currenty only the get_blabla_data functions are cached, which means only the db calls are cached.
 # Not the dataframe postprocessing, which is always done. Dataframe postprocessing could be added to those functions.
 
-df_bsdd_created: pd.DataFrame = get_bsdd_created_data()
+df_bsdd: pd.DataFrame = get_bsdd_data()
+df_bsdd = df_bsdd.loc[df_bsdd['createdAt'] >= date_n_days_ago]
+
 # TODO integrate these conversions in parse_dates
+df_bsdd['dangerous'] = df_bsdd.apply(lambda row: set_dangerous(row), axis=1)
+df_bsdd['createdAt'] = pd.to_datetime(df_bsdd['createdAt'], errors='coerce')
+df_bsdd['processedAt'] = pd.to_datetime(df_bsdd['processedAt'], errors='coerce')
+print(df_bsdd)
 
-
-# def setPolluting(row):
-#     if row['wasteDetailsCode'].str.contains('*') or row['wasteDetailsPop'] is True:
-#         return True
-#     else:
-#         return False
-
-
-# df_bsdd_created['polluting'] = df_bsdd_created.apply(lambda row: setPolluting(row), axis=1)
-df_bsdd_created['createdAt'] = pd.to_datetime(df_bsdd_created['createdAt'], errors='coerce')
-
-df_bsdd_created = df_bsdd_created.loc[(today > df_bsdd_created['createdAt'])
-                                      & (df_bsdd_created['createdAt'] >= date_n_days_ago)]
-print(df_bsdd_created)
-bsdd_created_weekly = px.line(df_bsdd_created, y='count', x='createdAt',
+df_bsdd_created_grouped = df_bsdd.groupby(by=['createdAt', 'dangerous'], as_index=False).count()
+print(df_bsdd_created_grouped)
+bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt', color='dangerous',
                               title="Nombre de bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
                               labels={'count': 'Bordereaux de suivi de déchets dangereux',
                                       'createdAt': 'Date de création'},
                               markers=True)
-bsdd_created_total = df_bsdd_created['count'].sum()
+bsdd_created_total = df_bsdd.index.size
 
 # bsdd_status = px.bar(df_bsdd.groupby(by='status').count().sort_values(['id'], ascending=True), x='id',
 #              title="Répartition des BSDD par statut")
 
 # nb_sent = df_bsdd.query("status=='SENT'")
+df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] >= date_n_days_ago) & (df_bsdd['status'] == 'PROCESSED')]
+df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'dangerous'], as_index=False).sum()
 
-df_bsdd_processed = get_bsdd_processed_data()
-df_bsdd_processed['processedAt'] = pd.to_datetime(df_bsdd_processed['processedAt'], errors='coerce')
-df_bsdd_processed = df_bsdd_processed[(today > df_bsdd_processed['processedAt'])
-                                      & (df_bsdd_processed['processedAt'] >= date_n_days_ago)]
-print(df_bsdd_processed)
-
-quantity_processed_weekly = px.line(df_bsdd_processed,
+quantity_processed_weekly = px.line(df_bsdd_processed_grouped,
                                     title='Quantité de déchets traitée par semaine',
+                                    color='dangerous',
                                     y='quantityReceived',
                                     x='processedAt',
                                     labels={'quantityReceived': 'Quantité de déchets traitée (tonnes)',
                                             'processedAt': 'Date du traitement'},
                                     markers=True)
-quantity_processed_total = df_bsdd_processed['quantityReceived'].sum().round()
+quantity_processed_total = df_bsdd_processed_grouped['quantityReceived'].sum().round()
 
 # -----------
 # Établissements et utilisateurs
