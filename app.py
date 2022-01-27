@@ -125,7 +125,7 @@ bsdd_created_total = df_bsdd.index.size
 
 # nb_sent = df_bsdd.query("status=='SENT'")
 df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] >= date_n_days_ago) & (df_bsdd['status'] == 'PROCESSED')]
-df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'dangerous'], as_index=False).sum()
+df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'dangerous'], as_index=False).sum().round()
 
 quantity_processed_weekly = px.line(df_bsdd_processed_grouped,
                                     title='Quantité de déchets traitée par semaine',
@@ -135,7 +135,7 @@ quantity_processed_weekly = px.line(df_bsdd_processed_grouped,
                                     labels={'quantityReceived': 'Quantité de déchets traitée (tonnes)',
                                             'processedAt': 'Date du traitement'},
                                     markers=True)
-quantity_processed_total = df_bsdd_processed_grouped['quantityReceived'].sum().round()
+quantity_processed_total = df_bsdd_processed_grouped['quantityReceived'].sum()
 
 # -----------
 # Établissements et utilisateurs
