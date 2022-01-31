@@ -8,6 +8,7 @@ from os import getenv
 import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
 from flask_caching import Cache
+import plotly.graph_objects as go
 
 external_scripts = ['https://cdn.plot.ly/plotly-locale-fr-latest.js']
 config = {'locale': 'fr'}
@@ -15,7 +16,17 @@ config = {'locale': 'fr'}
 # Use [dbc.themes.BOOTSTRAP] to import the full Bootstrap CSS
 app = dash.Dash("trackdechets-public-stats", title='Trackdéchets : statistiques et impact',
                 external_stylesheets=[dbc.themes.GRID], external_scripts=external_scripts)
-pio.templates.default = "none"
+
+# Override the 'none' template
+pio.templates['gouv'] = go.layout.Template(
+    layout=dict(
+        font=dict(
+            family='Marianne',
+        ),
+    ),
+)
+
+pio.templates.default = "none+gouv"
 
 # Flask cache https://dash.plotly.com/performance
 # timeout in seconds
@@ -122,12 +133,10 @@ df_bsdd = df_bsdd.loc[df_bsdd['createdAt'] >= date_n_days_ago]
 df_bsdd['recipientProcessingOperation'] = df_bsdd.apply(lambda row: normalize_processing_operation(row), axis=1)
 df_bsdd['createdAt'] = pd.to_datetime(df_bsdd['createdAt'], errors='coerce')
 df_bsdd['processedAt'] = pd.to_datetime(df_bsdd['processedAt'], errors='coerce')
-print(df_bsdd)
 
 df_bsdd_created_grouped = df_bsdd.groupby(by=['createdAt'], as_index=False).count()
-print(df_bsdd_created_grouped)
 bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt',
-                              title="Nombre de bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
+                              title="Bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
                               labels={'id': 'Bordereaux de suivi de déchets dangereux',
                                       'createdAt': 'Date de création'},
                               markers=True)
@@ -142,13 +151,13 @@ df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'recipi
                                                       as_index=False).sum().round()
 
 quantity_processed_weekly = px.bar(df_bsdd_processed_grouped,
-                                   title='Quantité de déchets dangereux traités par semaine',
+                                   title='Déchets dangereux traités par semaine',
                                    color='recipientProcessingOperation',
                                    y='quantityReceived',
                                    x='processedAt',
-                                   labels={'quantityReceived': 'Quantité de déchets dangereux traités (tonnes)',
+                                   labels={'quantityReceived': 'Déchets dangereux traités (tonnes)',
                                            'processedAt': 'Date du traitement',
-                                           'recipientProcessingOperation': 'Code de traitement'})
+                                           'recipientProcessingOperation': 'Type de traitement'})
 quantity_processed_total = df_bsdd_processed_grouped['quantityReceived'].sum()
 
 # -----------
@@ -161,12 +170,9 @@ df_company['createdAt'] = pd.to_datetime(df_company['createdAt'])
 df_user = get_user_data()
 df_user['type'] = 'Utilisateurs'
 df_user['createdAt'] = pd.to_datetime(df_user['createdAt'])
-print(df_user)
-print(df_company)
 df_company_user_created = pd.concat([df_company, df_user], ignore_index=True)
 df_company_user_created = df_company_user_created.loc[(today > df_company_user_created['createdAt'])
                                                       & (df_company_user_created['createdAt'] >= date_n_days_ago)]
-print(df_company_user_created)
 company_user_created_weekly = px.line(df_company_user_created,
                                       y='count', x='createdAt', color='type',
                                       title="Établissements et utilisateurs inscrits par semaine",
@@ -177,10 +183,11 @@ user_created_total = df_company_user_created.loc[df_company_user_created['type']
 
 figure_text_tips = {
     'bsdd_processed_weekly': dcc.Markdown(
-        '''En fin de chaîne, un déchet dangereux est traité. Les **déchets 
-    valorisés** sont réutilisés (commbustion pour du chauffage, recyclage, revente, compostage, etc.) tandis que les 
-    **déchets éliminés** sont en fin de cycle de vie (enfouissement, stockage, traitement chimique, etc.). 
-    '''),
+        '''En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés** sont réutilisés (commbustion 
+        pour du chauffage, recyclage, revente, compostage, etc.) tandis que les **déchets éliminés** sont en fin de 
+        cycle de vie (enfouissement, stockage, traitement chimique, etc.). Plus d'informations sur [
+        ecologie.gouv.fr](https://www.ecologie.gouv.fr/traitement-des-dechets). '''
+    ),
     'bsdd_created_weekly': '',
     'company_user_created_weekly': ''
 }
