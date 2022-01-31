@@ -3,7 +3,7 @@ from dash import html, dcc
 import plotly.express as px
 import plotly.io as pio
 import pandas as pd
-from sqlalchemy import create_engine
+import sqlalchemy
 from os import getenv
 import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
@@ -26,31 +26,33 @@ cache = Cache(app.server, config={
 })
 
 # postgresql://admin:admin@localhost:5432/ibnse
-engine = create_engine(getenv('DATABASE_URL'))
+engine = sqlalchemy.create_engine(getenv('DATABASE_URL'))
 
 
 @cache.memoize(timeout=cache_timeout)
 def get_bsdd_data() -> pd.DataFrame:
     df_bsdd_query = pd.read_sql_query(
-        'SELECT '
-        'id, '
-        'status, '
-        'date_trunc(\'week\', "default$default"."Form"."createdAt") AS "createdAt", '
-        '"Form"."isDeleted", '
-        'date_trunc(\'week\', "default$default"."Form"."processedAt") AS "processedAt", '
-        '"Form"."wasteDetailsPop", '
-        '"Form"."wasteDetailsCode", '
-        '"Form"."quantityReceived", '
-        '"Form"."recipientProcessingOperation" '
-        'FROM "default$default"."Form" '
-        'WHERE '
-        '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
-        # To keep only dangerous waste at query level (not tested):
-        # 'AND ("Form"."wasteDetailsCode" LIKE \'%*\' OR "Form"."wasteDetailsPop" = TRUE)'
-        'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-        'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-        # TODO Think of a bedrock starting date to limit number of results
-        'ORDER BY date_trunc(\'week\', "default$default"."Form"."createdAt")',
+        sqlalchemy.text(
+            'SELECT '
+            'id, '
+            'status, '
+            'date_trunc(\'week\', "default$default"."Form"."createdAt") AS "createdAt", '
+            '"Form"."isDeleted", '
+            'date_trunc(\'week\', "default$default"."Form"."processedAt") AS "processedAt", '
+            '"Form"."wasteDetailsPop", '
+            '"Form"."wasteDetailsCode", '
+            '"Form"."quantityReceived", '
+            '"Form"."recipientProcessingOperation" '
+            'FROM "default$default"."Form" '
+            'WHERE '
+            '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
+            # To keep only dangerous waste at query level (not tested):
+            'AND ("default$default"."Form"."wasteDetailsCode" LIKE \'%*%\' '
+            'OR "default$default"."Form"."wasteDetailsPop" = TRUE)'
+            'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
+            'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
+            # TODO Think of a bedrock starting date to limit number of results
+            'ORDER BY date_trunc(\'week\', "default$default"."Form"."createdAt")'),
         con=engine)
     return df_bsdd_query
 
@@ -126,7 +128,7 @@ df_bsdd_created_grouped = df_bsdd.groupby(by=['createdAt'], as_index=False).coun
 print(df_bsdd_created_grouped)
 bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt',
                               title="Nombre de bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
-                              labels={'count': 'Bordereaux de suivi de déchets dangereux',
+                              labels={'id': 'Bordereaux de suivi de déchets dangereux',
                                       'createdAt': 'Date de création'},
                               markers=True)
 bsdd_created_total = df_bsdd.index.size
@@ -168,7 +170,7 @@ print(df_company_user_created)
 company_user_created_weekly = px.line(df_company_user_created,
                                       y='count', x='createdAt', color='type',
                                       title="Établissements et utilisateurs inscrits par semaine",
-                                      labels={'id': 'Inscriptions', 'createdAt': 'Date d\'inscription'},
+                                      labels={'count': 'Inscriptions', 'createdAt': 'Date d\'inscription'},
                                       markers=True)
 company_created_total = df_company_user_created.loc[df_company_user_created['type'] == 'Établissements']['count'].sum()
 user_created_total = df_company_user_created.loc[df_company_user_created['type'] == 'Utilisateurs']['count'].sum()
@@ -200,17 +202,16 @@ def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
         [
             dbc.Col(
                 [
-                    dcc.Graph(
-                        id=fig_id,
-                        figure=fig,
-                        config=config
-                    ),
-                    figure_text_tips[fig_id],
-                ], width=8, class_name='graph'
-            ),
-            dbc.Col(
-                html.Div(unroll_totals(totals_on_period), className='side-total'),
-                width=4, align='center', className='d-flex'
+                    html.Div([
+                        dcc.Graph(
+                            id=fig_id,
+                            figure=fig,
+                            config=config
+                        ),
+                        figure_text_tips[fig_id],
+                        html.Div(unroll_totals(totals_on_period), className='side-total'),
+                    ], className='graph')
+                ], width=12
             )
         ]
     )
