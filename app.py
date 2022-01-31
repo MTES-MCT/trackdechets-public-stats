@@ -95,7 +95,10 @@ date_n_days_ago = today - timedelta(time_delta_d)
 # -----------
 def normalize_processing_operation(row) -> str:
     string = row['recipientProcessingOperation']
-    return string.replace(' ', '').replace('R0', 'R').replace('D0', 'D')[:3].upper()
+    return string.replace(' ', '') \
+               .replace('R0', 'R') \
+               .replace('D0', 'D')[:3] \
+        .replace('/', '').upper()
 
 
 # TODO Currenty only the get_blabla_data functions are cached, which means only the db calls are cached.
@@ -127,25 +130,12 @@ df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] >= date_n_days_ago) & (d
 df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'recipientProcessingOperation'],
                                                       as_index=False).sum().round()
 
-# Codes processing à garder:
-# - R1 : combustion
-# - R13 : stockage pour valorisation
-# - R12 : échangé pour valorisation
-# - D13 :
-# - D10
-# - R4
-# - R5
-# - D9
-# - R3
-# - D12
-# - D5
-
 quantity_processed_weekly = px.bar(df_bsdd_processed_grouped,
-                                   title='Quantité de déchets traitée par semaine',
+                                   title='Quantité de déchets dangereux traités par semaine',
                                    color='recipientProcessingOperation',
                                    y='quantityReceived',
                                    x='processedAt',
-                                   labels={'quantityReceived': 'Quantité de déchets traitée (tonnes)',
+                                   labels={'quantityReceived': 'Quantité de déchets dangereux traités (tonnes)',
                                            'processedAt': 'Date du traitement',
                                            'recipientProcessingOperation': 'Code de traitement'})
 quantity_processed_total = df_bsdd_processed_grouped['quantityReceived'].sum()
