@@ -93,12 +93,21 @@ date_n_days_ago = today - timedelta(time_delta_d)
 # -----------
 # BSDD
 # -----------
+# def normalize_processing_operation(row) -> str:
+#     string = row['recipientProcessingOperation']
+#     return string.replace(' ', '') \
+#                .replace('R0', 'R') \
+#                .replace('D0', 'D')[:3] \
+#         .replace('/', '').upper()
+
 def normalize_processing_operation(row) -> str:
-    string = row['recipientProcessingOperation']
-    return string.replace(' ', '') \
-               .replace('R0', 'R') \
-               .replace('D0', 'D')[:3] \
-        .replace('/', '').upper()
+    string = row['recipientProcessingOperation'].upper()
+    if string.startswith('R'):
+        return 'Déchet valorisé'
+    elif string.startswith('D'):
+        return 'Déchet éliminé'
+    else:
+        return 'Autre'
 
 
 # TODO Currenty only the get_blabla_data functions are cached, which means only the db calls are cached.
@@ -164,6 +173,16 @@ company_user_created_weekly = px.line(df_company_user_created,
 company_created_total = df_company_user_created.loc[df_company_user_created['type'] == 'Établissements']['count'].sum()
 user_created_total = df_company_user_created.loc[df_company_user_created['type'] == 'Utilisateurs']['count'].sum()
 
+figure_text_tips = {
+    'bsdd_processed_weekly': dcc.Markdown(
+        '''En fin de chaîne, un déchet dangereux est traité. Les **déchets 
+    valorisés** sont réutilisés (commbustion pour du chauffage, recyclage, revente, compostage, etc.) tandis que les 
+    **déchets éliminés** sont en fin de cycle de vie (enfouissement, stockage, traitement chimique, etc.). 
+    '''),
+    'bsdd_created_weekly': '',
+    'company_user_created_weekly': ''
+}
+
 
 def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
     def fn(input_number) -> str:
@@ -180,11 +199,14 @@ def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
     row = dbc.Row(
         [
             dbc.Col(
-                dcc.Graph(
-                    id=fig_id,
-                    figure=fig,
-                    config=config
-                ), width=8
+                [
+                    dcc.Graph(
+                        id=fig_id,
+                        figure=fig,
+                        config=config
+                    ),
+                    figure_text_tips[fig_id],
+                ], width=8, class_name='graph'
             ),
             dbc.Col(
                 html.Div(unroll_totals(totals_on_period), className='side-total'),
@@ -199,18 +221,23 @@ app.layout = html.Div(children=[
     dbc.Container(fluid=True, children=[
         dbc.Row(
             [
-                html.P(["L'application Trackdéchets est utilisée en France par des milliers de professionnels du "
-                        "déchet pour tracer les déchets dangereux et/ou polluants (",
-                        html.A("POP", href='https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop'),
-                        ") produits, ainsi que les différentes étapes de leur traçabilité et ce, jusqu'au traitement "
-                        "final. Les déchets traités à l'étranger ne sont pas tracés par Trackdéchets."]),
-                html.P("Un borderau de suivi de déchet (BSD) est créé pour chaque déchet et il contient de nombreuses "
-                       "informations (acteurs, déchets, poids, traitement réalisé etc.). Ces informations sont "
-                       "transmises à Trackdéchets par un usage direct ou par API. "),
-                html.P("Depuis le 1er janvier, l'utilisation de Trackdéchets est obligatoire pour les déchets "
-                       "dangereux (DD) et les déchets d'amiante (DA)."),
-                html.P("Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir "
-                       "régulièrement avec de nouvelles statistiques.")
+                dcc.Markdown('''
+L'application Trackdéchets est utilisée en France par des milliers de professionnels 
+du  déchet pour tracer les déchets dangereux et/ou polluants ([POP](
+https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) produits, ainsi que différentes 
+étapes de leur traçabilité et ce, jusqu'au traitement final. Les déchets traités à l'étranger ne sont 
+pas tracés par Trackdéchets. 
+        
+Un borderau de suivi de déchet (BSD) est créé pour chaque déchet et il contient de nombreuses 
+informations (acteurs, déchets, poids, traitement réalisé etc.). Ces informations sont transmises à 
+Trackdéchets par un usage direct ou par API.
+
+Depuis le 1er janvier, l'utilisation de Trackdéchets est obligatoire pour les déchets  dangereux (DD) 
+et les déchets d'amiante (DA).
+
+Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir régulièrement 
+avec de nouvelles statistiques.
+                ''')
             ]
         ),
         add_figure(quantity_processed_weekly, [{'total': quantity_processed_total, 'unit': "tonnes"}],
