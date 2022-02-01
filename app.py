@@ -237,7 +237,7 @@ https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) produits, ai
 pas tracés par Trackdéchets. 
         
 Un borderau de suivi de déchet (BSD) est créé pour chaque déchet et il contient de nombreuses 
-informations (acteurs, déchets, poids, traitement réalisé etc.). Ces informations sont transmises à 
+informations (acteurs, déchets, poids, traitement réalisé, etc.). Ces informations sont transmises à 
 Trackdéchets par un usage direct ou par API.
 
 Depuis le 1er janvier, l'utilisation de Trackdéchets est obligatoire pour les déchets  dangereux (DD) 
