@@ -201,7 +201,11 @@ def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
         result = [html.P(f"Total sur les {time_delta_m} derniers mois")]
         ul_children = []
         for dic in totals:
-            ul_children += [html.Li(f"{fn(dic['total'])} {dic['unit']}")]
+            ul_children += [html.Li(
+                [
+                    html.Span(f"{fn(dic['total'])}"),
+                    f" {dic['unit']}"]
+            )]
         result += [html.Ul(ul_children)]
         return result
 
@@ -248,7 +252,8 @@ avec de nouvelles statistiques.
                 ''')
             ]
         ),
-        add_figure(quantity_processed_weekly, [{'total': quantity_processed_total, 'unit': "tonnes"}],
+        add_figure(quantity_processed_weekly, [{'total': quantity_processed_total, 'unit': "tonnes de déchets dangereux"
+                                                                                           " traités"}],
                    "bsdd_processed_weekly"),
         add_figure(bsdd_created_weekly, [{'total': bsdd_created_total, 'unit': "bordereaux"}], "bsdd_created_weekly"),
         add_figure(company_user_created_weekly, [{'total': company_created_total, 'unit': "établissements inscrits"},
