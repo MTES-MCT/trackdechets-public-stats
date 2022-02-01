@@ -183,7 +183,7 @@ user_created_total = df_company_user_created.loc[df_company_user_created['type']
 
 figure_text_tips = {
     'bsdd_processed_weekly': dcc.Markdown(
-        '''En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés** sont réutilisés (commbustion 
+        '''En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés** sont réutilisés (combustion 
         pour du chauffage, recyclage, revente, compostage, etc.) tandis que les **déchets éliminés** sont en fin de 
         cycle de vie (enfouissement, stockage, traitement chimique, etc.). Plus d'informations sur [
         ecologie.gouv.fr](https://www.ecologie.gouv.fr/traitement-des-dechets). '''
