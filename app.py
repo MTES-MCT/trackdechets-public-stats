@@ -176,7 +176,8 @@ df_company_user_created = df_company_user_created.loc[(today > df_company_user_c
 company_user_created_weekly = px.line(df_company_user_created,
                                       y='count', x='createdAt', color='type',
                                       title="Établissements et utilisateurs inscrits par semaine",
-                                      labels={'count': 'Inscriptions', 'createdAt': 'Date d\'inscription'},
+                                      labels={'count': 'Inscriptions', 'createdAt': 'Date d\'inscription',
+                                              'type': ''},
                                       markers=True)
 company_created_total = df_company_user_created.loc[df_company_user_created['type'] == 'Établissements']['count'].sum()
 user_created_total = df_company_user_created.loc[df_company_user_created['type'] == 'Utilisateurs']['count'].sum()
