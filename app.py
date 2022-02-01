@@ -123,6 +123,13 @@ def normalize_processing_operation(row) -> str:
         return 'Autre'
 
 
+def normalize_quantity_received(row) -> float:
+    quantity = row['quantityReceived']
+    if quantity > (int(getenv('SEUIL_DIVISION_QUANTITE')) or 1000):
+        quantity = quantity / 1000
+    return quantity
+
+
 # TODO Currenty only the get_blabla_data functions are cached, which means only the db calls are cached.
 # Not the dataframe postprocessing, which is always done. Dataframe postprocessing could be added to those functions.
 
@@ -131,6 +138,7 @@ df_bsdd = df_bsdd.loc[df_bsdd['createdAt'] >= date_n_days_ago]
 
 # TODO integrate these conversions in parse_dates
 df_bsdd['recipientProcessingOperation'] = df_bsdd.apply(lambda row: normalize_processing_operation(row), axis=1)
+df_bsdd['quantityReceived'] = df_bsdd.apply(lambda row: normalize_quantity_received(row), axis=1)
 df_bsdd['createdAt'] = pd.to_datetime(df_bsdd['createdAt'], errors='coerce')
 df_bsdd['processedAt'] = pd.to_datetime(df_bsdd['processedAt'], errors='coerce')
 
@@ -142,10 +150,6 @@ bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt',
                               markers=True)
 bsdd_created_total = df_bsdd.index.size
 
-# bsdd_status = px.bar(df_bsdd.groupby(by='status').count().sort_values(['id'], ascending=True), x='id',
-#              title="Répartition des BSDD par statut")
-
-# nb_sent = df_bsdd.query("status=='SENT'")
 df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] >= date_n_days_ago) & (df_bsdd['status'] == 'PROCESSED')]
 df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'recipientProcessingOperation'],
                                                       as_index=False).sum().round()
