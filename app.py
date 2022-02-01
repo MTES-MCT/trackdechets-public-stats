@@ -254,6 +254,8 @@ avec de nouvelles statistiques.
         add_figure(company_user_created_weekly, [{'total': company_created_total, 'unit': "établissements inscrits"},
                                                  {'total': user_created_total, 'unit': "utilisateurs inscrits"}],
                    "company_user_created_weekly"),
+        dcc.Markdown('Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ('
+                     '[code source](https://github.com/MTES-MCT/trackdechets-public-stats/))', className='source-code')
     ]
                   )
 
