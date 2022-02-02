@@ -17,10 +17,10 @@
 1. Faites une copie du fichier de déclaration des variables d'environnement :
 
 ```
-cp sample.env.sh env.sh
+cp sample.env .env
 ```
 
-2. Configurez les variables d'environnement dans `env.sh` 
+2. Configurez les variables d'environnement dans `.env` (vous pouvez aussi les déclarer directement dans votre système)  
 3. Créez l'environnement
 
 ```bash
@@ -31,5 +31,5 @@ pipenv install
 4. Démarrez l'application
 
 ```bash
-./start.sh
+python app.py
 ```

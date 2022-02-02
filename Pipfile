@@ -9,9 +9,9 @@ plotly = "*"
 pandas = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
-matplotlib = "*"
 dash_bootstrap_components = "*"
 flask_caching = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
