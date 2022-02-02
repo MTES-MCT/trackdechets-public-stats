@@ -9,6 +9,10 @@ import dash_bootstrap_components as dbc
 from datetime import datetime, timedelta
 from flask_caching import Cache
 import plotly.graph_objects as go
+from dotenv import load_dotenv
+
+# Load the environment variables in .env file, or from the host OS if no .env file
+load_dotenv()
 
 external_scripts = ['https://cdn.plot.ly/plotly-locale-fr-latest.js']
 config = {'locale': 'fr'}
@@ -71,10 +75,9 @@ def get_bsdd_data() -> pd.DataFrame:
 @cache.memoize(timeout=cache_timeout)
 def get_company_data() -> pd.DataFrame:
     df_company_query = pd.read_sql_query(
-        'SELECT date_trunc(\'week\', "default$default"."Company"."createdAt") AS "createdAt", count(*) as "count" '
+        'SELECT id, date_trunc(\'week\', "default$default"."Company"."createdAt") AS "createdAt" '
         'FROM "default$default"."Company" '
         'WHERE "default$default"."Company"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-        'GROUP BY date_trunc(\'week\', "default$default"."Company"."createdAt") '
         'ORDER BY date_trunc(\'week\', "default$default"."Company"."createdAt")',
         con=engine)
     return df_company_query
@@ -83,11 +86,10 @@ def get_company_data() -> pd.DataFrame:
 @cache.memoize(timeout=cache_timeout)
 def get_user_data() -> pd.DataFrame:
     df_user_query = pd.read_sql_query(
-        'SELECT date_trunc(\'week\', "default$default"."User"."createdAt") AS "createdAt", count(*) as "count" '
+        'SELECT id, date_trunc(\'week\', "default$default"."User"."createdAt") AS "createdAt" '
         'FROM "default$default"."User" '
         'WHERE "User"."isActive" = True '
         'AND "default$default"."User"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-        'GROUP BY date_trunc(\'week\', "default$default"."User"."createdAt") '
         'ORDER BY date_trunc(\'week\', "default$default"."User"."createdAt")',
         con=engine)
     return df_user_query
@@ -134,9 +136,8 @@ def normalize_quantity_received(row) -> float:
 # Not the dataframe postprocessing, which is always done. Dataframe postprocessing could be added to those functions.
 
 df_bsdd: pd.DataFrame = get_bsdd_data()
-df_bsdd = df_bsdd.loc[df_bsdd['createdAt'] >= date_n_days_ago]
+df_bsdd = df_bsdd.loc[(df_bsdd['createdAt'] < today) & (df_bsdd['createdAt'] >= date_n_days_ago)]
 
-# TODO integrate these conversions in parse_dates
 df_bsdd['recipientProcessingOperation'] = df_bsdd.apply(lambda row: normalize_processing_operation(row), axis=1)
 df_bsdd['quantityReceived'] = df_bsdd.apply(lambda row: normalize_quantity_received(row), axis=1)
 df_bsdd['createdAt'] = pd.to_datetime(df_bsdd['createdAt'], errors='coerce')
@@ -150,7 +151,7 @@ bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt',
                               markers=True)
 bsdd_created_total = df_bsdd.index.size
 
-df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] >= date_n_days_ago) & (df_bsdd['status'] == 'PROCESSED')]
+df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] < today) & (df_bsdd['processedAt'] >= date_n_days_ago) & (df_bsdd['status'] == 'PROCESSED')]
 df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'recipientProcessingOperation'],
                                                       as_index=False).sum().round()
 
@@ -175,16 +176,24 @@ df_user = get_user_data()
 df_user['type'] = 'Utilisateurs'
 df_user['createdAt'] = pd.to_datetime(df_user['createdAt'])
 df_company_user_created = pd.concat([df_company, df_user], ignore_index=True)
+
+company_created_total_life = df_company.index.size
+user_created_total_life = df_user.index.size
+
 df_company_user_created = df_company_user_created.loc[(today > df_company_user_created['createdAt'])
                                                       & (df_company_user_created['createdAt'] >= date_n_days_ago)]
-company_user_created_weekly = px.line(df_company_user_created,
-                                      y='count', x='createdAt', color='type',
+df_company_user_created_grouped = df_company_user_created.groupby(by=['type', 'createdAt'],
+                                                                  as_index=False).count()
+company_user_created_weekly = px.line(df_company_user_created_grouped,
+                                      y='id', x='createdAt', color='type',
                                       title="Établissements et utilisateurs inscrits par semaine",
-                                      labels={'count': 'Inscriptions', 'createdAt': 'Date d\'inscription',
+                                      labels={'id': 'Inscriptions', 'createdAt': 'Date d\'inscription',
                                               'type': ''},
                                       markers=True)
-company_created_total = df_company_user_created.loc[df_company_user_created['type'] == 'Établissements']['count'].sum()
-user_created_total = df_company_user_created.loc[df_company_user_created['type'] == 'Utilisateurs']['count'].sum()
+company_created_total = \
+    df_company_user_created_grouped.loc[df_company_user_created_grouped['type'] == 'Établissements']['id'].sum()
+user_created_total = \
+    df_company_user_created_grouped.loc[df_company_user_created_grouped['type'] == 'Utilisateurs']['id'].sum()
 
 figure_text_tips = {
     'bsdd_processed_weekly': dcc.Markdown(
@@ -264,6 +273,22 @@ avec de nouvelles statistiques.
         add_figure(company_user_created_weekly, [{'total': company_created_total, 'unit': "établissements inscrits"},
                                                  {'total': user_created_total, 'unit': "utilisateurs inscrits"}],
                    "company_user_created_weekly"),
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.Div([html.P('Nombre total d\'établissements'),
+                                  html.P(company_created_total_life)], className='graph')
+                    ], width=6
+                ),
+                dbc.Col(
+                    [
+                        html.Div([html.P('Nombre total d\'utilisateurs'),
+                                  html.P(user_created_total_life)], className='graph'),
+                    ], width=6
+                ),
+            ]
+        ),
         dcc.Markdown('Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ('
                      '[code source](https://github.com/MTES-MCT/trackdechets-public-stats/))', className='source-code')
     ]
