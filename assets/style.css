@@ -21,14 +21,6 @@ body {
 margin-bottom: 10px
 }
 
-.graph {
-    border: solid 1px #ccc;
-    border-radius: 30px;
-    /* background-color: #f9f9f8;*/
-    box-shadow: 2px 2px 2px lightgrey;
-    padding: 0 25px 25px 25px;
-}
-
 .side-total {
     text-align: right
 }
@@ -38,14 +30,14 @@ margin-bottom: 10px
     color: #777;
 }
 
-.side-total ul {
+.side-total > * {
     list-style-type: none;
     padding: 0;
     margin: 12px 0 0 20px;
     font-size: 1.0em;
 }
 
-.side-total ul span {
+.side-total span {
     font-size: 1.6em;
 }
 
