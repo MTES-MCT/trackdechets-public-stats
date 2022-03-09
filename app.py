@@ -27,6 +27,12 @@ pio.templates['gouv'] = go.layout.Template(
         font=dict(
             family='Marianne',
         ),
+        title=dict(
+            font=dict(
+                color='white',
+                size=1
+            )
+        )
     ),
 )
 
@@ -61,7 +67,7 @@ def get_bsdd_data() -> pd.DataFrame:
             'FROM "default$default"."Form" '
             'WHERE '
             '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
-            # To keep only dangerous waste at query level (not tested):
+            # To keep only dangerous waste at query level:
             'AND ("default$default"."Form"."wasteDetailsCode" LIKE \'%*%\' '
             'OR "default$default"."Form"."wasteDetailsPop" = TRUE)'
             'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
