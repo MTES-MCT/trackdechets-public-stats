@@ -7,13 +7,14 @@ name = "pypi"
 dash = "*"
 plotly = "*"
 pandas = "*"
-sqlalchemy = "*"
+sqlalchemy = ">=1.4.0"
 psycopg2-binary = "*"
-matplotlib = "*"
 dash_bootstrap_components = "*"
 flask_caching = "*"
+python-dotenv = "*"
 
 [dev-packages]
+jupyter = "*"
 
 [requires]
 python_version = "3.9"

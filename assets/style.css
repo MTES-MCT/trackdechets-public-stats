@@ -21,26 +21,31 @@ body {
 margin-bottom: 10px
 }
 
-.graph {
-    border: solid 1px #ccc;
-    border-radius: 30px;
-    /* background-color: #f9f9f8;*/
-    box-shadow: 2px 2px 2px lightgrey;
-    padding: 0 25px 25px 25px;
-}
-
 .side-total {
     text-align: right
 }
 
 .side-total p {
-    font-size: 1.4em;
+    font-size: 1.2em;
     color: #777;
 }
 
-.side-total ul {
+.side-total > * {
     list-style-type: none;
     padding: 0;
     margin: 12px 0 0 20px;
-    font-size: 1.2em;
+    font-size: 1.0em;
 }
+
+.side-total span {
+    font-size: 1.6em;
+}
+
+.source-code {
+    text-align: right;
+    color: #777;
+    margin-top: 40px;
+}
+ .source-code a {
+    color: #777;
+ }
