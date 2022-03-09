@@ -27,12 +27,12 @@ pio.templates['gouv'] = go.layout.Template(
         font=dict(
             family='Marianne',
         ),
-        title=dict(
-            font=dict(
-                color='white',
-                size=1
-            )
-        )
+        # title=dict(
+        #     font=dict(
+        #         color='white',
+        #         size=1
+        #     )
+        # )
     ),
 )
 
@@ -105,6 +105,7 @@ time_delta_m = int(getenv('TIME_PERIOD_M'))
 time_delta_d = time_delta_m * 30.5
 try:
     today = datetime.strptime(getenv('FIXED_TODAY_DATE'), '%Y-%m-%d')
+    print('Today = ' + str(today))
 except TypeError:
     print('Today date is not fixed, using datetime.today()')
     today = datetime.today()
