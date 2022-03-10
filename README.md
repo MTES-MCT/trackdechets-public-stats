@@ -36,6 +36,10 @@ python app.py
 
 ### Notes de versions
 
+**1.1.1 10/03/2022**
+
+- ajout du support des fuseaux horaires (lié à [ceci](https://github.com/MTES-MCT/trackdechets/commit/cef32f2bcddbf60a4a214c243c149bf6e4f32c8b) et [cela](https://github.com/MTES-MCT/trackdechets/blob/34785171b8495b707b9339d2e14d2e211f0d4777/back/prisma/migrations/56_fix_timestamp_zone.sql))
+
 **1.1.0 09/03/2022**
 
 - améliorations esthétiques
