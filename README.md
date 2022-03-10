@@ -1,6 +1,6 @@
 # Statistiques publiques Trackdéchets
 
-**version 1.1.0**
+**version 1.1.2**
 
 > Application basée sur Plotly Dash consacrée à la publication d'un tableau de bord illustrant l'activité de [l'application
 > Trackdéchets](https://app.trackdechets.beta.gouv.fr/). Ce tableau de bord vise à donner au grand public aux
@@ -35,6 +35,10 @@ python app.py
 ```
 
 ### Notes de versions
+
+**1.1.2 10/03/2022**
+
+- filtrage des BSDD dont la date de traitement `processedAt` est en l'an 0001 ([#3](https://github.com/MTES-MCT/trackdechets-public-stats/issues/3))
 
 **1.1.1 10/03/2022**
 
