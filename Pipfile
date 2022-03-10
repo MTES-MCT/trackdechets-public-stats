@@ -12,6 +12,7 @@ psycopg2-binary = "*"
 dash_bootstrap_components = "*"
 flask_caching = "*"
 python-dotenv = "*"
+python-dateutil = "*"
 
 [dev-packages]
 jupyter = "*"

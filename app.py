@@ -1,4 +1,5 @@
 import dash
+from dateutil.tz import UTC
 from dash import html, dcc
 import plotly.express as px
 import plotly.io as pio
@@ -104,11 +105,11 @@ def get_user_data() -> pd.DataFrame:
 time_delta_m = int(getenv('TIME_PERIOD_M'))
 time_delta_d = time_delta_m * 30.5
 try:
-    today = datetime.strptime(getenv('FIXED_TODAY_DATE'), '%Y-%m-%d')
+    today = datetime.strptime(getenv('FIXED_TODAY_DATE'), '%Y-%m-%d').replace(tzinfo=UTC)
     print('Today = ' + str(today))
 except TypeError:
     print('Today date is not fixed, using datetime.today()')
-    today = datetime.today()
+    today = datetime.today().replace(tzinfo=UTC)
 date_n_days_ago = today - timedelta(time_delta_d)
 
 
@@ -147,8 +148,8 @@ df_bsdd = df_bsdd.loc[(df_bsdd['createdAt'] < today) & (df_bsdd['createdAt'] >= 
 
 df_bsdd['recipientProcessingOperation'] = df_bsdd.apply(lambda row: normalize_processing_operation(row), axis=1)
 df_bsdd['quantityReceived'] = df_bsdd.apply(lambda row: normalize_quantity_received(row), axis=1)
-df_bsdd['createdAt'] = pd.to_datetime(df_bsdd['createdAt'], errors='coerce')
-df_bsdd['processedAt'] = pd.to_datetime(df_bsdd['processedAt'], errors='coerce')
+df_bsdd['createdAt'] = pd.to_datetime(df_bsdd['createdAt'], errors='coerce', utc=True)
+df_bsdd['processedAt'] = pd.to_datetime(df_bsdd['processedAt'], errors='coerce', utc=True)
 
 df_bsdd_created_grouped = df_bsdd.groupby(by=['createdAt'], as_index=False).count()
 bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt',
@@ -178,10 +179,10 @@ quantity_processed_total = df_bsdd_processed_grouped['quantityReceived'].sum()
 
 df_company = get_company_data()
 df_company['type'] = 'Établissements'
-df_company['createdAt'] = pd.to_datetime(df_company['createdAt'])
+df_company['createdAt'] = pd.to_datetime(df_company['createdAt'], utc=True)
 df_user = get_user_data()
 df_user['type'] = 'Utilisateurs'
-df_user['createdAt'] = pd.to_datetime(df_user['createdAt'])
+df_user['createdAt'] = pd.to_datetime(df_user['createdAt'], utc=True)
 df_company_user_created = pd.concat([df_company, df_user], ignore_index=True)
 
 company_created_total_life = df_company.index.size
