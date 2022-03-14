@@ -52,31 +52,58 @@ engine = sqlalchemy.create_engine(getenv('DATABASE_URL'))
 
 
 @cache.memoize(timeout=cache_timeout)
-def get_bsdd_data() -> pd.DataFrame:
+def get_bsdd_created() -> pd.DataFrame:
     df_bsdd_query = pd.read_sql_query(
         sqlalchemy.text(
             'SELECT '
-            'id, '
-            'status, '
-            'date_trunc(\'week\', "default$default"."Form"."createdAt") AS "createdAt", '
-            '"Form"."isDeleted", '
-            'date_trunc(\'week\', "default$default"."Form"."processedAt") AS "processedAt", '
-            '"Form"."wasteDetailsPop", '
-            '"Form"."wasteDetailsCode", '
+            'date_trunc(\'week\', "default$default"."Form"."createdAt") AS createdAt, '
+            
+            # Need id to receive count values upon groupBy
+            'id '
+            'FROM "default$default"."Form" '
+            'WHERE '
+            '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
+            # To keep only dangerous waste at query level:
+            'AND ("default$default"."Form"."wasteDetailsCode" LIKE \'%*%\' '
+            'OR "default$default"."Form"."wasteDetailsPop" = TRUE)'           
+            'AND "default$default"."Form"."createdAt" >= date_trunc(\'week\','
+            f'CAST((CAST(now() AS timestamp) + (INTERVAL \'-{str(time_delta_m)} month\')) AS timestamp))'
+            'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
+            # TODO Think of a bedrock starting date to limit number of results
+            'ORDER BY createdAt'),
+        con=engine)
+
+    # By default the column name is createdat (lowercase), strange
+    column_name = df_bsdd_query.columns[0]
+    df_bsdd_query.rename(columns={column_name: 'createdAt'}, inplace=True)
+    return df_bsdd_query
+
+
+@cache.memoize(timeout=cache_timeout)
+def get_bsdd_processed() -> pd.DataFrame:
+    df_bsdd_query = pd.read_sql_query(
+        sqlalchemy.text(
+            'SELECT '
+            'date_trunc(\'week\', "default$default"."Form"."processedAt") AS processedAt, '
+            '"Form"."status",'
             '"Form"."quantityReceived", '
             '"Form"."recipientProcessingOperation" '
             'FROM "default$default"."Form" '
             'WHERE '
             '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
             # To keep only dangerous waste at query level:
-            'AND "default$default"."Form"."processedAt" > \'2010-01-01\' '
+            'AND "default$default"."Form"."processedAt" >= date_trunc(\'week\','
+            f'CAST((CAST(now() AS timestamp) + (INTERVAL \'-{str(time_delta_m)} month\')) AS timestamp))'
             'AND ("default$default"."Form"."wasteDetailsCode" LIKE \'%*%\' '
             'OR "default$default"."Form"."wasteDetailsPop" = TRUE)'
-            'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
             'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
             # TODO Think of a bedrock starting date to limit number of results
-            'ORDER BY date_trunc(\'week\', "default$default"."Form"."createdAt")'),
+            'ORDER BY processedAt'),
         con=engine)
+
+    # By default the column name is processedat, strange
+    column_name = df_bsdd_query.columns[0]
+    df_bsdd_query.rename(columns={column_name: 'processedAt'}, inplace=True)
     return df_bsdd_query
 
 
@@ -144,23 +171,28 @@ def normalize_quantity_received(row) -> float:
 # TODO Currenty only the get_blabla_data functions are cached, which means only the db calls are cached.
 # Not the dataframe postprocessing, which is always done. Dataframe postprocessing could be added to those functions.
 
-df_bsdd: pd.DataFrame = get_bsdd_data()
-df_bsdd = df_bsdd.loc[(df_bsdd['createdAt'] < today) & (df_bsdd['createdAt'] >= date_n_days_ago)]
+df_bsdd_created: pd.DataFrame = get_bsdd_created()
+df_bsdd_processed: pd.DataFrame = get_bsdd_processed()
 
-df_bsdd['recipientProcessingOperation'] = df_bsdd.apply(lambda row: normalize_processing_operation(row), axis=1)
-df_bsdd['quantityReceived'] = df_bsdd.apply(lambda row: normalize_quantity_received(row), axis=1)
-df_bsdd['createdAt'] = pd.to_datetime(df_bsdd['createdAt'], errors='coerce', utc=True)
-df_bsdd['processedAt'] = pd.to_datetime(df_bsdd['processedAt'], errors='coerce', utc=True)
+df_bsdd_created = df_bsdd_created.loc[
+    (df_bsdd_created['createdAt'] < today) & (df_bsdd_created['createdAt'] >= date_n_days_ago)]
 
-df_bsdd_created_grouped = df_bsdd.groupby(by=['createdAt'], as_index=False).count()
+df_bsdd_processed['recipientProcessingOperation'] = df_bsdd_processed.apply(
+    lambda row: normalize_processing_operation(row), axis=1)
+df_bsdd_processed['quantityReceived'] = df_bsdd_processed.apply(lambda row: normalize_quantity_received(row), axis=1)
+df_bsdd_created['createdAt'] = pd.to_datetime(df_bsdd_created['createdAt'], errors='coerce', utc=True)
+df_bsdd_processed['processedAt'] = pd.to_datetime(df_bsdd_processed['processedAt'], errors='coerce', utc=True)
+
+df_bsdd_created_grouped = df_bsdd_created.groupby(by=['createdAt'], as_index=False).count()
 bsdd_created_weekly = px.line(df_bsdd_created_grouped, y='id', x='createdAt',
                               title="Bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
                               labels={'id': 'Bordereaux de suivi de déchets dangereux',
                                       'createdAt': 'Date de création'},
                               markers=True)
-bsdd_created_total = df_bsdd.index.size
+bsdd_created_total = df_bsdd_created.index.size
 
-df_bsdd_processed = df_bsdd.loc[(df_bsdd['processedAt'] < today) & (df_bsdd['processedAt'] >= date_n_days_ago) & (df_bsdd['status'] == 'PROCESSED')]
+df_bsdd_processed = df_bsdd_processed.loc[(df_bsdd_processed['processedAt'] < today)
+                                          & (df_bsdd_processed['status'] == 'PROCESSED')]
 df_bsdd_processed_grouped = df_bsdd_processed.groupby(by=['processedAt', 'recipientProcessingOperation'],
                                                       as_index=False).sum().round()
 
