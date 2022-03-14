@@ -13,6 +13,7 @@ dash_bootstrap_components = "*"
 flask_caching = "*"
 python-dotenv = "*"
 python-dateutil = "*"
+gunicorn = "*"
 
 [dev-packages]
 jupyter = "*"

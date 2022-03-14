@@ -29,6 +29,7 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.GRID],
     external_scripts=external_scripts,
 )
+server = app.server
 
 # Override the 'none' template
 pio.templates["gouv"] = go.layout.Template(
@@ -274,9 +275,11 @@ quantity_processed_total = df_bsdd_processed_grouped["quantityReceived"].sum()
 df_company = get_company_data()
 df_company["type"] = "Établissements"
 df_company["createdAt"] = pd.to_datetime(df_company["createdAt"], utc=True)
+
 df_user = get_user_data()
 df_user["type"] = "Utilisateurs"
 df_user["createdAt"] = pd.to_datetime(df_user["createdAt"], utc=True)
+# Concatenate user and company data
 df_company_user_created = pd.concat([df_company, df_user], ignore_index=True)
 
 company_created_total_life = df_company.index.size
