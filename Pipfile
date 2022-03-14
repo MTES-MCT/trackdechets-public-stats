@@ -16,6 +16,12 @@ python-dateutil = "*"
 
 [dev-packages]
 jupyter = "*"
+black = "*"
+pylint = "*"
+pre-commit = "*"
 
 [requires]
 python_version = "3.9"
+
+[pipenv]
+allow_prereleases = true

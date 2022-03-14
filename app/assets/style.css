@@ -1,6 +1,6 @@
 @font-face{
     font-family:'Marianne';
-    src:url("/assets/Marianne-Regular.woff2") format("woff2"),url("/assets/Marianne-Regular.woff") format("woff");
+    src:url("/app/assetssets/Marianne-Regular.woff2") format("woff2"),url("/app/assetssets/Marianne-Regular.woff") format("woff");
     font-weight:400;
     font-style:normal;
 }
