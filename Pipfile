@@ -17,9 +17,6 @@ gunicorn = "*"
 
 [dev-packages]
 jupyter = "*"
-black = "*"
-pylint = "*"
-pre-commit = "*"
 
 [requires]
 python_version = "3.9"

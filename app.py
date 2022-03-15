@@ -24,7 +24,7 @@ config = {"locale": "fr"}
 
 # Use [dbc.themes.BOOTSTRAP] to import the full Bootstrap CSS
 app = dash.Dash(
-    "trackdechets-public-stats",
+    __name__,
     title="Trackdéchets : statistiques et impact",
     external_stylesheets=[dbc.themes.GRID],
     external_scripts=external_scripts,
