@@ -113,7 +113,6 @@ def get_bsdd_processed() -> pd.DataFrame:
             'AND ("default$default"."Form"."wasteDetailsCode" LIKE \'%*%\' '
             'OR "default$default"."Form"."wasteDetailsPop" = TRUE)'
             'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-            # TODO Think of a bedrock starting date to limit number of results
             "ORDER BY processedAt"
         ),
         con=engine,
@@ -169,17 +168,6 @@ except TypeError:
     print("Today date is not fixed, using datetime.today()")
     today = datetime.today().replace(tzinfo=UTC)
 date_n_days_ago = today - timedelta(time_delta_d)
-
-
-# -----------
-# BSDD
-# -----------
-# def normalize_processing_operation(row) -> str:
-#     string = row['recipientProcessingOperation']
-#     return string.replace(' ', '') \
-#                .replace('R0', 'R') \
-#                .replace('D0', 'D')[:3] \
-#         .replace('/', '').upper()
 
 
 def normalize_processing_operation(row) -> str:
