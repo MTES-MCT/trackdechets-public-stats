@@ -35,12 +35,14 @@ server = app.server
 pio.templates["gouv"] = go.layout.Template(
     layout=dict(
         font=dict(family="Marianne",),
-        # title=dict(
-        #     font=dict(
-        #         color='white',
-        #         size=1
-        #     )
-        # )
+        title=dict(
+            font=dict(
+                color='black',
+                size=22,
+                family='Marianne-Bold'
+            ),
+            x=0.01
+        )
     ),
 )
 
@@ -345,7 +347,7 @@ def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
                                 unroll_totals(totals_on_period), className="side-total"
                             ),
                         ],
-                        className="graph",
+                        className="fr-callout",
                     )
                 ],
                 width=12,

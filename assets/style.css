@@ -53,3 +53,13 @@ margin-bottom: 10px
 h1, h2, h3 {
     color: rgb(0, 0, 146);
 }
+
+/* Can't add bold style to Plotly figure title, but can specify font family (https://plotly.com/python/reference/layout/).
+Copied and renamed from DSFR core CSS */
+@font-face {
+  font-family: 'Marianne-Bold';
+  src: url("dsfr_dist/fonts/Marianne-Bold.woff2") format("woff2"), url("dsfr_dist/fonts/Marianne-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
