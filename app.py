@@ -362,6 +362,7 @@ app.layout = html.Div(
             children=[
                 dbc.Row(
                     [
+                        html.H1('Déchets dangereux tracés dans Trackdéchets'),
                         dcc.Markdown(
                             """
 L'application Trackdéchets est utilisée en France par des milliers de professionnels
