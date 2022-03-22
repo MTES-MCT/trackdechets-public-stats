@@ -405,44 +405,24 @@ avec de nouvelles statistiques.
                     bsdd_created_weekly,
                     "bsdd_created_weekly",
                 ),
+                html.H2('Établissements et utilisateurs'),
+                dbc.Row([
+                    add_callout(number=company_created_total,
+                                text=f'établissements inscrits sur {str(time_delta_m)}&nbsp;mois',
+                                width=3),
+                    add_callout(number=user_created_total,
+                                text=f'utilisateurs inscrits sur {str(time_delta_m)}&nbsp;mois',
+                                width=3),
+                    add_callout(number=company_created_total_life,
+                                text='établissements inscrits',
+                                width=3),
+                    add_callout(number=user_created_total_life,
+                                text='utilisateurs inscrits',
+                                width=3),
+                ]),
                 add_figure(
                     company_user_created_weekly,
-                    # [
-                    #     {
-                    #         "total": company_created_total,
-                    #         "unit": "établissements inscrits",
-                    #     },
-                    #     {"total": user_created_total, "unit": "utilisateurs inscrits"},
-                    # ],
                     "company_user_created_weekly",
-                ),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                html.Div(
-                                    [
-                                        html.P("Nombre total d'établissements"),
-                                        html.P(company_created_total_life),
-                                    ],
-                                    className="graph",
-                                )
-                            ],
-                            width=6,
-                        ),
-                        dbc.Col(
-                            [
-                                html.Div(
-                                    [
-                                        html.P("Nombre total d'utilisateurs"),
-                                        html.P(user_created_total_life),
-                                    ],
-                                    className="graph",
-                                ),
-                            ],
-                            width=6,
-                        ),
-                    ]
                 ),
                 dcc.Markdown(
                     "Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ("

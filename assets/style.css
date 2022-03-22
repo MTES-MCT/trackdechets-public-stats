@@ -6,7 +6,8 @@ body {
 }
 
 #react-entry-point {
-    width: 98%
+    width: 98%;
+    margin: auto
 }
 
 
