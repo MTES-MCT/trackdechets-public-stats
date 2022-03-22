@@ -42,7 +42,8 @@ pio.templates["gouv"] = go.layout.Template(
                 family='Marianne-Bold'
             ),
             x=0.01
-        )
+        ),
+        paper_bgcolor='rgb(238, 238, 238)'
     ),
 )
 
@@ -298,42 +299,41 @@ user_created_total = df_company_user_created_grouped.loc[
     df_company_user_created_grouped["type"] == "Utilisateurs"
 ]["id"].sum()
 
-figure_text_tips = {
-    "bsdd_processed_weekly": dcc.Markdown(
-        """En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés**
-        sont réutilisés (combustion pour du chauffage, recyclage, revente, compostage, etc.)
-        tandis que les **déchets éliminés** sont en fin de cycle de vie (enfouissement, stockage,
-        traitement chimique, etc.). Plus d'informations sur [
-        ecologie.gouv.fr](https://www.ecologie.gouv.fr/traitement-des-dechets). """
-    ),
-    "bsdd_created_weekly": "",
-    "company_user_created_weekly": "",
-}
+
+def format_number(input_number) -> str:
+    return "{:,.0f}".format(input_number).replace(",", " ")
 
 
-def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
+def add_callout(text: str,  width: int, number: int = None):
+    text_class = 'number-text' if number else 'fr-callout__text'
+    if number:
+        # Below 1M
+        if number < 1000000:
+            number_class = 'callout-number'
+        # Above 10M
+        elif number >= 10000000:
+            number_class = 'callout-number smaller-number'
+        # From 1M to 10M-1
+        else:
+            number_class = 'callout-number small-number'
+
+    col = dbc.Col(
+        html.Div([
+            html.P(format_number(number), className=number_class) if number else None,
+            dcc.Markdown(text, className=text_class)
+        ],
+            className='fr-callout'),
+        width=width)
+    return col
+
+
+def add_figure(fig, fig_id: str) -> dbc.Row:
     """
     Boilerplate for figure rows.
     :param fig: a plotly figure
-    :param totals_on_period: sum of values for the given period
     :param fig_id: if of the figure in the resulting HTML
     :return: HTML Row to be added in a Dash layout
     """
-
-    def format_number(input_number) -> str:
-        return "{:,.0f}".format(input_number).replace(",", " ")
-
-    def unroll_totals(totals: [dict]) -> list:
-        result = [html.P(f"Total sur les {time_delta_m} derniers mois")]
-        ul_children = []
-        for dic in totals:
-            ul_children += [
-                html.Li(
-                    [html.Span(f"{format_number(dic['total'])}"), f" {dic['unit']}"]
-                )
-            ]
-        result += [html.Ul(ul_children)]
-        return result
 
     row = dbc.Row(
         [
@@ -341,11 +341,7 @@ def add_figure(fig, totals_on_period: [dict], fig_id: str) -> dbc.Row:
                 [
                     html.Div(
                         [
-                            dcc.Graph(id=fig_id, figure=fig, config=config),
-                            figure_text_tips[fig_id],
-                            html.Div(
-                                unroll_totals(totals_on_period), className="side-total"
-                            ),
+                            dcc.Graph(id=fig_id, figure=fig, config=config)
                         ],
                         className="fr-callout",
                     )
@@ -364,7 +360,7 @@ app.layout = html.Div(
             children=[
                 dbc.Row(
                     [
-                        html.H1('Déchets dangereux tracés dans Trackdéchets'),
+                        html.H1('Statistiques de Trackdéchets'),
                         dcc.Markdown(
                             """
 L'application Trackdéchets est utilisée en France par des milliers de professionnels
@@ -386,30 +382,38 @@ avec de nouvelles statistiques.
                         )
                     ]
                 ),
+                html.H2('Déchets dangereux'),
+                dbc.Row([
+                    add_callout(number=quantity_processed_total,
+                                text=f'tonnes de déchets dangereux traités sur {str(time_delta_m)}&nbsp;mois',
+                                width=3),
+                    add_callout(number=bsdd_created_total,
+                                text=f'bordereaux créés sur {str(time_delta_m)}&nbsp;mois',
+                                width=3),
+                    add_callout(text="""En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés**
+        sont réutilisés (combustion pour du chauffage, recyclage, revente, compostage, etc.)
+        tandis que les **déchets éliminés** sont en fin de cycle de vie (enfouissement, stockage,
+        traitement chimique, etc.). Plus d'informations sur [
+        ecologie.gouv.fr](https://www.ecologie.gouv.fr/traitement-des-dechets). """,
+                                width=6)
+                ]),
                 add_figure(
                     quantity_processed_weekly,
-                    [
-                        {
-                            "total": quantity_processed_total,
-                            "unit": "tonnes de déchets dangereux" " traités",
-                        }
-                    ],
                     "bsdd_processed_weekly",
                 ),
                 add_figure(
                     bsdd_created_weekly,
-                    [{"total": bsdd_created_total, "unit": "bordereaux"}],
                     "bsdd_created_weekly",
                 ),
                 add_figure(
                     company_user_created_weekly,
-                    [
-                        {
-                            "total": company_created_total,
-                            "unit": "établissements inscrits",
-                        },
-                        {"total": user_created_total, "unit": "utilisateurs inscrits"},
-                    ],
+                    # [
+                    #     {
+                    #         "total": company_created_total,
+                    #         "unit": "établissements inscrits",
+                    #     },
+                    #     {"total": user_created_total, "unit": "utilisateurs inscrits"},
+                    # ],
                     "company_user_created_weekly",
                 ),
                 dbc.Row(
