@@ -50,7 +50,7 @@ margin-bottom: 10px
  */
 
 /* Force blue-france color on headings */
-#_dash-app-content h1, #_dash-app-content h2, #_dash-app-content h3 {
+#react-entry-point h1, #react-entry-point h2, #react-entry-point h3 {
     color: rgb(0, 0, 146);
 }
 
@@ -66,7 +66,7 @@ Copied and renamed from DSFR core CSS */
 
 /* fr-callout customization */
 
-#_dash-app-content .fr-callout {
+#react-entry-point .fr-callout {
     padding: 2rem 2rem;
 }
 
@@ -74,7 +74,7 @@ Copied and renamed from DSFR core CSS */
     font-size: 3rem;
     font-family: "Marianne-Bold", sans-serif;
     text-align: right;
-    margin-top: 48px;
+    margin-top: 3rem;
     color: var(--text-title-grey);
 }
 
@@ -86,8 +86,8 @@ Copied and renamed from DSFR core CSS */
 }
 
 .number-text {
-    font-size: 24px;
-    margin-top: 24px;
+    font-size: 1.5rem;
+    margin-top: 1.5rem;
     font-weight: 500;
 }
 

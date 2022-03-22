@@ -306,6 +306,7 @@ def format_number(input_number) -> str:
 
 def add_callout(text: str,  width: int, number: int = None):
     text_class = 'number-text' if number else 'fr-callout__text'
+    number_class = 'callout-number small-number'
     if number:
         # Below 1M
         if number < 1000000:
@@ -314,8 +315,7 @@ def add_callout(text: str,  width: int, number: int = None):
         elif number >= 10000000:
             number_class = 'callout-number smaller-number'
         # From 1M to 10M-1
-        else:
-            number_class = 'callout-number small-number'
+        # don't change initial value
 
     col = dbc.Col(
         html.Div([
