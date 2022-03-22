@@ -29,6 +29,10 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.GRID],
     external_scripts=external_scripts,
 )
+
+# Add the @lang attribute to the root <html>
+app.index_string = app.index_string.replace('<html>', '<html lang="fr">')
+
 server = app.server
 
 # Override the 'none' template
