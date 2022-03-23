@@ -38,7 +38,7 @@ server = app.server
 # Override the 'none' template
 pio.templates["gouv"] = go.layout.Template(
     layout=dict(
-        font=dict(family="Marianne",),
+        font=dict(family="Marianne"),
         title=dict(
             font=dict(
                 color='black',
@@ -206,7 +206,7 @@ df_bsdd_processed: pd.DataFrame = get_bsdd_processed()
 df_bsdd_created = df_bsdd_created.loc[
     (df_bsdd_created["createdAt"] < today)
     & (df_bsdd_created["createdAt"] >= date_n_days_ago)
-]
+    ]
 
 df_bsdd_processed["recipientProcessingOperation"] = df_bsdd_processed.apply(
     normalize_processing_operation, axis=1
@@ -240,13 +240,13 @@ bsdd_created_total = df_bsdd_created.index.size
 df_bsdd_processed = df_bsdd_processed.loc[
     (df_bsdd_processed["processedAt"] < today)
     & (df_bsdd_processed["status"] == "PROCESSED")
-]
+    ]
 df_bsdd_processed_grouped = (
     df_bsdd_processed.groupby(
         by=["processedAt", "recipientProcessingOperation"], as_index=False
     )
-    .sum()
-    .round()
+        .sum()
+        .round()
 )
 
 quantity_processed_weekly = px.bar(
@@ -283,7 +283,7 @@ user_created_total_life = df_user.index.size
 df_company_user_created = df_company_user_created.loc[
     (today > df_company_user_created["createdAt"])
     & (df_company_user_created["createdAt"] >= date_n_days_ago)
-]
+    ]
 df_company_user_created_grouped = df_company_user_created.groupby(
     by=["type", "createdAt"], as_index=False
 ).count()
@@ -298,19 +298,20 @@ company_user_created_weekly = px.line(
 )
 company_created_total = df_company_user_created_grouped.loc[
     df_company_user_created_grouped["type"] == "Établissements"
-]["id"].sum()
+    ]["id"].sum()
 user_created_total = df_company_user_created_grouped.loc[
     df_company_user_created_grouped["type"] == "Utilisateurs"
-]["id"].sum()
+    ]["id"].sum()
 
 
 def format_number(input_number) -> str:
     return "{:,.0f}".format(input_number).replace(",", " ")
 
 
-def add_callout(text: str,  width: int, number: int = None):
+def add_callout(text: str, width: int, sm_width: int = 0, number: int = None):
     text_class = 'number-text' if number else 'fr-callout__text'
     number_class = 'callout-number small-number'
+    small_width = width * 2 if sm_width == 0 else sm_width
     if number:
         # Below 1M
         if number < 1000000:
@@ -327,7 +328,8 @@ def add_callout(text: str,  width: int, number: int = None):
             dcc.Markdown(text, className=text_class)
         ],
             className='fr-callout'),
-        width=width)
+        width=small_width,
+        lg=width)
     return col
 
 
@@ -361,12 +363,13 @@ app.layout = html.Div(
     children=[
         dbc.Container(
             fluid=True,
+            id='layout-container',
             children=[
                 dbc.Row(
                     [
-                        html.H1('Statistiques de Trackdéchets'),
-                        dcc.Markdown(
-                            """
+                        dbc.Col([html.H1('Statistiques de Trackdéchets'),
+                                 dcc.Markdown(
+                                     """
 L'application Trackdéchets est utilisée en France par des milliers de professionnels
 du  déchet pour tracer les déchets dangereux et/ou polluants ([POP](
 https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) produits, ainsi que différentes
@@ -383,9 +386,9 @@ et les déchets d'amiante (DA).
 Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir régulièrement
 avec de nouvelles statistiques.
                 """
-                        )
-                    ]
-                ),
+                                 )
+                                 ], width=12
+                                )]),
                 html.H2('Déchets dangereux'),
                 dbc.Row([
                     add_callout(number=quantity_processed_total,
