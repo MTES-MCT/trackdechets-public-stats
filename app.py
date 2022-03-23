@@ -244,9 +244,7 @@ df_bsdd_processed = df_bsdd_processed.loc[
 df_bsdd_processed_grouped = (
     df_bsdd_processed.groupby(
         by=["processedAt", "recipientProcessingOperation"], as_index=False
-    )
-        .sum()
-        .round()
+    ).sum().round()
 )
 
 quantity_processed_weekly = px.bar(
@@ -329,7 +327,8 @@ def add_callout(text: str, width: int, sm_width: int = 0, number: int = None):
         ],
             className='fr-callout'),
         width=small_width,
-        lg=width)
+        lg=width,
+        class_name='flex')
     return col
 
 
