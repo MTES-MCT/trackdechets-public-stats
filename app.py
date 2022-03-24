@@ -32,6 +32,7 @@ app = dash.Dash(
 
 # Add the @lang attribute to the root <html>
 app.index_string = app.index_string.replace('<html>', '<html lang="fr">')
+print(app.index_string)
 
 server = app.server
 
@@ -47,7 +48,8 @@ pio.templates["gouv"] = go.layout.Template(
             ),
             x=0.01
         ),
-        paper_bgcolor='rgb(238, 238, 238)'
+        paper_bgcolor='rgb(238, 238, 238)',
+        colorway=['#2F4077', '#a94645', '#8D533E', '#417DC4']
     ),
 )
 
