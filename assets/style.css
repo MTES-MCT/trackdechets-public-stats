@@ -68,6 +68,9 @@ Copied and renamed from DSFR core CSS */
 
 #layout-container .fr-callout {
     padding: 2rem 2rem;
+
+    /* To avoid flex shrinking due to .flex */
+    width: 100%;
 }
 
 .callout-number {

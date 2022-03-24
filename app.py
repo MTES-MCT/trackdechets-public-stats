@@ -360,7 +360,7 @@ def add_figure(fig, fig_id: str) -> dbc.Row:
     return row
 
 
-app.layout = html.Div(
+app.layout = html.Main(
     children=[
         dbc.Container(
             fluid=True,
