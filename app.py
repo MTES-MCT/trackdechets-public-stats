@@ -32,7 +32,7 @@ app = dash.Dash(
 
 # Add the @lang attribute to the root <html>
 app.index_string = app.index_string.replace('<html>', '<html lang="fr">')
-print(app.index_string)
+# print(app.index_string)
 
 server = app.server
 
@@ -49,7 +49,11 @@ pio.templates["gouv"] = go.layout.Template(
             x=0.01
         ),
         paper_bgcolor='rgb(238, 238, 238)',
-        colorway=['#2F4077', '#a94645', '#8D533E', '#417DC4']
+        colorway=['#2F4077', '#a94645', '#8D533E', '#417DC4'],
+        yaxis=dict(
+            tickformat=',0f',
+            separatethousands=True,
+        )
     ),
 )
 
@@ -236,7 +240,11 @@ bsdd_created_weekly = px.line(
         "createdAt": "Date de création",
     },
     markers=True,
+    text="id"
+
 )
+bsdd_created_weekly.update_traces(textposition="top center")
+
 bsdd_created_total = df_bsdd_created.index.size
 
 df_bsdd_processed = df_bsdd_processed.loc[
@@ -255,12 +263,14 @@ quantity_processed_weekly = px.bar(
     color="recipientProcessingOperation",
     y="quantityReceived",
     x="processedAt",
+    text="quantityReceived",
     labels={
         "quantityReceived": "Déchets dangereux traités (tonnes)",
         "processedAt": "Date du traitement",
         "recipientProcessingOperation": "Type de traitement",
     },
 )
+
 quantity_processed_total = df_bsdd_processed_grouped["quantityReceived"].sum()
 
 # -----------
@@ -295,7 +305,11 @@ company_user_created_weekly = px.line(
     title="Établissements et utilisateurs inscrits par semaine",
     labels={"id": "Inscriptions", "createdAt": "Date d'inscription", "type": ""},
     markers=True,
+    text="id"
 )
+company_user_created_weekly.update_traces(textposition="top center")
+
+
 company_created_total = df_company_user_created_grouped.loc[
     df_company_user_created_grouped["type"] == "Établissements"
     ]["id"].sum()
