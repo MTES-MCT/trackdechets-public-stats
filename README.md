@@ -1,6 +1,6 @@
 # Statistiques publiques Trackdéchets
 
-**version 1.2.0**
+**version 1.3.0**
 
 > Application basée sur Plotly Dash consacrée à la publication d'un tableau de bord illustrant l'activité de [l'application
 > Trackdéchets](https://app.trackdechets.beta.gouv.fr/). Ce tableau de bord vise à donner au grand public aux
@@ -34,6 +34,10 @@ pipenv run gunicorn --bind 0.0.0.0:8700 app:server
 ```
 
 ### Notes de versions
+
+**1.3.0 29/03/2022**
+
+- ajout du [design système de l'État](https://gouvfr.atlassian.net/wiki/spaces/DB/overview?homepageId=145359476)
 
 **1.2.0 15/03/2022**
 
