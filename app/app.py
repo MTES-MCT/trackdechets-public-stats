@@ -1,5 +1,5 @@
 """
-Dash app configuration
+Dash dash_app configuration
 """
 import dash_bootstrap_components as dbc
 from dotenv import load_dotenv
@@ -12,7 +12,7 @@ external_scripts = ["https://cdn.plot.ly/plotly-locale-fr-latest.js"]
 extra_config = {"locale": "fr"}
 
 # Use [dbc.themes.BOOTSTRAP] to import the full Bootstrap CSS
-app = dash.Dash(
+dash_app = dash.Dash(
     __name__,
     title="Trackdéchets : statistiques et impact",
     external_stylesheets=[dbc.themes.GRID],
@@ -20,5 +20,5 @@ app = dash.Dash(
 )
 
 # Add the @lang attribute to the root <html>
-app.index_string = app.index_string.replace('<html>', '<html lang="fr">')
-# print(app.index_string)
+dash_app.index_string = dash_app.index_string.replace('<html>', '<html lang="fr">')
+# print(dash_app.index_string)

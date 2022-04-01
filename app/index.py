@@ -5,9 +5,9 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from os import getenv
 
-from app import app, extra_config
-from time_config import time_delta_m
-import data
+from app.app import dash_app, extra_config
+from app.time_config import time_delta_m
+import app.data
 
 # Override the 'none' template
 pio.templates["gouv"] = go.layout.Template(
@@ -33,7 +33,7 @@ pio.templates["gouv"] = go.layout.Template(
 pio.templates.default = "none+gouv"
 
 bsdd_created_weekly = px.line(
-    data.df_bsdd_created_grouped,
+    app.data.df_bsdd_created_grouped,
     y="id",
     x="createdAt",
     title="Bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
@@ -47,10 +47,10 @@ bsdd_created_weekly = px.line(
 )
 bsdd_created_weekly.update_traces(textposition="top center")
 
-bsdd_created_total = data.df_bsdd_created.index.size
+bsdd_created_total = app.data.df_bsdd_created.index.size
 
 quantity_processed_weekly = px.bar(
-    data.df_bsdd_processed_grouped,
+    app.data.df_bsdd_processed_grouped,
     title="Déchets dangereux traités par semaine",
     color="recipientProcessingOperation",
     y="quantityReceived",
@@ -63,13 +63,13 @@ quantity_processed_weekly = px.bar(
     },
 )
 
-quantity_processed_total = data.df_bsdd_processed_grouped["quantityReceived"].sum()
+quantity_processed_total = app.data.df_bsdd_processed_grouped["quantityReceived"].sum()
 
-company_created_total_life = data.df_company.index.size
-user_created_total_life = data.df_user.index.size
+company_created_total_life = app.data.df_company.index.size
+user_created_total_life = app.data.df_user.index.size
 
 company_user_created_weekly = px.line(
-    data.df_company_user_created_grouped,
+    app.data.df_company_user_created_grouped,
     y="id",
     x="createdAt",
     color="type",
@@ -81,11 +81,11 @@ company_user_created_weekly = px.line(
 company_user_created_weekly.update_traces(textposition="top center")
 
 
-company_created_total = data.df_company_user_created_grouped.loc[
-    data.df_company_user_created_grouped["type"] == "Établissements"
+company_created_total = app.data.df_company_user_created_grouped.loc[
+    app.data.df_company_user_created_grouped["type"] == "Établissements"
     ]["id"].sum()
-user_created_total = data.df_company_user_created_grouped.loc[
-    data.df_company_user_created_grouped["type"] == "Utilisateurs"
+user_created_total = app.data.df_company_user_created_grouped.loc[
+    app.data.df_company_user_created_grouped["type"] == "Utilisateurs"
     ]["id"].sum()
 
 
@@ -145,7 +145,7 @@ def add_figure(fig, fig_id: str) -> dbc.Row:
     return row
 
 
-app.layout = html.Main(
+dash_app.layout = html.Main(
     children=[
         dbc.Container(
             fluid=True,
@@ -228,12 +228,12 @@ avec de nouvelles statistiques.
 )
 
 # To use `gunicorn index:server` (prod)
-server = app.server
+server = dash_app.server
 
 # To use `python index.py` (dev)
 if __name__ == "__main__":
     port = getenv("PORT", "8050")
 
     # Scalingo requires 0.0.0.0 as host, instead of the default 127.0.0.1
-    app.run_server(debug=bool(getenv("DEVELOPMENT")), host="0.0.0.0", port=int(port))
+    dash_app.run_server(debug=bool(getenv("DEVELOPMENT")), host="0.0.0.0", port=int(port))
 
