@@ -1,11 +1,15 @@
-"""Configuration and construction of the dashboard"""
-from dash import html, dcc
+from dash import dcc
+from dash import html
 import dash_bootstrap_components as dbc
-import plotly.express as px
 import plotly.io as pio
 import plotly.graph_objects as go
+import plotly.express as px
+from os import getenv
+
+from app import app
 import data
 import timeconf
+
 
 company_created_total_life = data.df_company.index.size
 user_created_total_life = data.df_user.index.size
@@ -74,10 +78,10 @@ company_user_created_weekly = px.line(
 )
 company_created_total = data.df_company_user_created_grouped.loc[
     data.df_company_user_created_grouped["type"] == "Établissements"
-]["id"].sum()
+    ]["id"].sum()
 user_created_total = data.df_company_user_created_grouped.loc[
     data.df_company_user_created_grouped["type"] == "Utilisateurs"
-]["id"].sum()
+    ]["id"].sum()
 
 figure_text_tips = {
     "bsdd_processed_weekly": dcc.Markdown(
@@ -229,3 +233,13 @@ avec de nouvelles statistiques.
         )
     ]
 )
+
+app.layout = layout
+server = app.server
+
+if __name__ == "__main__":
+    port = getenv("PORT", "8050")
+
+    # Scalingo requires 0.0.0.0 as host, instead of the default 127.0.0.1
+    app.run_server(debug=bool(getenv("DEVELOPMENT")), host="0.0.0.0", port=int(port))
+
