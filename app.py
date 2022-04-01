@@ -34,34 +34,7 @@ app = dash.Dash(
 app.index_string = app.index_string.replace('<html>', '<html lang="fr">')
 # print(app.index_string)
 
-server = app.server
 
-# Override the 'none' template
-pio.templates["gouv"] = go.layout.Template(
-    layout=dict(
-        font=dict(family="Marianne"),
-        title=dict(
-            font=dict(
-                color='black',
-                size=22,
-                family='Marianne-Bold'
-            ),
-            x=0.01
-        ),
-        paper_bgcolor='rgb(238, 238, 238)',
-        colorway=['#2F4077', '#a94645', '#8D533E', '#417DC4'],
-        yaxis=dict(
-            tickformat=',0f',
-            separatethousands=True,
-        )
-    ),
-)
-
-pio.templates.default = "none+gouv"
-
-# Flask cache https://dash.plotly.com/performance
-# timeout in seconds
-cache_timeout = int(getenv("CACHE_TIMEOUT_S"))
 cache = Cache(app.server, config={"CACHE_TYPE": "filesystem", "CACHE_DIR": "./cache"})
 
 # postgresql://admin:admin@localhost:5432/ibnse
