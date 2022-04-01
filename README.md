@@ -21,7 +21,7 @@ cp sample.env .env
 ```
 
 2. Configurez les variables d'environnement dans `.env` (vous pouvez aussi les déclarer directement dans votre système)  
-3. Créez l'environnement
+3. Installez les dépendances :
 
 ```bash
 pipenv install
@@ -30,7 +30,7 @@ pipenv install
 4. Démarrez l'application
 
 ```bash
-pipenv run gunicorn --bind 0.0.0.0:8700 app:server
+pipenv run gunicorn --bind 0.0.0.0:8700 run:server
 ```
 
 ### Notes de versions
