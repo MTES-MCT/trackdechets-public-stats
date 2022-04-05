@@ -2,11 +2,7 @@
 Dash dash_app configuration
 """
 import dash_bootstrap_components as dbc
-from dotenv import load_dotenv
 import dash
-
-# Load the environment variables in .env file, or from the host OS if no .env file
-load_dotenv()
 
 external_scripts = ["https://cdn.plot.ly/plotly-locale-fr-latest.js"]
 extra_config = {"locale": "fr"}
