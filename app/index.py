@@ -147,6 +147,7 @@ def add_figure(fig, fig_id: str) -> dbc.Row:
 
 dash_app.layout = html.Main(
     children=[
+        dcc.Location(id='url', refresh=False),
         dbc.Container(
             fluid=True,
             id='layout-container',
