@@ -185,7 +185,6 @@ df_user["createdAt"] = pd.to_datetime(df_user["createdAt"], utc=True)
 # Concatenate user and company data
 df_company_user_created = pd.concat([df_company, df_user], ignore_index=True)
 
-
 df_company_user_created = df_company_user_created.loc[
     (today > df_company_user_created["createdAt"])
     & (df_company_user_created["createdAt"] >= date_n_days_ago)
@@ -193,3 +192,62 @@ df_company_user_created = df_company_user_created.loc[
 df_company_user_created_grouped = df_company_user_created.groupby(
     by=["type", "createdAt"], as_index=False
 ).count()
+
+
+#######################################################################################################
+#
+#                       Internal statistics
+#
+#######################################################################################################
+
+@appcache.memoize(timeout=cache_timeout)
+def get_recent_bsdd_created() -> pd.DataFrame:
+    """
+    Queries the configured database for BSDD data, focused on creation date.
+    :return: dataframe of BSDD for a given period of time, with their creation week
+    """
+    df = pd.read_sql_query(
+        sqlalchemy.text("""
+            SELECT date_trunc('week', "default$default"."Form"."createdAt") AS "createdAt"
+            FROM "default$default"."Form"
+            WHERE ("default$default"."Form"."isDeleted" = FALSE
+               AND "default$default"."Form"."createdAt" >= '2022-01-01'
+               AND "default$default"."Form"."createdAt" < date_trunc('week', CAST(now() AS timestamp)))
+        """),
+        con=engine,
+    )
+
+    # By default the column name is createdat (lowercase), strange
+    column_name = df.columns[0]
+    df.rename(columns={column_name: "createdAt"}, inplace=True)
+    return df
+
+
+@appcache.memoize(timeout=cache_timeout)
+def get_recent_bsdd_created() -> pd.DataFrame:
+    """
+    Queries the configured database for BSDA data, focused on creation date.
+    :return: dataframe of BSDA for a given period of time, with their creation week
+    """
+    df = pd.read_sql_query(
+        sqlalchemy.text("""
+            SELECT "Bsda"."id", "Bsda"."createdAt",
+            "Bsda"."transporterTransportTakenOverAt",
+            "Bsda"."destinationOperationDate"
+            FROM "default$default"."Bsda"
+            WHERE (
+            "default$default"."Bsda"."createdAt" >= '2022-01-01'
+               AND "default$default"."Bsda"."createdAt" < date_trunc('week', CAST(now() AS timestamp)) 
+               AND "default$default"."Bsda"."isDeleted" = FALSE)
+        """),
+        con=engine,
+    )
+
+    # By default the column name is createdat (lowercase), strange
+    column_name = df.columns[0]
+    df.rename(columns={column_name: "createdAt"}, inplace=True)
+    return df
+
+
+
+
