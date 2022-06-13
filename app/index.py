@@ -89,7 +89,7 @@ def add_callout(text: str, width: int, sm_width: int = 0, number: int = None):
 
 
 bsdd_created_weekly = px.line(
-    app.data.df_bsdd_created_grouped,
+    app.data.get_bsdd_created_df(),
     y="id",
     x="createdAt",
     title="Bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
@@ -103,10 +103,10 @@ bsdd_created_weekly = px.line(
 )
 bsdd_created_weekly.update_traces(textposition="top center")
 
-bsdd_created_total = app.data.df_bsdd_created.index.size
+bsdd_created_total = app.data.get_bsdd_created().index.size
 
 quantity_processed_weekly = px.bar(
-    app.data.df_bsdd_processed_grouped,
+    app.data.get_bsdd_processed_df(),
     title="Déchets dangereux traités par semaine",
     color="recipientProcessingOperation",
     y="quantityReceived",
@@ -119,13 +119,13 @@ quantity_processed_weekly = px.bar(
     },
 )
 
-quantity_processed_total = app.data.df_bsdd_processed_grouped["quantityReceived"].sum()
+quantity_processed_total = app.data.get_bsdd_processed_df()["quantityReceived"].sum()
 
-company_created_total_life = app.data.df_company.index.size
-user_created_total_life = app.data.df_user.index.size
+company_created_total_life = app.data.get_company_data().index.size
+user_created_total_life = app.data.get_user_data().index.size
 
 company_user_created_weekly = px.line(
-    app.data.df_company_user_created_grouped,
+    app.data.get_company_user_data_df(),
     y="id",
     x="createdAt",
     color="type",
@@ -136,11 +136,11 @@ company_user_created_weekly = px.line(
 )
 company_user_created_weekly.update_traces(textposition="top center")
 
-company_created_total = app.data.df_company_user_created_grouped.loc[
-    app.data.df_company_user_created_grouped["type"] == "Établissements"
+company_created_total = app.data.get_company_user_data_df().loc[
+    app.data.get_company_user_data_df()["type"] == "Établissements"
     ]["id"].sum()
-user_created_total = app.data.df_company_user_created_grouped.loc[
-    app.data.df_company_user_created_grouped["type"] == "Utilisateurs"
+user_created_total = app.data.get_company_user_data_df().loc[
+    app.data.get_company_user_data_df()["type"] == "Utilisateurs"
     ]["id"].sum()
 
 public_stats_container = [
