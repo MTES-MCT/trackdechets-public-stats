@@ -200,19 +200,18 @@ df_company_user_created_grouped = df_company_user_created.groupby(
 #
 #######################################################################################################
 
+# Created BSDD
 @appcache.memoize(timeout=cache_timeout)
-def get_recent_bsdd_created() -> pd.DataFrame:
-    """
-    Queries the configured database for BSDD data, focused on creation date.
-    :return: dataframe of BSDD for a given period of time, with their creation week
-    """
+def get_recent_bsdd_created_week() -> pd.DataFrame:
     df = pd.read_sql_query(
         sqlalchemy.text("""
-            SELECT date_trunc('week', "default$default"."Form"."createdAt") AS "createdAt"
+            SELECT date_trunc('week', "default$default"."Form"."createdAt") AS "createdAt", count(*) AS "count"
             FROM "default$default"."Form"
             WHERE ("default$default"."Form"."isDeleted" = FALSE
-               AND "default$default"."Form"."createdAt" >= '2022-01-01'
+               AND "default$default"."Form"."createdAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) + (INTERVAL '-20 week')) AS timestamp)) 
                AND "default$default"."Form"."createdAt" < date_trunc('week', CAST(now() AS timestamp)))
+            GROUP BY date_trunc('week', "default$default"."Form"."createdAt")
+            ORDER BY date_trunc('week', "default$default"."Form"."createdAt")
         """),
         con=engine,
     )
@@ -223,30 +222,49 @@ def get_recent_bsdd_created() -> pd.DataFrame:
     return df
 
 
+# Sent BSDD
 @appcache.memoize(timeout=cache_timeout)
-def get_recent_bsdd_created() -> pd.DataFrame:
-    """
-    Queries the configured database for BSDA data, focused on creation date.
-    :return: dataframe of BSDA for a given period of time, with their creation week
-    """
+def get_recent_bsdd_sent() -> pd.DataFrame:
     df = pd.read_sql_query(
         sqlalchemy.text("""
-            SELECT "Bsda"."id", "Bsda"."createdAt",
-            "Bsda"."transporterTransportTakenOverAt",
-            "Bsda"."destinationOperationDate"
-            FROM "default$default"."Bsda"
-            WHERE (
-            "default$default"."Bsda"."createdAt" >= '2022-01-01'
-               AND "default$default"."Bsda"."createdAt" < date_trunc('week', CAST(now() AS timestamp)) 
-               AND "default$default"."Bsda"."isDeleted" = FALSE)
+            SELECT date_trunc('week', "default$default"."Form"."sentAt") AS "sentAt", count(*) AS "count"
+            FROM "default$default"."Form"
+            WHERE ("default$default"."Form"."isDeleted" = FALSE
+               AND "default$default"."Form"."sentAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) + 
+               (INTERVAL '-20 week')) AS timestamp)) 
+               AND "default$default"."Form"."sentAt" < date_trunc('week', CAST(now() AS timestamp)))
+            GROUP BY date_trunc('week', "default$default"."Form"."sentAt")
+            ORDER BY date_trunc('week', "default$default"."Form"."sentAt") 
         """),
         con=engine,
     )
 
-    # By default the column name is createdat (lowercase), strange
-    column_name = df.columns[0]
-    df.rename(columns={column_name: "createdAt"}, inplace=True)
     return df
+
+
+# Received BSDD
+@appcache.memoize(timeout=cache_timeout)
+def get_recent_bsdd_received() -> pd.DataFrame:
+    df = pd.read_sql_query(
+        sqlalchemy.text("""
+            SELECT date_trunc('week', "default$default"."Form"."receivedAt") AS "receivedAt", count(*) AS "count"
+            FROM "default$default"."Form"
+            WHERE ("default$default"."Form"."isDeleted" = FALSE
+               AND "default$default"."Form"."receivedAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) 
+               + (INTERVAL '-20 week')) AS timestamp)) 
+               AND "default$default"."Form"."receivedAt" < date_trunc('week', CAST(now() AS timestamp)))
+            GROUP BY date_trunc('week', "default$default"."Form"."receivedAt")
+            ORDER BY date_trunc('week', "default$default"."Form"."receivedAt")
+        """),
+        con=engine,
+    )
+
+    return df
+
+
+
+
+
 
 
 
