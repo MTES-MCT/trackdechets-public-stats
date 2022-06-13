@@ -1,9 +1,8 @@
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import plotly.express as px
 import plotly.io as pio
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from os import getenv
 
 from app.app import dash_app, extra_config
 from app.time_config import time_delta_m
@@ -32,61 +31,31 @@ pio.templates["gouv"] = go.layout.Template(
 
 pio.templates.default = "none+gouv"
 
-bsdd_created_weekly = px.line(
-    app.data.df_bsdd_created_grouped,
-    y="id",
-    x="createdAt",
-    title="Bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
-    labels={
-        "id": "Bordereaux de suivi de déchets dangereux",
-        "createdAt": "Date de création",
-    },
-    markers=True,
-    text="id"
 
-)
-bsdd_created_weekly.update_traces(textposition="top center")
+def add_figure(fig, fig_id: str) -> dbc.Row:
+    """
+    Boilerplate for figure rows.
+    :param fig: a plotly figure
+    :param fig_id: if of the figure in the resulting HTML
+    :return: HTML Row to be added in a Dash layout
+    """
 
-bsdd_created_total = app.data.df_bsdd_created.index.size
-
-quantity_processed_weekly = px.bar(
-    app.data.df_bsdd_processed_grouped,
-    title="Déchets dangereux traités par semaine",
-    color="recipientProcessingOperation",
-    y="quantityReceived",
-    x="processedAt",
-    text="quantityReceived",
-    labels={
-        "quantityReceived": "Déchets dangereux traités (tonnes)",
-        "processedAt": "Date du traitement",
-        "recipientProcessingOperation": "Type de traitement",
-    },
-)
-
-quantity_processed_total = app.data.df_bsdd_processed_grouped["quantityReceived"].sum()
-
-company_created_total_life = app.data.df_company.index.size
-user_created_total_life = app.data.df_user.index.size
-
-company_user_created_weekly = px.line(
-    app.data.df_company_user_created_grouped,
-    y="id",
-    x="createdAt",
-    color="type",
-    title="Établissements et utilisateurs inscrits par semaine",
-    labels={"id": "Inscriptions", "createdAt": "Date d'inscription", "type": ""},
-    markers=True,
-    text="id"
-)
-company_user_created_weekly.update_traces(textposition="top center")
-
-
-company_created_total = app.data.df_company_user_created_grouped.loc[
-    app.data.df_company_user_created_grouped["type"] == "Établissements"
-    ]["id"].sum()
-user_created_total = app.data.df_company_user_created_grouped.loc[
-    app.data.df_company_user_created_grouped["type"] == "Utilisateurs"
-    ]["id"].sum()
+    row = dbc.Row(
+        [
+            dbc.Col(
+                [
+                    html.Div(
+                        [
+                            dcc.Graph(id=fig_id, figure=fig, config=extra_config)
+                        ],
+                        className="fr-callout",
+                    )
+                ],
+                width=12,
+            )
+        ]
+    )
+    return row
 
 
 def format_number(input_number) -> str:
@@ -119,43 +88,67 @@ def add_callout(text: str, width: int, sm_width: int = 0, number: int = None):
     return col
 
 
-def add_figure(fig, fig_id: str) -> dbc.Row:
-    """
-    Boilerplate for figure rows.
-    :param fig: a plotly figure
-    :param fig_id: if of the figure in the resulting HTML
-    :return: HTML Row to be added in a Dash layout
-    """
+bsdd_created_weekly = px.line(
+    app.data.get_bsdd_created_df(),
+    y="id",
+    x="createdAt",
+    title="Bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
+    labels={
+        "id": "Bordereaux de suivi de déchets dangereux",
+        "createdAt": "Date de création",
+    },
+    markers=True,
+    text="id"
 
-    row = dbc.Row(
+)
+bsdd_created_weekly.update_traces(textposition="top center")
+
+bsdd_created_total = app.data.get_bsdd_created().index.size
+
+quantity_processed_weekly = px.bar(
+    app.data.get_bsdd_processed_df(),
+    title="Déchets dangereux traités par semaine",
+    color="recipientProcessingOperation",
+    y="quantityReceived",
+    x="processedAt",
+    text="quantityReceived",
+    labels={
+        "quantityReceived": "Déchets dangereux traités (tonnes)",
+        "processedAt": "Date du traitement",
+        "recipientProcessingOperation": "Type de traitement",
+    },
+)
+
+quantity_processed_total = app.data.get_bsdd_processed_df()["quantityReceived"].sum()
+
+company_created_total_life = app.data.get_company_data().index.size
+user_created_total_life = app.data.get_user_data().index.size
+
+company_user_created_weekly = px.line(
+    app.data.get_company_user_data_df(),
+    y="id",
+    x="createdAt",
+    color="type",
+    title="Établissements et utilisateurs inscrits par semaine",
+    labels={"id": "Inscriptions", "createdAt": "Date d'inscription", "type": ""},
+    markers=True,
+    text="id"
+)
+company_user_created_weekly.update_traces(textposition="top center")
+
+company_created_total = app.data.get_company_user_data_df().loc[
+    app.data.get_company_user_data_df()["type"] == "Établissements"
+    ]["id"].sum()
+user_created_total = app.data.get_company_user_data_df().loc[
+    app.data.get_company_user_data_df()["type"] == "Utilisateurs"
+    ]["id"].sum()
+
+public_stats_container = [
+    dbc.Row(
         [
-            dbc.Col(
-                [
-                    html.Div(
-                        [
-                            dcc.Graph(id=fig_id, figure=fig, config=extra_config)
-                        ],
-                        className="fr-callout",
-                    )
-                ],
-                width=12,
-            )
-        ]
-    )
-    return row
-
-
-dash_app.layout = html.Main(
-    children=[
-        dbc.Container(
-            fluid=True,
-            id='layout-container',
-            children=[
-                dbc.Row(
-                    [
-                        dbc.Col([html.H1('Statistiques de Trackdéchets'),
-                                 dcc.Markdown(
-                                     """
+            dbc.Col([html.H1('Statistiques de Trackdéchets'),
+                     dcc.Markdown(
+                         """
 L'application Trackdéchets est utilisée en France par des milliers de professionnels
 du  déchet pour tracer les déchets dangereux et/ou polluants ([POP](
 https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) produits, ainsi que différentes
@@ -172,60 +165,145 @@ et les déchets d'amiante (DA).
 Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir régulièrement
 avec de nouvelles statistiques.
                 """
-                                 )
-                                 ], width=12
-                                )]),
-                html.H2('Déchets dangereux'),
-                dbc.Row([
-                    add_callout(number=quantity_processed_total,
-                                text=f'tonnes de déchets dangereux traités sur {str(time_delta_m)}&nbsp;mois',
-                                width=3),
-                    add_callout(number=bsdd_created_total,
-                                text=f'bordereaux créés sur {str(time_delta_m)}&nbsp;mois',
-                                width=3),
-                    add_callout(text="""En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés**
+                     )
+                     ], width=12
+                    )]),
+    html.H2('Déchets dangereux'),
+    dbc.Row([
+        add_callout(number=quantity_processed_total,
+                    text=f'tonnes de déchets dangereux traités sur {str(time_delta_m)}&nbsp;mois',
+                    width=3),
+        add_callout(number=bsdd_created_total,
+                    text=f'bordereaux créés sur {str(time_delta_m)}&nbsp;mois',
+                    width=3),
+        add_callout(text="""En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés**
         sont réutilisés (combustion pour du chauffage, recyclage, revente, compostage, etc.)
         tandis que les **déchets éliminés** sont en fin de cycle de vie (enfouissement, stockage,
         traitement chimique, etc.). Plus d'informations sur [
         ecologie.gouv.fr](https://www.ecologie.gouv.fr/traitement-des-dechets). """,
-                                width=6)
-                ]),
-                add_figure(
-                    quantity_processed_weekly,
-                    "bsdd_processed_weekly",
-                ),
-                add_figure(
-                    bsdd_created_weekly,
-                    "bsdd_created_weekly",
-                ),
-                html.H2('Établissements et utilisateurs'),
-                dbc.Row([
-                    add_callout(number=company_created_total,
-                                text=f'établissements inscrits sur {str(time_delta_m)}&nbsp;mois',
-                                width=3),
-                    add_callout(number=company_created_total_life,
-                                text='établissements inscrits',
-                                width=3),
-                    add_callout(number=user_created_total,
-                                text=f'utilisateurs inscrits sur {str(time_delta_m)}&nbsp;mois',
-                                width=3),
-                    add_callout(number=user_created_total_life,
-                                text='utilisateurs inscrits',
-                                width=3),
-                ]),
-                add_figure(
-                    company_user_created_weekly,
-                    "company_user_created_weekly",
-                ),
-                dcc.Markdown(
-                    "Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ("
-                    "[code source](https://github.com/MTES-MCT/trackdechets-public-stats/))",
-                    className="source-code",
-                ),
+                    width=6)
+    ]),
+    add_figure(
+        quantity_processed_weekly,
+        "bsdd_processed_weekly",
+    ),
+    add_figure(
+        bsdd_created_weekly,
+        "bsdd_created_weekly",
+    ),
+    html.H2('Établissements et utilisateurs'),
+    dbc.Row([
+        add_callout(number=company_created_total,
+                    text=f'établissements inscrits sur {str(time_delta_m)}&nbsp;mois',
+                    width=3),
+        add_callout(number=company_created_total_life,
+                    text='établissements inscrits',
+                    width=3),
+        add_callout(number=user_created_total,
+                    text=f'utilisateurs inscrits sur {str(time_delta_m)}&nbsp;mois',
+                    width=3),
+        add_callout(number=user_created_total_life,
+                    text='utilisateurs inscrits',
+                    width=3),
+    ]),
+    add_figure(
+        company_user_created_weekly,
+        "company_user_created_weekly",
+    ),
+    dcc.Markdown(
+        "Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ("
+        "[code source](https://github.com/MTES-MCT/trackdechets-public-stats/))",
+        className="source-code",
+    ),
+]
+
+#################################################################################
+#
+#                   Internal stats figures and container
+#
+##################################################################################
+
+# Created BSDD
+internal_bsdd_created_week = px.line(app.data.get_recent_bsdd_created_week(), x="createdAt", y="count", text="count",
+                                     title="BSDD créés par semaine",
+                                     labels={
+                                         "count": "BSDD créés",
+                                         "createdAt": "Semaine de création",
+                                     },
+                                     markers=True, )
+internal_bsdd_created_week.update_traces(textposition="bottom right")
+
+# Sent BSDD
+internal_bsdd_sent_week = px.line(app.data.get_recent_bsdd_sent(), x="sentAt", y="count", text="count",
+                                  title="BSDD enlevés par semaine",
+                                  labels={
+                                      "count": "BSDD enlevés",
+                                      "sentAt": "Semaine d'enlèvement",
+                                  },
+                                  markers=True, )
+internal_bsdd_sent_week.update_traces(textposition="bottom right")
+
+# Received BSDD
+internal_bsdd_received_week = px.line(app.data.get_recent_bsdd_received(), x="receivedAt", y="count", text="count",
+                                      title="BSDD réceptionnés par semaine",
+                                      labels={
+                                          "count": "BSDD réceptionnés",
+                                          "receivedAt": "Semaine de réception",
+                                      },
+                                      markers=True, )
+internal_bsdd_received_week.update_traces(textposition="bottom right")
+
+internal_stats_container = [
+    dbc.Row(
+        dbc.Col(
+            [html.H1('Statistiques de montée en charge de Trackdéchets'),
+             html.H2('Bordereaux de suivi de déchets dangereux (BSDD)'), ]
+        )
+    ),
+    dbc.Row(
+        dbc.Col(
+            [
+                add_figure(internal_bsdd_created_week, 'internal_bsdd_created_week')
             ],
+            width=10)
+    ),
+    dbc.Row(
+        dbc.Col(
+            [
+                add_figure(internal_bsdd_sent_week, 'internal_bsdd_sent_week')
+            ],
+            width=10)
+    ),
+    dbc.Row(
+        dbc.Col(
+            [
+                add_figure(internal_bsdd_received_week, 'internal_bsdd_received_week')
+            ],
+            width=10)
+    ),
+
+]
+
+
+# Router
+@callback(Output('layout-container', 'children'),
+          [Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == '/':
+        return public_stats_container
+    elif pathname == '/internal-stats':
+        return internal_stats_container
+    else:
+        return 'Page inconnue : "' + pathname + '"'
+
+
+dash_app.layout = html.Main(
+    children=[
+        dcc.Location(id='url', refresh=False),
+        dbc.Container(
+            fluid=True,
+            id='layout-container',
+            children=[]
         )
     ]
 )
-
-
-
