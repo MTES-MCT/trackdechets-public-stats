@@ -131,18 +131,14 @@ def normalize_quantity_received(row) -> float:
     return quantity
 
 
-# TODO Currenty only the get_blabla_data functions are cached, which means
-#  only the db calls are cached.
-# Not the dataframe postprocessing, which is always done. Dataframe postprocessing could
-# be added to those functions.
-
 @appcache.memoize(timeout=cache_timeout)
 def get_bsdd_created_df() -> pd.DataFrame:
+    today = get_today_datetime()
     df: pd.DataFrame = get_bsdd_created()
 
     df = df.loc[
         (df["createdAt"] < today)
-        & (df["createdAt"] >= date_n_days_ago)
+        & (df["createdAt"] >= get_today_n_days_ago(today))
         ]
 
     df["createdAt"] = pd.to_datetime(
@@ -166,7 +162,7 @@ def get_bsdd_processed_df() -> pd.DataFrame:
         df["processedAt"], errors="coerce", utc=True
     )
     df = df.loc[
-        (df["processedAt"] < today)
+        (df["processedAt"] < get_today_datetime())
         & (df["status"] == "PROCESSED")
         ]
     df = df.groupby(
@@ -181,6 +177,8 @@ def get_bsdd_processed_df() -> pd.DataFrame:
 
 @appcache.memoize(timeout=cache_timeout)
 def get_company_user_data_df() -> pd.DataFrame:
+    today = get_today_datetime()
+
     df_company = get_company_data()
     df_company["type"] = "Établissements"
     df_company["createdAt"] = pd.to_datetime(df_company["createdAt"], utc=True)
@@ -193,7 +191,7 @@ def get_company_user_data_df() -> pd.DataFrame:
 
     df_company_user_created = df_company_user_created.loc[
         (today > df_company_user_created["createdAt"])
-        & (df_company_user_created["createdAt"] >= date_n_days_ago)
+        & (df_company_user_created["createdAt"] >= get_today_n_days_ago(today))
         ]
     df_company_user_created_grouped = df_company_user_created.groupby(
         by=["type", "createdAt"], as_index=False
