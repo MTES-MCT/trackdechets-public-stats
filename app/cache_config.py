@@ -9,4 +9,4 @@ from app.app import dash_app
 appcache = Cache(
     dash_app.server, config={"CACHE_TYPE": "filesystem", "CACHE_DIR": "./cache"}
 )
-cache_timeout = int(getenv("CACHE_TIMEOUT_S"))
+cache_timeout = int(1)

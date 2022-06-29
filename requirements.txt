@@ -1,0 +1,10 @@
+dash
+plotly
+pandas
+"sqlalchemy>=1.4.0"
+psycopg2-binary
+dash_bootstrap_components
+flask_caching
+python-dotenv
+python-dateutil
+gunicorn

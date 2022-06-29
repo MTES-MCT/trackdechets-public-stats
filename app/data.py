@@ -4,7 +4,6 @@ Data gathering and processing
 import pandas as pd
 import sqlalchemy
 
-from app.cache_config import cache_timeout, appcache
 from app.time_config import *
 
 # postgresql://admin:admin@localhost:5432/ibnse
@@ -16,6 +15,7 @@ def get_bsdd_created() -> pd.DataFrame:
     Queries the configured database for BSDD data, focused on creation date.
     :return: dataframe of BSDD for a given period of time, with their creation week
     """
+    print("get_bsdd_created called")
     df_bsdd_query = pd.read_sql_query(
         sqlalchemy.text(
             "SELECT "
@@ -47,9 +47,9 @@ def get_bsdd_created() -> pd.DataFrame:
 
 def get_bsdd_processed() -> pd.DataFrame:
     """
-        Queries the configured database for BSDD data, focused on processing date.
-        :return: dataframe of BSDD for a given period of time, with their processing week
-        """
+    Queries the configured database for BSDD data, focused on processing date.
+    :return: dataframe of BSDD for a given period of time, with their processing week
+    """
     df_bsdd_query = pd.read_sql_query(
         sqlalchemy.text(
             "SELECT "
@@ -78,7 +78,7 @@ def get_bsdd_processed() -> pd.DataFrame:
     return df_bsdd_query
 
 
-@appcache.memoize(timeout=cache_timeout)
+# @appcache.memoize(timeout=cache_timeout)
 def get_company_data() -> pd.DataFrame:
     """
     Queries the configured database for company data.
@@ -96,9 +96,9 @@ def get_company_data() -> pd.DataFrame:
 
 def get_user_data() -> pd.DataFrame:
     """
-        Queries the configured database for user data, focused on creation date.
-        :return: dataframe of users for a given period of time, with their creation week
-        """
+    Queries the configured database for user data, focused on creation date.
+    :return: dataframe of users for a given period of time, with their creation week
+    """
     df_user_query = pd.read_sql_query(
         'SELECT id, date_trunc(\'week\', "default$default"."User"."createdAt") AS "createdAt" '
         'FROM "default$default"."User" '
@@ -131,43 +131,37 @@ def normalize_quantity_received(row) -> float:
     return quantity
 
 
-@appcache.memoize(timeout=cache_timeout)
+# @appcache.memoize(timeout=cache_timeout)
 def get_bsdd_created_df() -> pd.DataFrame:
     today = get_today_datetime()
     df: pd.DataFrame = get_bsdd_created()
 
     df = df.loc[
-        (df["createdAt"] < today)
-        & (df["createdAt"] >= get_today_n_days_ago(today))
-        ]
+        (df["createdAt"] < today) & (df["createdAt"] >= get_today_n_days_ago(today))
+    ]
 
-    df["createdAt"] = pd.to_datetime(
-        df["createdAt"], errors="coerce", utc=True
-    )
+    df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce", utc=True)
 
-    df = df.groupby(
-        by=["createdAt"], as_index=False
-    ).count()
+    df = df.groupby(by=["createdAt"], as_index=False).count()
     return df
 
 
-@appcache.memoize(timeout=cache_timeout)
+# @appcache.memoize(timeout=cache_timeout)
 def get_bsdd_processed_df() -> pd.DataFrame:
     df = get_bsdd_processed()
-    df['recipientProcessingOperation'] = df.apply(
+    df["recipientProcessingOperation"] = df.apply(
         normalize_processing_operation, axis=1
     )
-    df['quantityReceived'] = df.apply(normalize_quantity_received, axis=1)
-    df["processedAt"] = pd.to_datetime(
-        df["processedAt"], errors="coerce", utc=True
-    )
+    df["quantityReceived"] = df.apply(normalize_quantity_received, axis=1)
+    df["processedAt"] = pd.to_datetime(df["processedAt"], errors="coerce", utc=True)
     df = df.loc[
-        (df["processedAt"] < get_today_datetime())
-        & (df["status"] == "PROCESSED")
-        ]
-    df = df.groupby(
-            by=["processedAt", "recipientProcessingOperation"], as_index=False
-        ).sum().round()
+        (df["processedAt"] < get_today_datetime()) & (df["status"] == "PROCESSED")
+    ]
+    df = (
+        df.groupby(by=["processedAt", "recipientProcessingOperation"], as_index=False)
+        .sum()
+        .round()
+    )
     return df
 
 
@@ -175,7 +169,8 @@ def get_bsdd_processed_df() -> pd.DataFrame:
 # Établissements et utilisateurs
 # -----------
 
-@appcache.memoize(timeout=cache_timeout)
+
+# @appcache.memoize(timeout=cache_timeout)
 def get_company_user_data_df() -> pd.DataFrame:
     today = get_today_datetime()
 
@@ -192,7 +187,7 @@ def get_company_user_data_df() -> pd.DataFrame:
     df_company_user_created = df_company_user_created.loc[
         (today > df_company_user_created["createdAt"])
         & (df_company_user_created["createdAt"] >= get_today_n_days_ago(today))
-        ]
+    ]
     df_company_user_created_grouped = df_company_user_created.groupby(
         by=["type", "createdAt"], as_index=False
     ).count()
@@ -206,10 +201,11 @@ def get_company_user_data_df() -> pd.DataFrame:
 #######################################################################################################
 
 # Created BSDD
-@appcache.memoize(timeout=cache_timeout)
+# @appcache.memoize(timeout=cache_timeout)
 def get_recent_bsdd_created_week() -> pd.DataFrame:
     df = pd.read_sql_query(
-        sqlalchemy.text("""
+        sqlalchemy.text(
+            """
             SELECT date_trunc('week', "default$default"."Form"."createdAt") AS "createdAt", count(*) AS "count"
             FROM "default$default"."Form"
             WHERE ("default$default"."Form"."isDeleted" = FALSE
@@ -217,7 +213,8 @@ def get_recent_bsdd_created_week() -> pd.DataFrame:
                AND "default$default"."Form"."createdAt" < date_trunc('week', CAST(now() AS timestamp)))
             GROUP BY date_trunc('week', "default$default"."Form"."createdAt")
             ORDER BY date_trunc('week', "default$default"."Form"."createdAt")
-        """),
+        """
+        ),
         con=engine,
     )
 
@@ -228,10 +225,11 @@ def get_recent_bsdd_created_week() -> pd.DataFrame:
 
 
 # Sent BSDD
-@appcache.memoize(timeout=cache_timeout)
+# @appcache.memoize(timeout=cache_timeout)
 def get_recent_bsdd_sent() -> pd.DataFrame:
     df = pd.read_sql_query(
-        sqlalchemy.text("""
+        sqlalchemy.text(
+            """
             SELECT date_trunc('week', "default$default"."Form"."sentAt") AS "sentAt", count(*) AS "count"
             FROM "default$default"."Form"
             WHERE ("default$default"."Form"."isDeleted" = FALSE
@@ -240,7 +238,8 @@ def get_recent_bsdd_sent() -> pd.DataFrame:
                AND "default$default"."Form"."sentAt" < date_trunc('week', CAST(now() AS timestamp)))
             GROUP BY date_trunc('week', "default$default"."Form"."sentAt")
             ORDER BY date_trunc('week', "default$default"."Form"."sentAt") 
-        """),
+        """
+        ),
         con=engine,
     )
 
@@ -248,10 +247,11 @@ def get_recent_bsdd_sent() -> pd.DataFrame:
 
 
 # Received BSDD
-@appcache.memoize(timeout=cache_timeout)
+# @appcache.memoize(timeout=cache_timeout)
 def get_recent_bsdd_received() -> pd.DataFrame:
     df = pd.read_sql_query(
-        sqlalchemy.text("""
+        sqlalchemy.text(
+            """
             SELECT date_trunc('week', "default$default"."Form"."receivedAt") AS "receivedAt", count(*) AS "count"
             FROM "default$default"."Form"
             WHERE ("default$default"."Form"."isDeleted" = FALSE
@@ -260,17 +260,9 @@ def get_recent_bsdd_received() -> pd.DataFrame:
                AND "default$default"."Form"."receivedAt" < date_trunc('week', CAST(now() AS timestamp)))
             GROUP BY date_trunc('week', "default$default"."Form"."receivedAt")
             ORDER BY date_trunc('week', "default$default"."Form"."receivedAt")
-        """),
+        """
+        ),
         con=engine,
     )
 
     return df
-
-
-
-
-
-
-
-
-
