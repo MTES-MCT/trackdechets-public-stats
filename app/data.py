@@ -1,13 +1,35 @@
 """
 Data gathering and processing
 """
+from pathlib import Path
+from zoneinfo import ZoneInfo
+from datetime import datetime
+import time
 import pandas as pd
 import sqlalchemy
 
 from app.time_config import *
+from app.cache_config import appcache
 
 # postgresql://admin:admin@localhost:5432/ibnse
-engine = sqlalchemy.create_engine(getenv("DATABASE_URL"))
+DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
+SQL_PATH = Path("app/sql")
+
+
+def get_bsdd_data() -> pd.DataFrame:
+
+    started_time = time.time()
+    sql_query = (SQL_PATH / "get_bsdd_data.sql").read_text()
+    bsdd_data_df = pd.read_sql_query(sql_query, con=DB_ENGINE)
+    bsdd_data_df["createdAt"] = pd.to_datetime(
+        bsdd_data_df["createdAt"], utc=True
+    ).dt.tz_convert("Europe/Paris")
+    bsdd_data_df["processedAt"] = pd.to_datetime(
+        bsdd_data_df["processedAt"], utc=True, errors="coerce"
+    ).dt.tz_convert("Europe/Paris")
+    print(f"get_bsdd_data duration: {time.time()-started_time} ")
+
+    return bsdd_data_df
 
 
 def get_bsdd_created() -> pd.DataFrame:
@@ -31,12 +53,13 @@ def get_bsdd_created() -> pd.DataFrame:
             'AND "default$default"."Form"."createdAt" >= date_trunc(\'week\','
             f"CAST((CAST(now() AS timestamp) + (INTERVAL '-{str(time_delta_m)} month'))"
             "AS timestamp))"
+            'and cast("default$default"."Form"."processedAt" as date) >= \'2022-01-01\''
             'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() '
             "AS timestamp)) "
-            # TODO Think of a bedrock starting date to limit number of results
+            # @TODO Think of a bedrock starting date to limit number of results
             "ORDER BY createdAt"
         ),
-        con=engine,
+        con=DB_ENGINE,
     )
 
     # By default the column name is createdat (lowercase), strange
@@ -45,6 +68,7 @@ def get_bsdd_created() -> pd.DataFrame:
     return df_bsdd_query
 
 
+# deprecated
 def get_bsdd_processed() -> pd.DataFrame:
     """
     Queries the configured database for BSDD data, focused on processing date.
@@ -69,7 +93,7 @@ def get_bsdd_processed() -> pd.DataFrame:
             'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
             "ORDER BY processedAt"
         ),
-        con=engine,
+        con=DB_ENGINE,
     )
 
     # By default the column name is processedat, strange
@@ -78,7 +102,7 @@ def get_bsdd_processed() -> pd.DataFrame:
     return df_bsdd_query
 
 
-# @appcache.memoize(timeout=cache_timeout)
+# @appcache.memoize(timeout=10)
 def get_company_data() -> pd.DataFrame:
     """
     Queries the configured database for company data.
@@ -89,7 +113,7 @@ def get_company_data() -> pd.DataFrame:
         'FROM "default$default"."Company" '
         'WHERE "default$default"."Company"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
         'ORDER BY date_trunc(\'week\', "default$default"."Company"."createdAt")',
-        con=engine,
+        con=DB_ENGINE,
     )
     return df_company_query
 
@@ -105,19 +129,20 @@ def get_user_data() -> pd.DataFrame:
         'WHERE "User"."isActive" = True '
         'AND "default$default"."User"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
         'ORDER BY date_trunc(\'week\', "default$default"."User"."createdAt")',
-        con=engine,
+        con=DB_ENGINE,
     )
     return df_user_query
 
 
-def normalize_processing_operation(row) -> str:
+def normalize_processing_operation(col: pd.Series) -> pd.Series:
     """Replace waste processing codes with readable labels"""
-    string = row["recipientProcessingOperation"].upper()
-    if string.startswith("R"):
-        return "Déchet valorisé"
-    elif string.startswith("D"):
-        return "Déchet éliminé"
-    return "Autre"
+    regex_dict = {
+        r"^R.*": "Déchet valorisé",
+        r"^D.*": "Déchet éliminé",
+        r"^(?!R|D).*": "Autre",
+    }
+
+    return col.replace(regex=regex_dict)
 
 
 def normalize_quantity_received(row) -> float:
@@ -132,36 +157,39 @@ def normalize_quantity_received(row) -> float:
 
 
 # @appcache.memoize(timeout=cache_timeout)
-def get_bsdd_created_df() -> pd.DataFrame:
-    today = get_today_datetime()
-    df: pd.DataFrame = get_bsdd_created()
+def get_bsdd_created_df(bsdd_data: pd.DataFrame) -> pd.DataFrame:
 
-    df = df.loc[
-        (df["createdAt"] < today) & (df["createdAt"] >= get_today_n_days_ago(today))
-    ]
-
-    df["createdAt"] = pd.to_datetime(df["createdAt"], errors="coerce", utc=True)
-
-    df = df.groupby(by=["createdAt"], as_index=False).count()
+    df = (
+        bsdd_data.groupby(by=pd.Grouper(key="createdAt", freq="1W"))
+        .count()
+        .reset_index()
+    )
     return df
 
 
 # @appcache.memoize(timeout=cache_timeout)
-def get_bsdd_processed_df() -> pd.DataFrame:
-    df = get_bsdd_processed()
-    df["recipientProcessingOperation"] = df.apply(
-        normalize_processing_operation, axis=1
+def get_bsdd_processed_df(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+    df = bsdd_data.copy()
+    df["recipientProcessingOperation"] = normalize_processing_operation(
+        df["recipientProcessingOperation"]
     )
+    # @todo Optimize this normalization as it takes 65% of function time
     df["quantityReceived"] = df.apply(normalize_quantity_received, axis=1)
-    df["processedAt"] = pd.to_datetime(df["processedAt"], errors="coerce", utc=True)
+    now = datetime.now(tz=ZoneInfo("Europe/Paris"))
     df = df.loc[
-        (df["processedAt"] < get_today_datetime()) & (df["status"] == "PROCESSED")
+        (df["processedAt"] < now - timedelta(days=now.toordinal() % 7))
+        & (df["status"] == "PROCESSED")
     ]
     df = (
-        df.groupby(by=["processedAt", "recipientProcessingOperation"], as_index=False)
+        df.groupby(
+            by=[
+                pd.Grouper(key="processedAt", freq="1W"),
+                "recipientProcessingOperation",
+            ]
+        )
         .sum()
         .round()
-    )
+    ).reset_index()
     return df
 
 
@@ -215,7 +243,7 @@ def get_recent_bsdd_created_week() -> pd.DataFrame:
             ORDER BY date_trunc('week', "default$default"."Form"."createdAt")
         """
         ),
-        con=engine,
+        con=DB_ENGINE,
     )
 
     # By default the column name is createdat (lowercase), strange
@@ -240,7 +268,7 @@ def get_recent_bsdd_sent() -> pd.DataFrame:
             ORDER BY date_trunc('week', "default$default"."Form"."sentAt") 
         """
         ),
-        con=engine,
+        con=DB_ENGINE,
     )
 
     return df
@@ -262,7 +290,7 @@ def get_recent_bsdd_received() -> pd.DataFrame:
             ORDER BY date_trunc('week', "default$default"."Form"."receivedAt")
         """
         ),
-        con=engine,
+        con=DB_ENGINE,
     )
 
     return df

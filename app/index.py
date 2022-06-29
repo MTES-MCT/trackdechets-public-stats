@@ -1,11 +1,21 @@
-from dash import html, dcc, callback, Input, Output
-import plotly.express as px
-import plotly.io as pio
-import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
+import plotly.express as px
+import plotly.graph_objects as go
+import plotly.io as pio
+from dash import Input, Output, callback, dcc, html
 
+from app.data import (
+    get_bsdd_created_df,
+    get_bsdd_data,
+    get_bsdd_processed_df,
+    get_company_data,
+    get_company_user_data_df,
+    get_recent_bsdd_created_week,
+    get_recent_bsdd_received,
+    get_recent_bsdd_sent,
+    get_user_data,
+)
 from app.time_config import time_delta_m
-import app.data
 
 # Override the 'none' template
 pio.templates["gouv"] = go.layout.Template(
@@ -91,7 +101,7 @@ def add_callout(text: str, width: int, sm_width: int = 0, number: int = None):
 
 # Created BSDD
 internal_bsdd_created_week = px.line(
-    app.data.get_recent_bsdd_created_week(),
+    get_recent_bsdd_created_week(),
     x="createdAt",
     y="count",
     text="count",
@@ -106,7 +116,7 @@ internal_bsdd_created_week.update_traces(textposition="bottom right")
 
 # Sent BSDD
 internal_bsdd_sent_week = px.line(
-    app.data.get_recent_bsdd_sent(),
+    get_recent_bsdd_sent(),
     x="sentAt",
     y="count",
     text="count",
@@ -121,7 +131,7 @@ internal_bsdd_sent_week.update_traces(textposition="bottom right")
 
 # Received BSDD
 internal_bsdd_received_week = px.line(
-    app.data.get_recent_bsdd_received(),
+    get_recent_bsdd_received(),
     x="receivedAt",
     y="count",
     text="count",
@@ -165,18 +175,23 @@ internal_stats_container = [
 
 # Router
 # @callback(Output("layout-container", "children"), [Input("url", "pathname")])
-def display_page(pathname):
-    if pathname == "/":
-        return public_stats_container
-    elif pathname == "/internal-stats":
-        return internal_stats_container
-    else:
-        return 'Page inconnue : "' + pathname + '"'
+# def display_page(pathname):
+#     if pathname == "/":
+#         return public_stats_container
+#     elif pathname == "/internal-stats":
+#         return internal_stats_container
+#     else:
+#         return 'Page inconnue : "' + pathname + '"'
 
 
 def get_public_stats_container():
+
+    bsdd_data_df = get_bsdd_data()
+
+    bsdd_created_weekly_df = get_bsdd_created_df(bsdd_data_df)
+
     bsdd_created_weekly = px.line(
-        app.data.get_bsdd_created_df(),
+        bsdd_created_weekly_df,
         y="id",
         x="createdAt",
         title="Bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
@@ -189,10 +204,11 @@ def get_public_stats_container():
     )
     bsdd_created_weekly.update_traces(textposition="top center")
 
-    bsdd_created_total = app.data.get_bsdd_created().index.size
+    bsdd_created_total = bsdd_data_df.id.nunique()
 
+    quantity_processed_weekly_df = get_bsdd_processed_df(bsdd_data=bsdd_data_df)
     quantity_processed_weekly = px.bar(
-        app.data.get_bsdd_processed_df(),
+        quantity_processed_weekly_df,
         title="Déchets dangereux traités par semaine",
         color="recipientProcessingOperation",
         y="quantityReceived",
@@ -205,15 +221,13 @@ def get_public_stats_container():
         },
     )
 
-    quantity_processed_total = app.data.get_bsdd_processed_df()[
-        "quantityReceived"
-    ].sum()
+    quantity_processed_total = quantity_processed_weekly_df["quantityReceived"].sum()
 
-    company_created_total_life = app.data.get_company_data().index.size
-    user_created_total_life = app.data.get_user_data().index.size
+    company_created_total_life = get_company_data().index.size
+    user_created_total_life = get_user_data().index.size
 
     company_user_created_weekly = px.line(
-        app.data.get_company_user_data_df(),
+        get_company_user_data_df(),
         y="id",
         x="createdAt",
         color="type",
@@ -225,13 +239,13 @@ def get_public_stats_container():
     company_user_created_weekly.update_traces(textposition="top center")
 
     company_created_total = (
-        app.data.get_company_user_data_df()
-        .loc[app.data.get_company_user_data_df()["type"] == "Établissements"]["id"]
+        get_company_user_data_df()
+        .loc[get_company_user_data_df()["type"] == "Établissements"]["id"]
         .sum()
     )
     user_created_total = (
-        app.data.get_company_user_data_df()
-        .loc[app.data.get_company_user_data_df()["type"] == "Utilisateurs"]["id"]
+        get_company_user_data_df()
+        .loc[get_company_user_data_df()["type"] == "Utilisateurs"]["id"]
         .sum()
     )
 
