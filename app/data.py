@@ -1,15 +1,17 @@
 """
 Data gathering and processing
 """
+import time
+from datetime import datetime, timedelta
+from os import getenv
 from pathlib import Path
 from zoneinfo import ZoneInfo
-from datetime import datetime
-import time
+
 import pandas as pd
 import sqlalchemy
 
-from app.time_config import *
 from app.cache_config import appcache
+from app.time_config import *
 
 # postgresql://admin:admin@localhost:5432/ibnse
 DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
@@ -17,121 +19,113 @@ SQL_PATH = Path("app/sql")
 
 
 def get_bsdd_data() -> pd.DataFrame:
+    """
+    Queries the configured database for BSDD data.
+    :return: dataframe of BSDD for a given period of time, with their creation date
+    """
 
     started_time = time.time()
+
     sql_query = (SQL_PATH / "get_bsdd_data.sql").read_text()
-    bsdd_data_df = pd.read_sql_query(sql_query, con=DB_ENGINE)
+    bsdd_data_df = pd.read_sql_query(
+        sql_query,
+        con=DB_ENGINE,
+    )
     bsdd_data_df["createdAt"] = pd.to_datetime(
         bsdd_data_df["createdAt"], utc=True
     ).dt.tz_convert("Europe/Paris")
     bsdd_data_df["processedAt"] = pd.to_datetime(
         bsdd_data_df["processedAt"], utc=True, errors="coerce"
     ).dt.tz_convert("Europe/Paris")
+
+    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    # This is to handle specific case when sqlalchemy does not handle well the timezone
+    # and there is data at midnight Paris time the last day of the time window we want to keep
+    # that is return by the query but shouldn't
+    bsdd_data_df = bsdd_data_df.loc[
+        (
+            (
+                bsdd_data_df["processedAt"]
+                < (now - timedelta(days=(now.toordinal() % 7) - 1))
+            )
+            | bsdd_data_df["processedAt"].isna()
+        )
+        & (
+            (
+                bsdd_data_df["createdAt"]
+                < (now - timedelta(days=(now.toordinal() % 7) - 1))
+            )
+            | bsdd_data_df["createdAt"].isna()
+        )
+    ]
+
     print(f"get_bsdd_data duration: {time.time()-started_time} ")
 
     return bsdd_data_df
-
-
-def get_bsdd_created() -> pd.DataFrame:
-    """
-    Queries the configured database for BSDD data, focused on creation date.
-    :return: dataframe of BSDD for a given period of time, with their creation week
-    """
-    print("get_bsdd_created called")
-    df_bsdd_query = pd.read_sql_query(
-        sqlalchemy.text(
-            "SELECT "
-            'date_trunc(\'week\', "default$default"."Form"."createdAt") AS createdAt, '
-            # Need id to receive count values upon groupBy
-            "id "
-            'FROM "default$default"."Form" '
-            "WHERE "
-            '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
-            # To keep only dangerous waste at query level:
-            'AND ("default$default"."Form"."wasteDetailsCode" LIKE \'%*%\' '
-            'OR "default$default"."Form"."wasteDetailsPop" = TRUE)'
-            'AND "default$default"."Form"."createdAt" >= date_trunc(\'week\','
-            f"CAST((CAST(now() AS timestamp) + (INTERVAL '-{str(time_delta_m)} month'))"
-            "AS timestamp))"
-            'and cast("default$default"."Form"."processedAt" as date) >= \'2022-01-01\''
-            'AND "default$default"."Form"."createdAt" < date_trunc(\'week\', CAST(now() '
-            "AS timestamp)) "
-            # @TODO Think of a bedrock starting date to limit number of results
-            "ORDER BY createdAt"
-        ),
-        con=DB_ENGINE,
-    )
-
-    # By default the column name is createdat (lowercase), strange
-    column_name = df_bsdd_query.columns[0]
-    df_bsdd_query.rename(columns={column_name: "createdAt"}, inplace=True)
-    return df_bsdd_query
-
-
-# deprecated
-def get_bsdd_processed() -> pd.DataFrame:
-    """
-    Queries the configured database for BSDD data, focused on processing date.
-    :return: dataframe of BSDD for a given period of time, with their processing week
-    """
-    df_bsdd_query = pd.read_sql_query(
-        sqlalchemy.text(
-            "SELECT "
-            'date_trunc(\'week\', "default$default"."Form"."processedAt") AS processedAt, '
-            '"Form"."status",'
-            '"Form"."quantityReceived", '
-            '"Form"."recipientProcessingOperation" '
-            'FROM "default$default"."Form" '
-            "WHERE "
-            '"Form"."isDeleted" = FALSE AND "Form"."status" <> \'DRAFT\' '
-            # To keep only dangerous waste at query level:
-            'AND "default$default"."Form"."processedAt" >= date_trunc(\'week\','
-            f"CAST((CAST(now() AS timestamp) + (INTERVAL '-{str(time_delta_m)} month'))"
-            " AS timestamp))"
-            'AND ("default$default"."Form"."wasteDetailsCode" LIKE \'%*%\' '
-            'OR "default$default"."Form"."wasteDetailsPop" = TRUE)'
-            'AND "default$default"."Form"."processedAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-            "ORDER BY processedAt"
-        ),
-        con=DB_ENGINE,
-    )
-
-    # By default the column name is processedat, strange
-    column_name = df_bsdd_query.columns[0]
-    df_bsdd_query.rename(columns={column_name: "processedAt"}, inplace=True)
-    return df_bsdd_query
 
 
 # @appcache.memoize(timeout=10)
 def get_company_data() -> pd.DataFrame:
     """
     Queries the configured database for company data.
-    :return: dataframe of companies for a given period of time, with their creation week
+    :return: dataframe of companies for a given period of time, with their creation date
     """
-    df_company_query = pd.read_sql_query(
-        'SELECT id, date_trunc(\'week\', "default$default"."Company"."createdAt") AS "createdAt" '
-        'FROM "default$default"."Company" '
-        'WHERE "default$default"."Company"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-        'ORDER BY date_trunc(\'week\', "default$default"."Company"."createdAt")',
-        con=DB_ENGINE,
+    started_time = time.time()
+
+    sql_query = (SQL_PATH / "get_company_data.sql").read_text()
+    company_data_df = pd.read_sql_query(sql_query, con=DB_ENGINE)
+    company_data_df["createdAt"] = pd.to_datetime(
+        company_data_df["createdAt"], utc=True
+    ).dt.tz_convert("Europe/Paris")
+
+    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
-    return df_company_query
+    # This is to handle specific case when sqlalchemy does not handle well the timezone
+    # and there is data at midnight Paris time the last day of the time window we want to keep
+    # that is return by the query but shouldn't
+    company_data_df = company_data_df.loc[
+        (
+            company_data_df["createdAt"]
+            < (now - timedelta(days=(now.toordinal() % 7) - 1))
+        )
+        | company_data_df["createdAt"].isna()
+    ]
+
+    print(f"get_company_data duration: {time.time()-started_time} ")
+
+    return company_data_df
 
 
 def get_user_data() -> pd.DataFrame:
     """
     Queries the configured database for user data, focused on creation date.
-    :return: dataframe of users for a given period of time, with their creation week
+    :return: dataframe of users for a given period of time, with their creation date
     """
-    df_user_query = pd.read_sql_query(
-        'SELECT id, date_trunc(\'week\', "default$default"."User"."createdAt") AS "createdAt" '
-        'FROM "default$default"."User" '
-        'WHERE "User"."isActive" = True '
-        'AND "default$default"."User"."createdAt" < date_trunc(\'week\', CAST(now() AS timestamp)) '
-        'ORDER BY date_trunc(\'week\', "default$default"."User"."createdAt")',
-        con=DB_ENGINE,
+    started_time = time.time()
+
+    sql_query = (SQL_PATH / "get_user_data.sql").read_text()
+    user_data_df = pd.read_sql_query(sql_query, con=DB_ENGINE)
+    user_data_df["createdAt"] = pd.to_datetime(
+        user_data_df["createdAt"], utc=True
+    ).dt.tz_convert("Europe/Paris")
+
+    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
-    return df_user_query
+    # This is to handle specific case when sqlalchemy does not handle well the timezone
+    # and there is data at midnight Paris time the last day of the time window we want to keep
+    # that is return by the query but shouldn't
+    user_data_df = user_data_df.loc[
+        (user_data_df["createdAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
+        | user_data_df["createdAt"].isna()
+    ]
+
+    print(f"get_user_data duration: {time.time()-started_time} ")
+
+    return user_data_df
 
 
 def normalize_processing_operation(col: pd.Series) -> pd.Series:
@@ -143,17 +137,6 @@ def normalize_processing_operation(col: pd.Series) -> pd.Series:
     }
 
     return col.replace(regex=regex_dict)
-
-
-def normalize_quantity_received(row) -> float:
-    """Replace weights entered as kg instead of tons"""
-    quantity = row["quantityReceived"]
-    try:
-        if quantity > (int(getenv("SEUIL_DIVISION_QUANTITE")) or 1000):
-            quantity = quantity / 1000
-    except TypeError:
-        print("Error, it's not an int:", quantity)
-    return quantity
 
 
 # @appcache.memoize(timeout=cache_timeout)
@@ -173,13 +156,7 @@ def get_bsdd_processed_df(bsdd_data: pd.DataFrame) -> pd.DataFrame:
     df["recipientProcessingOperation"] = normalize_processing_operation(
         df["recipientProcessingOperation"]
     )
-    # @todo Optimize this normalization as it takes 65% of function time
-    df["quantityReceived"] = df.apply(normalize_quantity_received, axis=1)
-    now = datetime.now(tz=ZoneInfo("Europe/Paris"))
-    df = df.loc[
-        (df["processedAt"] < now - timedelta(days=now.toordinal() % 7))
-        & (df["status"] == "PROCESSED")
-    ]
+
     df = (
         df.groupby(
             by=[
@@ -190,6 +167,7 @@ def get_bsdd_processed_df(bsdd_data: pd.DataFrame) -> pd.DataFrame:
         .sum()
         .round()
     ).reset_index()
+
     return df
 
 
@@ -199,98 +177,26 @@ def get_bsdd_processed_df(bsdd_data: pd.DataFrame) -> pd.DataFrame:
 
 
 # @appcache.memoize(timeout=cache_timeout)
-def get_company_user_data_df() -> pd.DataFrame:
-    today = get_today_datetime()
+def get_company_user_data_df(
+    company_data: pd.DataFrame, user_data: pd.DataFrame
+) -> pd.DataFrame:
 
-    df_company = get_company_data()
+    df_company = company_data.copy()
     df_company["type"] = "Établissements"
-    df_company["createdAt"] = pd.to_datetime(df_company["createdAt"], utc=True)
 
-    df_user = get_user_data()
+    df_user = user_data.copy()
     df_user["type"] = "Utilisateurs"
-    df_user["createdAt"] = pd.to_datetime(df_user["createdAt"], utc=True)
     # Concatenate user and company data
     df_company_user_created = pd.concat([df_company, df_user], ignore_index=True)
 
     df_company_user_created = df_company_user_created.loc[
-        (today > df_company_user_created["createdAt"])
-        & (df_company_user_created["createdAt"] >= get_today_n_days_ago(today))
+        df_company_user_created["createdAt"] >= "2022-01-01"
     ]
-    df_company_user_created_grouped = df_company_user_created.groupby(
-        by=["type", "createdAt"], as_index=False
-    ).count()
+    df_company_user_created_grouped = (
+        df_company_user_created.groupby(
+            by=["type", pd.Grouper(key="createdAt", freq="1W")]
+        )
+        .count()
+        .reset_index()
+    )
     return df_company_user_created_grouped
-
-
-#######################################################################################################
-#
-#                       Internal statistics
-#
-#######################################################################################################
-
-# Created BSDD
-# @appcache.memoize(timeout=cache_timeout)
-def get_recent_bsdd_created_week() -> pd.DataFrame:
-    df = pd.read_sql_query(
-        sqlalchemy.text(
-            """
-            SELECT date_trunc('week', "default$default"."Form"."createdAt") AS "createdAt", count(*) AS "count"
-            FROM "default$default"."Form"
-            WHERE ("default$default"."Form"."isDeleted" = FALSE
-               AND "default$default"."Form"."createdAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) + (INTERVAL '-20 week')) AS timestamp)) 
-               AND "default$default"."Form"."createdAt" < date_trunc('week', CAST(now() AS timestamp)))
-            GROUP BY date_trunc('week', "default$default"."Form"."createdAt")
-            ORDER BY date_trunc('week', "default$default"."Form"."createdAt")
-        """
-        ),
-        con=DB_ENGINE,
-    )
-
-    # By default the column name is createdat (lowercase), strange
-    column_name = df.columns[0]
-    df.rename(columns={column_name: "createdAt"}, inplace=True)
-    return df
-
-
-# Sent BSDD
-# @appcache.memoize(timeout=cache_timeout)
-def get_recent_bsdd_sent() -> pd.DataFrame:
-    df = pd.read_sql_query(
-        sqlalchemy.text(
-            """
-            SELECT date_trunc('week', "default$default"."Form"."sentAt") AS "sentAt", count(*) AS "count"
-            FROM "default$default"."Form"
-            WHERE ("default$default"."Form"."isDeleted" = FALSE
-               AND "default$default"."Form"."sentAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) + 
-               (INTERVAL '-20 week')) AS timestamp)) 
-               AND "default$default"."Form"."sentAt" < date_trunc('week', CAST(now() AS timestamp)))
-            GROUP BY date_trunc('week', "default$default"."Form"."sentAt")
-            ORDER BY date_trunc('week', "default$default"."Form"."sentAt") 
-        """
-        ),
-        con=DB_ENGINE,
-    )
-
-    return df
-
-
-# Received BSDD
-# @appcache.memoize(timeout=cache_timeout)
-def get_recent_bsdd_received() -> pd.DataFrame:
-    df = pd.read_sql_query(
-        sqlalchemy.text(
-            """
-            SELECT date_trunc('week', "default$default"."Form"."receivedAt") AS "receivedAt", count(*) AS "count"
-            FROM "default$default"."Form"
-            WHERE ("default$default"."Form"."isDeleted" = FALSE
-               AND "default$default"."Form"."receivedAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) 
-               + (INTERVAL '-20 week')) AS timestamp)) 
-               AND "default$default"."Form"."receivedAt" < date_trunc('week', CAST(now() AS timestamp)))
-            GROUP BY date_trunc('week', "default$default"."Form"."receivedAt")
-            ORDER BY date_trunc('week', "default$default"."Form"."receivedAt")
-        """
-        ),
-        con=DB_ENGINE,
-    )
-
-    return df

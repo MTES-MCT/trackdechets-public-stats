@@ -5,8 +5,6 @@ import dash_bootstrap_components as dbc
 import dash
 
 from app.index import serve_layout
-from os import getenv
-from flask_caching import Cache
 
 external_scripts = ["https://cdn.plot.ly/plotly-locale-fr-latest.js"]
 extra_config = {"locale": "fr"}
@@ -19,10 +17,6 @@ dash_app = dash.Dash(
     external_scripts=external_scripts,
 )
 
-appcache = Cache(
-    dash_app.server, config={"CACHE_TYPE": "filesystem", "CACHE_DIR": "./cache"}
-)
-cache_timeout = int(1)
 
 dash_app.layout = serve_layout
 # Add the @lang attribute to the root <html>

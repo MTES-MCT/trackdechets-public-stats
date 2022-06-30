@@ -2,7 +2,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
-from dash import Input, Output, callback, dcc, html
+from dash import dcc, html
 
 from app.data import (
     get_bsdd_created_df,
@@ -10,12 +10,13 @@ from app.data import (
     get_bsdd_processed_df,
     get_company_data,
     get_company_user_data_df,
+    get_user_data,
+)
+from app.data_internal import (
     get_recent_bsdd_created_week,
     get_recent_bsdd_received,
     get_recent_bsdd_sent,
-    get_user_data,
 )
-from app.time_config import time_delta_m
 
 # Override the 'none' template
 pio.templates["gouv"] = go.layout.Template(
@@ -204,7 +205,7 @@ def get_public_stats_container():
     )
     bsdd_created_weekly.update_traces(textposition="top center")
 
-    bsdd_created_total = bsdd_data_df.id.nunique()
+    bsdd_created_total = bsdd_data_df.index.size
 
     quantity_processed_weekly_df = get_bsdd_processed_df(bsdd_data=bsdd_data_df)
     quantity_processed_weekly = px.bar(
@@ -223,11 +224,23 @@ def get_public_stats_container():
 
     quantity_processed_total = quantity_processed_weekly_df["quantityReceived"].sum()
 
-    company_created_total_life = get_company_data().index.size
-    user_created_total_life = get_user_data().index.size
+    company_data_df = get_company_data()
+    user_data_df = get_user_data()
+
+    company_created_total = company_data_df[
+        company_data_df["createdAt"] >= "2022-01-01"
+    ].index.size
+    user_created_total = user_data_df[
+        user_data_df["createdAt"] >= "2022-01-01"
+    ].index.size
+
+    company_created_total_life = company_data_df.index.size
+    user_created_total_life = user_data_df.index.size
+
+    company_user_data_df = get_company_user_data_df(company_data_df, user_data_df)
 
     company_user_created_weekly = px.line(
-        get_company_user_data_df(),
+        company_user_data_df,
         y="id",
         x="createdAt",
         color="type",
@@ -237,17 +250,6 @@ def get_public_stats_container():
         text="id",
     )
     company_user_created_weekly.update_traces(textposition="top center")
-
-    company_created_total = (
-        get_company_user_data_df()
-        .loc[get_company_user_data_df()["type"] == "Établissements"]["id"]
-        .sum()
-    )
-    user_created_total = (
-        get_company_user_data_df()
-        .loc[get_company_user_data_df()["type"] == "Utilisateurs"]["id"]
-        .sum()
-    )
 
     public_stats_container = [
         dbc.Row(
@@ -284,12 +286,12 @@ avec de nouvelles statistiques.
             [
                 add_callout(
                     number=quantity_processed_total,
-                    text=f"tonnes de déchets dangereux traités sur {str(time_delta_m)}&nbsp;mois",
+                    text="tonnes de déchets dangereux traités depuis le 1er janvier 2022",
                     width=3,
                 ),
                 add_callout(
                     number=bsdd_created_total,
-                    text=f"bordereaux créés sur {str(time_delta_m)}&nbsp;mois",
+                    text="bordereaux créés sur depuis le 1er janvier 2022",
                     width=3,
                 ),
                 add_callout(
@@ -315,7 +317,7 @@ avec de nouvelles statistiques.
             [
                 add_callout(
                     number=company_created_total,
-                    text=f"établissements inscrits sur {str(time_delta_m)}&nbsp;mois",
+                    text="établissements inscrits depuis le 1er janvier 2022",
                     width=3,
                 ),
                 add_callout(
@@ -325,7 +327,7 @@ avec de nouvelles statistiques.
                 ),
                 add_callout(
                     number=user_created_total,
-                    text=f"utilisateurs inscrits sur {str(time_delta_m)}&nbsp;mois",
+                    text="utilisateurs inscrits depuis le 1er janvier 2022",
                     width=3,
                 ),
                 add_callout(

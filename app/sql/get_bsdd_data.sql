@@ -2,7 +2,10 @@ select id,
     "default$default"."Form"."createdAt",
     "processedAt",
     status,
-    "quantityReceived",
+    case
+        when "quantityReceived" > 60 then "quantityReceived" / 1000
+        else "quantityReceived"
+    END as "quantityReceived",
     "recipientProcessingOperation"
 from "default$default"."Form"
 where "Form"."isDeleted" = false
@@ -11,15 +14,23 @@ where "Form"."isDeleted" = false
         "default$default"."Form"."wasteDetailsCode" ~* '\*$'
         or "default$default"."Form"."wasteDetailsPop" = true
     )
-    and cast("default$default"."Form"."createdAt" as date) >= '2022-01-01'
+    and "createdAt" >= '2022-01-01'
     and (
-        cast("default$default"."Form"."processedAt" as date) >= '2022-01-01'
+        (
+            "processedAt" >= "createdAt"
+            and "processedAt"::date AT TIME ZONE 'Europe/Paris' <= CURRENT_DATE - cast(
+                extract(
+                    dow
+                    from CURRENT_DATE
+                ) as int
+            )
+        )
         or "processedAt" is null
     )
-    and "default$default"."Form"."createdAt"::date <= CURRENT_DATE - cast(
+    and "default$default"."Form"."createdAt"::date AT TIME ZONE 'Europe/Paris' <= CURRENT_DATE - cast(
         extract(
             dow
-            FROM CURRENT_DATE
-        ) AS int
+            from CURRENT_DATE
+        ) as int
     )
-order by "createdAt" desc
+order by "processedAt" desc nulls last
