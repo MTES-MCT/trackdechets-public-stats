@@ -1,10 +1,6 @@
 import dash_bootstrap_components as dbc
 import plotly.express as px
-import plotly.graph_objects as go
-import plotly.io as pio
-from dash import dcc, html
-
-from app.data import (
+from app.data.public import (
     get_bsdd_created_df,
     get_bsdd_data,
     get_bsdd_processed_df,
@@ -12,177 +8,8 @@ from app.data import (
     get_company_user_data_df,
     get_user_data,
 )
-from app.data_internal import (
-    get_recent_bsdd_created_week,
-    get_recent_bsdd_received,
-    get_recent_bsdd_sent,
-)
-
-# Override the 'none' template
-pio.templates["gouv"] = go.layout.Template(
-    layout=dict(
-        font=dict(family="Marianne"),
-        title=dict(font=dict(color="black", size=22, family="Marianne-Bold"), x=0.01),
-        paper_bgcolor="rgb(238, 238, 238)",
-        colorway=["#2F4077", "#a94645", "#8D533E", "#417DC4"],
-        yaxis=dict(
-            tickformat=",0f",
-            separatethousands=True,
-        ),
-    ),
-)
-
-pio.templates.default = "none+gouv"
-
-
-def add_figure(fig, fig_id: str) -> dbc.Row:
-    """
-    Boilerplate for figure rows.
-    :param fig: a plotly figure
-    :param fig_id: if of the figure in the resulting HTML
-    :return: HTML Row to be added in a Dash layout
-    """
-
-    row = dbc.Row(
-        [
-            dbc.Col(
-                [
-                    html.Div(
-                        [dcc.Graph(id=fig_id, figure=fig, config={"locale": "fr"})],
-                        className="fr-callout",
-                    )
-                ],
-                width=12,
-            )
-        ]
-    )
-    return row
-
-
-def format_number(input_number) -> str:
-    return "{:,.0f}".format(input_number).replace(",", " ")
-
-
-def add_callout(text: str, width: int, sm_width: int = 0, number: int = None):
-    text_class = "number-text" if number else "fr-callout__text"
-    number_class = "callout-number small-number"
-    small_width = width * 2 if sm_width == 0 else sm_width
-    if number:
-        # Below 1M
-        if number < 1000000:
-            number_class = "callout-number"
-        # Above 10M
-        elif number >= 10000000:
-            number_class = "callout-number smaller-number"
-        # From 1M to 10M-1
-        # don't change initial value
-
-    col = dbc.Col(
-        html.Div(
-            [
-                html.P(format_number(number), className=number_class)
-                if number
-                else None,
-                dcc.Markdown(text, className=text_class),
-            ],
-            className="fr-callout",
-        ),
-        width=small_width,
-        lg=width,
-        class_name="flex",
-    )
-    return col
-
-
-#################################################################################
-#
-#                   Internal stats figures and container
-#
-##################################################################################
-
-# Created BSDD
-internal_bsdd_created_week = px.line(
-    get_recent_bsdd_created_week(),
-    x="createdAt",
-    y="count",
-    text="count",
-    title="BSDD créés par semaine",
-    labels={
-        "count": "BSDD créés",
-        "createdAt": "Semaine de création",
-    },
-    markers=True,
-)
-internal_bsdd_created_week.update_traces(textposition="bottom right")
-
-# Sent BSDD
-internal_bsdd_sent_week = px.line(
-    get_recent_bsdd_sent(),
-    x="sentAt",
-    y="count",
-    text="count",
-    title="BSDD enlevés par semaine",
-    labels={
-        "count": "BSDD enlevés",
-        "sentAt": "Semaine d'enlèvement",
-    },
-    markers=True,
-)
-internal_bsdd_sent_week.update_traces(textposition="bottom right")
-
-# Received BSDD
-internal_bsdd_received_week = px.line(
-    get_recent_bsdd_received(),
-    x="receivedAt",
-    y="count",
-    text="count",
-    title="BSDD réceptionnés par semaine",
-    labels={
-        "count": "BSDD réceptionnés",
-        "receivedAt": "Semaine de réception",
-    },
-    markers=True,
-)
-internal_bsdd_received_week.update_traces(textposition="bottom right")
-
-internal_stats_container = [
-    dbc.Row(
-        dbc.Col(
-            [
-                html.H1("Statistiques de montée en charge de Trackdéchets"),
-                html.H2("Bordereaux de suivi de déchets dangereux (BSDD)"),
-            ]
-        )
-    ),
-    dbc.Row(
-        dbc.Col(
-            [add_figure(internal_bsdd_created_week, "internal_bsdd_created_week")],
-            width=10,
-        )
-    ),
-    dbc.Row(
-        dbc.Col(
-            [add_figure(internal_bsdd_sent_week, "internal_bsdd_sent_week")], width=10
-        )
-    ),
-    dbc.Row(
-        dbc.Col(
-            [add_figure(internal_bsdd_received_week, "internal_bsdd_received_week")],
-            width=10,
-        )
-    ),
-]
-
-
-# Router
-# @callback(Output("layout-container", "children"), [Input("url", "pathname")])
-# def display_page(pathname):
-#     if pathname == "/":
-#         return public_stats_container
-#     elif pathname == "/internal-stats":
-#         return internal_stats_container
-#     else:
-#         return 'Page inconnue : "' + pathname + '"'
+from app.layout.utils import add_callout, add_figure
+from dash import dcc, html
 
 
 def get_public_stats_container():
@@ -322,7 +149,7 @@ avec de nouvelles statistiques.
                 ),
                 add_callout(
                     number=company_created_total_life,
-                    text="établissements inscrits",
+                    text="établissements inscrits au total",
                     width=3,
                 ),
                 add_callout(
@@ -332,7 +159,7 @@ avec de nouvelles statistiques.
                 ),
                 add_callout(
                     number=user_created_total_life,
-                    text="utilisateurs inscrits",
+                    text="utilisateurs inscrits au total",
                     width=3,
                 ),
             ]

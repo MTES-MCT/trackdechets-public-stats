@@ -13,7 +13,7 @@ from app.time_config import *
 
 # postgresql://admin:admin@localhost:5432/ibnse
 DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
-SQL_PATH = Path("app/sql")
+SQL_PATH = Path(__file__).parent.absolute() / "sql"
 
 # Created BSDD
 # @appcache.memoize(timeout=cache_timeout)
