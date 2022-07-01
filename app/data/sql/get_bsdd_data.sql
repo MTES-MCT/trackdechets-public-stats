@@ -21,10 +21,24 @@ where "Form"."isDeleted" = false
         ) as int
     )
     and (
-        "processedAt" >= '1970-01-01'
+        (
+            "processedAt" >= '1970-01-01'
+            and "processedAt" < '2262-04-11'
+            /* Due to pandas timestamp limitations */
+        )
         or "processedAt" is null
     )
     and (
-        "sentAt" >= '1970-01-01'
+        (
+            "sentAt" >= '1970-01-01'
+            and "sentAt" < '2262-04-11'
+        )
         or "sentAt" is null
+    )
+    and (
+        (
+            "receivedAt" >= '1970-01-01'
+            and "receivedAt" < '2262-04-11'
+        )
+        or "receivedAt" is null
     )
