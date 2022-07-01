@@ -3,81 +3,75 @@
 #                       Internal statistics
 #
 #######################################################################################################
+from datetime import datetime, timedelta
 from os import getenv
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import sqlalchemy
 
-from app.time_config import *
 
 # postgresql://admin:admin@localhost:5432/ibnse
 DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
 SQL_PATH = Path(__file__).parent.absolute() / "sql"
 
-# Created BSDD
-# @appcache.memoize(timeout=cache_timeout)
-def get_recent_bsdd_created_week() -> pd.DataFrame:
-    df = pd.read_sql_query(
-        sqlalchemy.text(
-            """
-            SELECT date_trunc('week', "default$default"."Form"."createdAt") AS "createdAt", count(*) AS "count"
-            FROM "default$default"."Form"
-            WHERE ("default$default"."Form"."isDeleted" = FALSE
-               AND "default$default"."Form"."createdAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) + (INTERVAL '-20 week')) AS timestamp)) 
-               AND "default$default"."Form"."createdAt" < date_trunc('week', CAST(now() AS timestamp)))
-            GROUP BY date_trunc('week', "default$default"."Form"."createdAt")
-            ORDER BY date_trunc('week', "default$default"."Form"."createdAt")
-        """
-        ),
-        con=DB_ENGINE,
-    )
 
-    # By default the column name is createdat (lowercase), strange
-    column_name = df.columns[0]
-    df.rename(columns={column_name: "createdAt"}, inplace=True)
+def get_bsd_created(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+    df = (
+        bsdd_data.groupby(by=pd.Grouper(key="createdAt", freq="1W"))
+        .count()
+        .reset_index()
+    )
     return df
 
 
 # Sent BSDD
 # @appcache.memoize(timeout=cache_timeout)
-def get_recent_bsdd_sent() -> pd.DataFrame:
-    df = pd.read_sql_query(
-        sqlalchemy.text(
-            """
-            SELECT date_trunc('week', "default$default"."Form"."sentAt") AS "sentAt", count(*) AS "count"
-            FROM "default$default"."Form"
-            WHERE ("default$default"."Form"."isDeleted" = FALSE
-               AND "default$default"."Form"."sentAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) + 
-               (INTERVAL '-20 week')) AS timestamp)) 
-               AND "default$default"."Form"."sentAt" < date_trunc('week', CAST(now() AS timestamp)))
-            GROUP BY date_trunc('week', "default$default"."Form"."sentAt")
-            ORDER BY date_trunc('week', "default$default"."Form"."sentAt") 
-        """
-        ),
-        con=DB_ENGINE,
+def get_recent_bsdd_sent(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+
+    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
 
-    return df
+    bsdd_data = bsdd_data[
+        (
+            (bsdd_data["sentAt"] >= "2021-01-01")
+            & (bsdd_data["sentAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
+        )
+        | bsdd_data["sentAt"].isna()
+    ]
+    grouped = (
+        bsdd_data.groupby(by=pd.Grouper(key="sentAt", freq="1W"))["id"]
+        .count()
+        .reset_index()
+    )
+
+    return grouped
 
 
 # Received BSDD
 # @appcache.memoize(timeout=cache_timeout)
-def get_recent_bsdd_received() -> pd.DataFrame:
-    df = pd.read_sql_query(
-        sqlalchemy.text(
-            """
-            SELECT date_trunc('week', "default$default"."Form"."receivedAt") AS "receivedAt", count(*) AS "count"
-            FROM "default$default"."Form"
-            WHERE ("default$default"."Form"."isDeleted" = FALSE
-               AND "default$default"."Form"."receivedAt" >= date_trunc('week', CAST((CAST(now() AS timestamp) 
-               + (INTERVAL '-20 week')) AS timestamp)) 
-               AND "default$default"."Form"."receivedAt" < date_trunc('week', CAST(now() AS timestamp)))
-            GROUP BY date_trunc('week', "default$default"."Form"."receivedAt")
-            ORDER BY date_trunc('week', "default$default"."Form"."receivedAt")
-        """
-        ),
-        con=DB_ENGINE,
+def get_recent_bsdd_received(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+
+    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
 
-    return df
+    bsdd_data = bsdd_data[
+        (
+            (bsdd_data["receivedAt"] >= "2021-01-01")
+            & (
+                bsdd_data["receivedAt"]
+                < (now - timedelta(days=(now.toordinal() % 7) - 1))
+            )
+        )
+        | bsdd_data["receivedAt"].isna()
+    ]
+    grouped = (
+        bsdd_data.groupby(by=pd.Grouper(key="receivedAt", freq="1W"))["id"]
+        .count()
+        .reset_index()
+    )
+
+    return grouped

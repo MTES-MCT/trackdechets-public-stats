@@ -2,21 +2,20 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 from app.data.public import (
     get_bsdd_created_df,
-    get_bsdd_data,
     get_bsdd_processed_df,
-    get_company_data,
     get_company_user_data_df,
-    get_user_data,
 )
+from app.data.data_extract import get_bsd_data, get_company_data, get_user_data
+
 from app.layout.utils import add_callout, add_figure
 from dash import dcc, html
 
 
 def get_public_stats_container():
 
-    bsdd_data_df = get_bsdd_data()
+    bsd_data_df = get_bsd_data(include_drafts=False)
 
-    bsdd_created_weekly_df = get_bsdd_created_df(bsdd_data_df)
+    bsdd_created_weekly_df = get_bsdd_created_df(bsd_data_df)
 
     bsdd_created_weekly = px.line(
         bsdd_created_weekly_df,
@@ -32,9 +31,9 @@ def get_public_stats_container():
     )
     bsdd_created_weekly.update_traces(textposition="top center")
 
-    bsdd_created_total = bsdd_data_df.index.size
+    bsdd_created_total = bsd_data_df.index.size
 
-    quantity_processed_weekly_df = get_bsdd_processed_df(bsdd_data=bsdd_data_df)
+    quantity_processed_weekly_df = get_bsdd_processed_df(bsdd_data=bsd_data_df)
     quantity_processed_weekly = px.bar(
         quantity_processed_weekly_df,
         title="Déchets dangereux traités par semaine",
