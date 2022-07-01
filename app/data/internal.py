@@ -36,7 +36,7 @@ def get_recent_bsdd_sent(bsdd_data: pd.DataFrame) -> pd.DataFrame:
 
     bsdd_data = bsdd_data[
         (
-            (bsdd_data["sentAt"] >= "2021-01-01")
+            (bsdd_data["sentAt"] >= "2022-01-01")
             & (bsdd_data["sentAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
         )
         | bsdd_data["sentAt"].isna()
@@ -60,7 +60,7 @@ def get_recent_bsdd_received(bsdd_data: pd.DataFrame) -> pd.DataFrame:
 
     bsdd_data = bsdd_data[
         (
-            (bsdd_data["receivedAt"] >= "2021-01-01")
+            (bsdd_data["receivedAt"] >= "2022-01-01")
             & (
                 bsdd_data["receivedAt"]
                 < (now - timedelta(days=(now.toordinal() % 7) - 1))
