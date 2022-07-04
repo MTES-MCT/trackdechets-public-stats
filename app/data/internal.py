@@ -1,8 +1,3 @@
-#######################################################################################################
-#
-#                       Internal statistics
-#
-#######################################################################################################
 from datetime import datetime, timedelta
 from os import getenv
 from pathlib import Path
@@ -12,12 +7,21 @@ import pandas as pd
 import sqlalchemy
 
 
-# postgresql://admin:admin@localhost:5432/ibnse
 DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
 SQL_PATH = Path(__file__).parent.absolute() / "sql"
 
 
 def get_bsd_created(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Creates a DataFrame with number of BSD(D) created by week.
+    It includes non dangerous BSD also.
+
+    Parameters
+    ----------
+    bsdd_data: DataFrame
+        DataFrame containing BSD(D) data.
+    """
+
     df = (
         bsdd_data.groupby(by=pd.Grouper(key="createdAt", freq="1W"))
         .count()
@@ -26,9 +30,16 @@ def get_bsd_created(bsdd_data: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# Sent BSDD
-# @appcache.memoize(timeout=cache_timeout)
 def get_recent_bsdd_sent(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Creates a DataFrame with number of BSD(D) sent by week.
+    It includes non dangerous BSD also.
+
+    Parameters
+    ----------
+    bsdd_data: DataFrame
+        DataFrame containing BSD(D) data.
+    """
 
     now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
         hour=0, minute=0, second=0, microsecond=0
@@ -50,9 +61,17 @@ def get_recent_bsdd_sent(bsdd_data: pd.DataFrame) -> pd.DataFrame:
     return grouped
 
 
-# Received BSDD
-# @appcache.memoize(timeout=cache_timeout)
+
 def get_recent_bsdd_received(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Creates a DataFrame with number of BSD(D) received by week.
+    It includes non dangerous BSD also.
+
+    Parameters
+    ----------
+    bsdd_data: DataFrame
+        DataFrame containing BSD(D) data.
+    """
 
     now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
         hour=0, minute=0, second=0, microsecond=0

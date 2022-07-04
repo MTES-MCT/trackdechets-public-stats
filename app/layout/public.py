@@ -1,17 +1,25 @@
+from os import getenv
+from typing import List
+
 import dash_bootstrap_components as dbc
 import plotly.express as px
+from app.data.data_extract import get_bsd_data, get_company_data, get_user_data
 from app.data.public import (
     get_bsdd_created_df,
     get_bsdd_processed_df,
     get_company_user_data_df,
 )
-from app.data.data_extract import get_bsd_data, get_company_data, get_user_data
-
 from app.layout.utils import add_callout, add_figure
 from dash import dcc, html
 
+from . import cache
 
-def get_public_stats_container():
+
+@cache.memoize(timeout=int(getenv("CACHE_TIMEOUT_S")))
+def get_public_stats_container() -> List[dbc.Row]:
+    """Create all figures needed for the public stats page
+    and returns an Dash HTML layout ready to be displayed.
+    """
 
     bsd_data_df = get_bsd_data(include_drafts=False)
 
@@ -174,17 +182,3 @@ avec de nouvelles statistiques.
         ),
     ]
     return public_stats_container
-
-
-def serve_layout() -> html:
-    print("layout served")
-    layout = html.Main(
-        children=[
-            # dcc.Location(id="url", refresh=False),
-            dbc.Container(
-                fluid=True, id="layout-container", children=get_public_stats_container()
-            ),
-        ]
-    )
-
-    return layout

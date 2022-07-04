@@ -17,7 +17,17 @@ SQL_PATH = Path(__file__).parent.absolute() / "sql"
 def get_bsd_data(include_drafts: bool = False) -> pd.DataFrame:
     """
     Queries the configured database for BSDD data.
-    :return: dataframe of BSDD for a given period of time, with their creation date
+
+    Parameters
+    ----------
+    include_drafts: bool
+        Wether to include drafts BSDD in the result.
+
+    Returns
+    -------
+    DataFrame
+        dataframe of BSDD for a given period of time, with all necessary data to create
+        the app figures.
     """
 
     started_time = time.time()
@@ -56,7 +66,11 @@ def get_bsd_data(include_drafts: bool = False) -> pd.DataFrame:
 def get_company_data() -> pd.DataFrame:
     """
     Queries the configured database for company data.
-    :return: dataframe of companies for a given period of time, with their creation date
+
+    Returns
+    -------
+    DataFrame
+        dataframe of companies for a given period of time, with their creation date
     """
     started_time = time.time()
 
@@ -88,7 +102,11 @@ def get_company_data() -> pd.DataFrame:
 def get_user_data() -> pd.DataFrame:
     """
     Queries the configured database for user data, focused on creation date.
-    :return: dataframe of users for a given period of time, with their creation date
+
+    Returns
+    --------
+    DataFrame
+        dataframe of users for a given period of time, with their creation date
     """
     started_time = time.time()
 

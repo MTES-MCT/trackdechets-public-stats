@@ -6,6 +6,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import plotly.io as pio
 
+from app.layout import cache
 from app.layout.serve import serve_layout
 
 external_scripts = ["https://cdn.plot.ly/plotly-locale-fr-latest.js"]
@@ -35,6 +36,8 @@ pio.templates["gouv"] = go.layout.Template(
 
 pio.templates.default = "none+gouv"
 
+# cache initialisation
+cache.init_app(dash_app.server)
 
 dash_app.layout = serve_layout
 # Add the @lang attribute to the root <html>

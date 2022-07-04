@@ -20,7 +20,9 @@ from dash import html
 
 
 def get_internal_stats_container() -> List[dbc.Row]:
-
+    """Create all figures needed for the internal stats page
+    and returns an Dash HTML layout ready to be displayed.
+    """
     bsd_data_df = get_bsd_data(include_drafts=True)
 
     bsd_created_weekly_df = get_bsd_created(bsd_data_df)
