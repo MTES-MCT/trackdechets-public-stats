@@ -33,7 +33,12 @@ def get_public_stats_container() -> List[dbc.Row]:
         markers=True,
         text="id",
     )
-    bsdd_created_weekly.update_traces(textposition="top center")
+    bsdd_created_weekly.update_traces(
+        {
+            "textposition": "top center",
+            "textfont_size": 10,
+        }
+    )
 
     bsdd_created_total = bsd_data_df.index.size
 
