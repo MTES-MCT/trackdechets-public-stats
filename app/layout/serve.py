@@ -1,11 +1,19 @@
+import os
 from typing import List
-from app.layout.public import get_public_stats_container
-from app.layout.internal import get_internal_stats_container
-from dash import html, Input, Output, callback, dcc
+
 import dash_bootstrap_components as dbc
+from app.layout.internal import get_internal_stats_container
+from app.layout.public import get_public_stats_container
+from dash import Input, Output, callback, dcc, html
+
+from . import cache
+
+CACHE_TIMEOUT = int(os.environ["CACHE_TIMEOUT_S"])
+
 
 # Router
 @callback(Output("layout-container", "children"), [Input("url", "pathname")])
+@cache.memoize(timeout=CACHE_TIMEOUT)
 def display_page(pathname: str) -> List[dbc.Row]:
     """Returns either public stats or internal stats container
     dependeing on request path.

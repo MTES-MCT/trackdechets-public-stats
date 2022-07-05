@@ -1,4 +1,3 @@
-from os import getenv
 from typing import List
 
 import dash_bootstrap_components as dbc
@@ -12,10 +11,7 @@ from app.data.public import (
 from app.layout.utils import add_callout, add_figure
 from dash import dcc, html
 
-from . import cache
 
-
-@cache.memoize(timeout=int(getenv("CACHE_TIMEOUT_S")))
 def get_public_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the public stats page
     and returns an Dash HTML layout ready to be displayed.
