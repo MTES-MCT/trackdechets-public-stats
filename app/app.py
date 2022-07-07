@@ -39,7 +39,7 @@ pio.templates.default = "none+gouv"
 # cache initialisation
 cache.init_app(dash_app.server)
 
-dash_app.layout = serve_layout
+dash_app.layout = serve_layout()
 # Add the @lang attribute to the root <html>
 dash_app.index_string = dash_app.index_string.replace("<html>", '<html lang="fr">')
 # print(dash_app.index_string)

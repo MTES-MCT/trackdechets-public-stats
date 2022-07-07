@@ -1,24 +1,23 @@
+import os
 from typing import List
 
 import dash_bootstrap_components as dbc
 import plotly.express as px
+from app.data.data_extract import get_bsd_data
 from app.data.internal import (
+    get_bsd_created,
     get_recent_bsdd_received,
     get_recent_bsdd_sent,
 )
-from app.data.internal import get_bsd_created
-from app.data.data_extract import get_bsd_data
-
 from app.layout.utils import add_figure
 from dash import html
 
-#################################################################################
-#
-#                   Internal stats figures and container
-#
-##################################################################################
+from . import cache
+
+CACHE_TIMEOUT = int(os.environ["CACHE_TIMEOUT_S"])
 
 
+@cache.memoize(timeout=CACHE_TIMEOUT)
 def get_internal_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the internal stats page
     and returns an Dash HTML layout ready to be displayed.
