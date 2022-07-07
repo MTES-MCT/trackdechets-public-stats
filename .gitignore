@@ -4,3 +4,6 @@
 .idea
 cache
 __pycache__
+.vscode
+.ipynb_checkpoints
+*.ipynb
