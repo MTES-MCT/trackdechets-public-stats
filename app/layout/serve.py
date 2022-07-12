@@ -6,7 +6,8 @@ from app.layout.internal import get_internal_stats_container
 from app.layout.public import get_public_stats_container
 from dash import Input, Output, callback, dcc, html
 
-
+PUBLIC_STATS_CONTAINER = get_public_stats_container()
+INTERNAL_STATS_CONTAINER = get_internal_stats_container()
 # Router
 @callback(Output("layout-container", "children"), [Input("url", "pathname")])
 def display_page(pathname: str) -> List[dbc.Row]:
@@ -23,9 +24,9 @@ def display_page(pathname: str) -> List[dbc.Row]:
     A Dash HTML layout that depends on the path and that is ready to be displayed.
     """
     if pathname == "/":
-        return get_public_stats_container()
+        return PUBLIC_STATS_CONTAINER
     elif pathname == "/internal-stats":
-        return get_internal_stats_container()
+        return INTERNAL_STATS_CONTAINER
     else:
         return 'Page inconnue : "' + pathname + '"'
 
