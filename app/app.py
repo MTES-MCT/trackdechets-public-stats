@@ -4,7 +4,6 @@ Dash dash_app configuration
 import dash
 import dash_bootstrap_components as dbc
 
-
 from app.layout.serve import serve_layout
 
 
@@ -18,6 +17,7 @@ dash_app = dash.Dash(
     external_stylesheets=[dbc.themes.GRID],
     external_scripts=external_scripts,
 )
+
 
 dash_app.layout = serve_layout()
 # Add the @lang attribute to the root <html>

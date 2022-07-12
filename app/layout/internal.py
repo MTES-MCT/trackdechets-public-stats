@@ -12,8 +12,6 @@ from app.layout.utils import add_figure
 from dash import html
 
 
-
-
 def get_internal_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the internal stats page
     and returns an Dash HTML layout ready to be displayed.

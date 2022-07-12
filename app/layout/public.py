@@ -13,7 +13,6 @@ from dash import dcc, html
 
 
 
-
 def get_public_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the public stats page
     and returns an Dash HTML layout ready to be displayed.
