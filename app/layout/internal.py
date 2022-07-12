@@ -17,7 +17,6 @@ from . import cache
 CACHE_TIMEOUT = int(os.environ["CACHE_TIMEOUT_S"])
 
 
-@cache.memoize(timeout=CACHE_TIMEOUT)
 def get_internal_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the internal stats page
     and returns an Dash HTML layout ready to be displayed.
