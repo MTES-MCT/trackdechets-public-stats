@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 import dash_bootstrap_components as dbc
@@ -11,10 +10,6 @@ from app.data.internal import (
 )
 from app.layout.utils import add_figure
 from dash import html
-
-from . import cache
-
-CACHE_TIMEOUT = int(os.environ["CACHE_TIMEOUT_S"])
 
 
 def get_internal_stats_container() -> List[dbc.Row]:

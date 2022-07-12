@@ -1,6 +1,7 @@
 # Statistiques publiques Trackdéchets
 
-**version 1.5.0**
+**version 1.5.1**
+
 
 
 > Application basée sur Plotly Dash consacrée à la publication d'un tableau de bord illustrant l'activité de [l'application
@@ -35,6 +36,10 @@ pipenv run run.py
 ```
 
 ### Notes de versions
+
+**1.5.1 12/07/2022**
+- Suppression de toute mention de cache
+
 
 **1.5.0 07/07/2022**
 - Refactoring complet de l'application
