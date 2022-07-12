@@ -35,7 +35,7 @@ pipenv run run.py
 
 ### Notes de versions
 
-**1.4.5 07/07/2022**
+**1.5.0 07/07/2022**
 - Refactoring complet de l'application
 - Changement de la logique d'actualisation des données
 
