@@ -594,6 +594,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==5.0.1"
+
         },
         "certifi": {
             "hashes": [
@@ -759,6 +760,7 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==8.4.0"
+
         },
         "ipython-genutils": {
             "hashes": [
@@ -821,6 +823,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==7.3.4"
+
         },
         "jupyter-console": {
             "hashes": [
@@ -861,6 +864,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==4.0.0a26"
+
         },
         "jupyterlab-pygments": {
             "hashes": [
@@ -877,6 +881,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==2.14.0"
+
         },
         "jupyterlab-widgets": {
             "hashes": [
@@ -993,6 +998,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==7.0.0a5"
+
         },
         "notebook-shim": {
             "hashes": [
@@ -1071,6 +1077,7 @@
             ],
             "markers": "python_full_version >= '3.6.2'",
             "version": "==3.0.30"
+
         },
         "psutil": {
             "hashes": [
@@ -1259,6 +1266,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==5.3.1"
+
         },
         "qtpy": {
             "hashes": [
@@ -1291,6 +1299,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==62.6.0"
+
         },
         "six": {
             "hashes": [
@@ -1346,6 +1355,7 @@
             ],
             "markers": "python_full_version < '3.11.0a7'",
             "version": "==2.0.1"
+
         },
         "tornado": {
             "hashes": [
@@ -1379,6 +1389,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==4.2.0"
+
         },
         "urllib3": {
             "hashes": [
@@ -1386,6 +1397,7 @@
                 "sha256:aabaf16477806a5e1dd19aa41f8c2b7950dd3c746362d7e3223dbe6de6ac448e"
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4.0'",
+
             "version": "==1.26.9"
         },
         "wcwidth": {
@@ -1409,6 +1421,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==1.3.3"
+
         },
         "widgetsnbextension": {
             "hashes": [
@@ -1457,6 +1470,7 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==0.1.13"
+
         }
     }
 }
