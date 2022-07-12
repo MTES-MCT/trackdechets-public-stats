@@ -17,6 +17,8 @@ gunicorn = "*"
 
 [dev-packages]
 jupyter = "*"
+black = "*"
+ipykernel = "*"
 
 [requires]
 python_version = "3.10"

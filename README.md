@@ -1,6 +1,7 @@
 # Statistiques publiques Trackdéchets
 
-**version 1.4.0**
+**version 1.5.0**
+
 
 > Application basée sur Plotly Dash consacrée à la publication d'un tableau de bord illustrant l'activité de [l'application
 > Trackdéchets](https://app.trackdechets.beta.gouv.fr/). Ce tableau de bord vise à donner au grand public aux
@@ -30,10 +31,14 @@ pipenv install
 4. Démarrez l'application
 
 ```bash
-pipenv run gunicorn --bind 0.0.0.0:8700 run:server
+pipenv run run.py
 ```
 
 ### Notes de versions
+
+**1.5.0 07/07/2022**
+- Refactoring complet de l'application
+- Changement de la logique d'actualisation des données
 
 **1.4.0 13/06/2022**
 
