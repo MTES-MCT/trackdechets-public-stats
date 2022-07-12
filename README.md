@@ -2,6 +2,7 @@
 
 **version 1.5.0**
 
+
 > Application basée sur Plotly Dash consacrée à la publication d'un tableau de bord illustrant l'activité de [l'application
 > Trackdéchets](https://app.trackdechets.beta.gouv.fr/). Ce tableau de bord vise à donner au grand public aux
 > professionnels du déchet un aperçu du cycle de vie des déchets en France.
@@ -35,7 +36,7 @@ pipenv run run.py
 
 ### Notes de versions
 
-**1.4.5 07/07/2022**
+**1.5.0 07/07/2022**
 - Refactoring complet de l'application
 - Changement de la logique d'actualisation des données
 

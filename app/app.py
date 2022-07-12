@@ -7,6 +7,7 @@ import dash_bootstrap_components as dbc
 
 from app.layout.serve import serve_layout
 
+
 external_scripts = ["https://cdn.plot.ly/plotly-locale-fr-latest.js"]
 extra_config = {"locale": "fr"}
 
