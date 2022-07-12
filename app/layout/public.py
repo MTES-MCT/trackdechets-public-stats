@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 import dash_bootstrap_components as dbc
@@ -11,10 +10,6 @@ from app.data.public import (
 )
 from app.layout.utils import add_callout, add_figure
 from dash import dcc, html
-
-from . import cache
-
-CACHE_TIMEOUT = int(os.environ["CACHE_TIMEOUT_S"])
 
 
 def get_public_stats_container() -> List[dbc.Row]:
@@ -38,10 +33,14 @@ def get_public_stats_container() -> List[dbc.Row]:
         markers=True,
         text="id",
     )
+    textpositions = [
+        "top center" if i % 2 else "bottom center"
+        for i in range(bsdd_created_weekly_df.shape[0])
+    ]
     bsdd_created_weekly.update_traces(
         {
-            "textposition": "top center",
-            "textfont_size": 10,
+            "textfont_size": 13,
+            "textposition": textpositions,
         }
     )
 
