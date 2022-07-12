@@ -62,7 +62,6 @@ def get_bsd_data(include_drafts: bool = False) -> pd.DataFrame:
     return bsdd_data_df
 
 
-# @appcache.memoize(timeout=10)
 def get_company_data() -> pd.DataFrame:
     """
     Queries the configured database for company data.
