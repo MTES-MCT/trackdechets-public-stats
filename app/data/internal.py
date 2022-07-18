@@ -6,7 +6,6 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import sqlalchemy
 
-
 DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
 SQL_PATH = Path(__file__).parent.absolute() / "sql"
 
@@ -59,7 +58,6 @@ def get_recent_bsdd_sent(bsdd_data: pd.DataFrame) -> pd.DataFrame:
     )
 
     return grouped
-
 
 
 def get_recent_bsdd_received(bsdd_data: pd.DataFrame) -> pd.DataFrame:

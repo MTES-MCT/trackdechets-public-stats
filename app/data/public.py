@@ -2,8 +2,8 @@
 Data gathering and processing
 """
 from datetime import datetime, timedelta
-
 from zoneinfo import ZoneInfo
+
 import pandas as pd
 
 
@@ -18,72 +18,62 @@ def normalize_processing_operation(col: pd.Series) -> pd.Series:
     return col.replace(regex=regex_dict)
 
 
-def get_bsdd_created_df(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+def get_weekly_bs_created_df(bs_data: pd.DataFrame) -> pd.DataFrame:
     """
-    Creates a DataFrame with number of BSDD created by week.
+    Creates a DataFrame with number of BSx created by week.
 
     Parameters
     ----------
-    bsdd_data: DataFrame
-        DataFrame containing BSDD data.
+    bs_data: DataFrame
+        DataFrame containing BSx data.
     """
-    bsdd_data = bsdd_data[
-        (
-            bsdd_data["wasteDetailsCode"].str.match(r".*\*$")
-            | bsdd_data["wasteDetailsPop"]
-        )
-    ]
+
     df = (
-        bsdd_data.groupby(by=pd.Grouper(key="createdAt", freq="1W"))
-        .count()
-        .reset_index()
+        bs_data.groupby(by=pd.Grouper(key="createdAt", freq="1W")).count().reset_index()
     )
+
     return df
 
 
-def get_bsdd_processed_df(bsdd_data: pd.DataFrame) -> pd.DataFrame:
+def get_weekly_bs_processed_df(
+    bs_data: pd.DataFrame,
+) -> pd.DataFrame:
     """
     Creates a DataFrame with total weight of dangerous waste processed by week.
 
     Parameters
     ----------
-    bsdd_data: DataFrame
-        DataFrame containing BSDD data.
+    bs_data: DataFrame
+        DataFrame containing BSx data.
     """
 
     now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
 
-    df = bsdd_data[
+    df = bs_data[
         (
-            bsdd_data["wasteDetailsCode"].str.match(r".*\*$")
-            | bsdd_data["wasteDetailsPop"]
+            (bs_data["processedAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
+            | bs_data["processedAt"].isna()
         )
-        & (
-            (
-                bsdd_data["processedAt"]
-                < (now - timedelta(days=(now.toordinal() % 7) - 1))
-            )
-            | bsdd_data["processedAt"].isna()
-        )
-        & (bsdd_data["status"] == "PROCESSED")
-        & (bsdd_data["processedAt"] >= "2022-01-01")
+        & (bs_data["status"] == "PROCESSED")
+        & (bs_data["processedAt"] >= "2022-01-01")
     ].copy()
-    df["recipientProcessingOperation"] = normalize_processing_operation(
-        df["recipientProcessingOperation"]
+
+    df["processingOperation"] = normalize_processing_operation(
+        df["processingOperation"]
     )
 
     df = (
         df.groupby(
             by=[
                 pd.Grouper(key="processedAt", freq="1W"),
-                "recipientProcessingOperation",
+                "processingOperation",
             ]
-        )
+        )["weightValue"]
         .sum()
         .round()
-    ).reset_index()
+    )
 
     return df
 

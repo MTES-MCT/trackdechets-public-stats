@@ -1,10 +1,10 @@
-import os
 from typing import List
 
 import dash_bootstrap_components as dbc
+from dash import Input, Output, callback, dcc, html
+
 from app.layout.internal import get_internal_stats_container
 from app.layout.public import get_public_stats_container
-from dash import Input, Output, callback, dcc, html
 
 PUBLIC_STATS_CONTAINER = get_public_stats_container()
 INTERNAL_STATS_CONTAINER = get_internal_stats_container()

@@ -1,22 +1,30 @@
+from pathlib import Path
 from typing import List
 
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from app.data.data_extract import get_bsd_data
+from dash import html
+
+from app.data.data_extract import get_bs_data
 from app.data.internal import (
     get_bsd_created,
     get_recent_bsdd_received,
     get_recent_bsdd_sent,
 )
 from app.layout.utils import add_figure
-from dash import html
+
+SQL_PATH = Path.cwd().absolute() / "app/data/sql"
 
 
 def get_internal_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the internal stats page
     and returns an Dash HTML layout ready to be displayed.
     """
-    bsd_data_df = get_bsd_data(include_drafts=True)
+    bsd_data_df = get_bs_data(
+        sql_path=SQL_PATH / "get_bsdd_data.sql",
+        include_drafts=True,
+        include_only_dangerous_waste=False,
+    )
 
     bsd_created_weekly_df = get_bsd_created(bsd_data_df)
 
