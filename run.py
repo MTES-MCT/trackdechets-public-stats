@@ -1,6 +1,6 @@
-from app.app import dash_app
 from os import getenv
 
+from app.app import dash_app
 
 # To use `gunicorn run:server` (prod)
 server = dash_app.server

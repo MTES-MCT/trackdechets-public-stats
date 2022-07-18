@@ -2,15 +2,19 @@ from typing import List
 
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from app.data.data_extract import get_bsd_data, get_company_data, get_user_data
-from app.data.public import (
-    get_bsdd_created_df,
-    get_bsdd_processed_df,
-    get_company_user_data_df,
-)
-from app.layout.utils import add_callout, add_figure
+from black import Path
 from dash import dcc, html
 
+from app.data.data_extract import get_bs_data, get_company_data, get_user_data
+from app.data.public import (
+    get_company_user_data_df,
+    get_weekly_bs_created_df,
+    get_weekly_bs_processed_df,
+)
+from app.layout.figures_factory import create_weekly_bs_created_figure
+from app.layout.utils import add_callout, add_figure
+
+SQL_PATH = Path.cwd().absolute() / "app/data/sql"
 
 
 def get_public_stats_container() -> List[dbc.Row]:
@@ -18,51 +22,67 @@ def get_public_stats_container() -> List[dbc.Row]:
     and returns an Dash HTML layout ready to be displayed.
     """
 
-    bsd_data_df = get_bsd_data(include_drafts=False)
-
-    bsdd_created_weekly_df = get_bsdd_created_df(bsd_data_df)
-
-    bsdd_created_weekly = px.line(
-        bsdd_created_weekly_df,
-        y="id",
-        x="createdAt",
-        title="Bordereaux de suivi de déchets dangereux (BSDD) créés par semaine",
-        labels={
-            "id": "Bordereaux de suivi de déchets dangereux",
-            "createdAt": "Date de création",
-        },
-        markers=True,
-        text="id",
+    # Load all needed data
+    bsd_data_df = get_bs_data(
+        sql_path=SQL_PATH / "get_bsdd_data.sql",
     )
-    textpositions = [
-        "top center" if i % 2 else "bottom center"
-        for i in range(bsdd_created_weekly_df.shape[0])
-    ]
-    bsdd_created_weekly.update_traces(
-        {
-            "textfont_size": 13,
-            "textposition": textpositions,
-        }
+    bsda_data_df = get_bs_data(
+        sql_path=SQL_PATH / "get_bsda_data.sql",
+    )
+    bsff_data_df = get_bs_data(
+        sql_path=SQL_PATH / "get_bsff_data.sql",
+    )
+    bsdasri_data_df = get_bs_data(
+        sql_path=SQL_PATH / "get_bsdasri_data.sql",
+    )
+
+    # BSx created weekly figure
+    bsdd_created_weekly_df = get_weekly_bs_created_df(
+        bsd_data_df,
+    )
+    bsda_created_weekly_df = get_weekly_bs_created_df(bsda_data_df)
+    bsff_created_weekly_df = get_weekly_bs_created_df(bsff_data_df)
+    bsdasri_created_weekly_df = get_weekly_bs_created_df(bsdasri_data_df)
+
+    bs_created_weekly = create_weekly_bs_created_figure(
+        bsdd_created_weekly_df,
+        bsda_created_weekly_df,
+        bsff_created_weekly_df,
+        bsdasri_created_weekly_df,
     )
 
     bsdd_created_total = bsd_data_df.index.size
 
-    quantity_processed_weekly_df = get_bsdd_processed_df(bsdd_data=bsd_data_df)
+    # Waste weight processed weekly
+
+    bsdd_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsd_data_df)
+    bsda_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsda_data_df)
+    bsff_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsff_data_df)
+    bsdasri_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsdasri_data_df)
+
+    quantity_processed_weekly_df = bsdd_quantity_processed_weekly_df
+    for df in [
+        bsda_quantity_processed_weekly_df,
+        bsff_quantity_processed_weekly_df,
+        bsdasri_quantity_processed_weekly_df,
+    ]:
+        quantity_processed_weekly_df.add(df, fill_value=0)
+
     quantity_processed_weekly = px.bar(
-        quantity_processed_weekly_df,
-        title="Déchets dangereux traités par semaine",
-        color="recipientProcessingOperation",
-        y="quantityReceived",
+        quantity_processed_weekly_df.reset_index(),
+        title="Quantités de déchets dangereux traités par semaine",
+        color="processingOperation",
+        y="weightValue",
         x="processedAt",
-        text="quantityReceived",
+        text="weightValue",
         labels={
-            "quantityReceived": "Déchets dangereux traités (tonnes)",
+            "weightValue": "Déchets dangereux traités (tonnes)",
             "processedAt": "Date du traitement",
-            "recipientProcessingOperation": "Type de traitement",
+            "processingOperation": "Type de traitement",
         },
     )
 
-    quantity_processed_total = quantity_processed_weekly_df["quantityReceived"].sum()
+    quantity_processed_total = quantity_processed_weekly_df.sum()
 
     company_data_df = get_company_data()
     user_data_df = get_user_data()
@@ -122,6 +142,11 @@ avec de nouvelles statistiques.
             ]
         ),
         html.H2("Déchets dangereux"),
+        dcc.Markdown(
+            """
+Les nombres présentés ici incluent tous les types de déchets nécessitant un suivi particulier : **déchets dangereux** (DD), **déchets d'amiante** (DA), déchets de **fluide frigorigène** (FF) et **déchets d'activités de soins à risques infectieux** (DASRI).
+        """
+        ),
         dbc.Row(
             [
                 add_callout(
@@ -149,7 +174,7 @@ avec de nouvelles statistiques.
             "bsdd_processed_weekly",
         ),
         add_figure(
-            bsdd_created_weekly,
+            bs_created_weekly,
             "bsdd_created_weekly",
         ),
         html.H2("Établissements et utilisateurs"),

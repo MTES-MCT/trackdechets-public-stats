@@ -14,33 +14,39 @@ DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
 SQL_PATH = Path(__file__).parent.absolute() / "sql"
 
 
-def get_bsd_data(include_drafts: bool = False) -> pd.DataFrame:
+def get_bs_data(
+    sql_path: Path,
+    include_drafts: bool = False,
+    include_only_dangerous_waste: bool = True,
+) -> pd.DataFrame:
     """
-    Queries the configured database for BSDD data.
+    Queries the configured database for BSx data. The query should select the columns needed to
+    create the figures of the application.
 
     Parameters
     ----------
+    sql_path: PathLike
+        Path of the sql query file. Query must select at least a "createdAt" column.
     include_drafts: bool
-        Wether to include drafts BSDD in the result.
+        Wether to include drafts BSx in the result.
 
     Returns
     -------
     DataFrame
-        dataframe of BSDD for a given period of time, with all necessary data to create
-        the app figures.
+        dataframe of BSx, with all data included in the sql query.
     """
 
     started_time = time.time()
 
-    sql_query = (SQL_PATH / "get_bsdd_data.sql").read_text()
-    bsdd_data_df = pd.read_sql_query(
+    sql_query = sql_path.read_text()
+    bs_data_df = pd.read_sql_query(
         sql_query,
         con=DB_ENGINE,
     )
 
-    for col_name in ["createdAt", "processedAt", "sentAt", "receivedAt"]:
-        bsdd_data_df[col_name] = pd.to_datetime(
-            bsdd_data_df[col_name], utc=True, errors="coerce"
+    for col_name in ["createdAt", "sentAt", "receivedAt", "processedAt"]:
+        bs_data_df[col_name] = pd.to_datetime(
+            bs_data_df[col_name], utc=True, errors="coerce"
         ).dt.tz_convert("Europe/Paris")
 
     now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
@@ -49,17 +55,27 @@ def get_bsd_data(include_drafts: bool = False) -> pd.DataFrame:
     # This is to handle specific case when sqlalchemy does not handle well the timezone
     # and there is data at midnight Paris time the last day of the time window we want to keep
     # that is return by the query but shouldn't
-    bsdd_data_df = bsdd_data_df.loc[
-        (bsdd_data_df["createdAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
-        | bsdd_data_df["createdAt"].isna()
+    bs_data_df = bs_data_df.loc[
+        (bs_data_df["createdAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
+        | bs_data_df["createdAt"].isna()
     ]
 
     if not include_drafts:
-        bsdd_data_df = bsdd_data_df[bsdd_data_df["status"] != "DRAFT"]
+        bs_data_df = bs_data_df[bs_data_df["status"] != "DRAFT"]
+    if include_only_dangerous_waste:
+        if "wastePop" in bs_data_df.columns:
+            bs_data_df = bs_data_df[
+                bs_data_df["wasteCode"].str.match(r".*\*$", na=False)
+                | bs_data_df["wastePop"]
+            ]
+        else:
+            bs_data_df = bs_data_df[
+                bs_data_df["wasteCode"].str.match(r".*\*$", na=False)
+            ]
 
-    print(f"get_bsdd_data duration: {time.time()-started_time} ")
+    print(f"get_bs_data duration: {time.time()-started_time} ")
 
-    return bsdd_data_df
+    return bs_data_df
 
 
 def get_company_data() -> pd.DataFrame:
