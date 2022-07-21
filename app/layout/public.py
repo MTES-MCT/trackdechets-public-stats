@@ -85,7 +85,7 @@ def get_public_stats_container() -> List[dbc.Row]:
     quantity_processed_weekly_fig = create_weekly_quantity_processed_figure(
         quantity_recovered.reset_index(),
         quantity_destroyed.reset_index(),
-        quantity_other,
+        quantity_other.reset_index(),
     )
 
     quantity_processed_total = quantity_processed_weekly_df.sum()
