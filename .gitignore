@@ -7,4 +7,4 @@ __pycache__
 .vscode
 .ipynb_checkpoints
 *.ipynb
-
+.DS_Store

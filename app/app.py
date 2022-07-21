@@ -13,7 +13,7 @@ extra_config = {"locale": "fr"}
 dash_app = dash.Dash(
     __name__,
     title="Trackdéchets : statistiques et impact",
-    external_stylesheets=[dbc.themes.GRID],
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
     external_scripts=external_scripts,
 )
 

@@ -58,7 +58,7 @@ margin-bottom: 10px
 Copied and renamed from DSFR core CSS */
 @font-face {
   font-family: 'Marianne-Bold';
-  src: url("dsfr_dist/fonts/Marianne-Bold.woff2") format("woff2"), url("dsfr_dist/fonts/Marianne-Bold.woff") format("woff");
+  src: url("fonts/Marianne-Bold.woff2") format("woff2"), url("fonts/Marianne-Bold.woff") format("woff");
   font-weight: 700;
   font-style: normal;
   font-display: swap;

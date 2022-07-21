@@ -11,7 +11,11 @@ from app.data.public import (
     get_weekly_bs_created_df,
     get_weekly_bs_processed_df,
 )
-from app.layout.figures_factory import create_weekly_bs_created_figure
+from app.layout.container_factory import create_public_stats_container
+from app.layout.figures_factory import (
+    create_weekly_quantity_processed_figure,
+    create_weekly_bs_created_figure,
+)
 from app.layout.utils import add_callout, add_figure
 
 SQL_PATH = Path.cwd().absolute() / "app/data/sql"
@@ -44,11 +48,11 @@ def get_public_stats_container() -> List[dbc.Row]:
     bsff_created_weekly_df = get_weekly_bs_created_df(bsff_data_df)
     bsdasri_created_weekly_df = get_weekly_bs_created_df(bsdasri_data_df)
 
-    bs_created_weekly = create_weekly_bs_created_figure(
-        bsdd_created_weekly_df,
-        bsda_created_weekly_df,
-        bsff_created_weekly_df,
-        bsdasri_created_weekly_df,
+    bsdd_created_weekly_fig = create_weekly_bs_created_figure(bsdd_created_weekly_df)
+    bsda_created_weekly_fig = create_weekly_bs_created_figure(bsda_created_weekly_df)
+    bsff_created_weekly_fig = create_weekly_bs_created_figure(bsff_created_weekly_df)
+    bsdasri_created_weekly_fig = create_weekly_bs_created_figure(
+        bsdasri_created_weekly_df
     )
 
     bsdd_created_total = bsd_data_df.index.size
@@ -68,18 +72,20 @@ def get_public_stats_container() -> List[dbc.Row]:
     ]:
         quantity_processed_weekly_df.add(df, fill_value=0)
 
-    quantity_processed_weekly = px.bar(
-        quantity_processed_weekly_df.reset_index(),
-        title="Quantités de déchets dangereux traités par semaine",
-        color="processingOperation",
-        y="weightValue",
-        x="processedAt",
-        text="weightValue",
-        labels={
-            "weightValue": "Déchets dangereux traités (tonnes)",
-            "processedAt": "Date du traitement",
-            "processingOperation": "Type de traitement",
-        },
+    quantity_recovered = quantity_processed_weekly_df.loc[
+        (slice(None), "Déchet valorisé")
+    ]
+    quantity_destroyed = quantity_processed_weekly_df[(slice(None), "Déchet éliminé")]
+    quantity_other = None
+    if "Autre" in quantity_processed_weekly_df.index.get_level_values(
+        "processingOperation"
+    ):
+        quantity_other = quantity_processed_weekly_df[(slice(None), "Autre")]
+
+    quantity_processed_weekly_fig = create_weekly_quantity_processed_figure(
+        quantity_recovered.reset_index(),
+        quantity_destroyed.reset_index(),
+        quantity_other,
     )
 
     quantity_processed_total = quantity_processed_weekly_df.sum()
@@ -111,105 +117,18 @@ def get_public_stats_container() -> List[dbc.Row]:
     )
     company_user_created_weekly.update_traces(textposition="top center")
 
-    public_stats_container = [
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        html.H1("Statistiques de Trackdéchets"),
-                        dcc.Markdown(
-                            """
-L'application Trackdéchets est utilisée en France par des milliers de professionnels
-du  déchet pour tracer les déchets dangereux et/ou polluants ([POP](
-https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) produits, ainsi que différentes
-étapes de leur traçabilité et ce, jusqu'au traitement final. Les déchets traités à l'étranger ne sont
-pas tracés par Trackdéchets.
-
-Un borderau de suivi de déchet (BSD) est créé pour chaque déchet et il contient de nombreuses
-informations (acteurs, déchets, poids, traitement réalisé, etc.). Ces informations sont transmises à
-Trackdéchets par un usage direct ou par API.
-
-Depuis le 1er janvier, l'utilisation de Trackdéchets est obligatoire pour les déchets  dangereux (DD)
-et les déchets d'amiante (DA).
-
-Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir régulièrement
-avec de nouvelles statistiques.
-                """
-                        ),
-                    ],
-                    width=12,
-                )
-            ]
-        ),
-        html.H2("Déchets dangereux"),
-        dcc.Markdown(
-            """
-Les nombres présentés ici incluent tous les types de déchets nécessitant un suivi particulier : **déchets dangereux** (DD), **déchets d'amiante** (DA), déchets de **fluide frigorigène** (FF) et **déchets d'activités de soins à risques infectieux** (DASRI).
-        """
-        ),
-        dbc.Row(
-            [
-                add_callout(
-                    number=quantity_processed_total,
-                    text="tonnes de déchets dangereux traités depuis le 1er janvier 2022",
-                    width=3,
-                ),
-                add_callout(
-                    number=bsdd_created_total,
-                    text="bordereaux créés sur depuis le 1er janvier 2022",
-                    width=3,
-                ),
-                add_callout(
-                    text="""En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés**
-        sont réutilisés (combustion pour du chauffage, recyclage, revente, compostage, etc.)
-        tandis que les **déchets éliminés** sont en fin de cycle de vie (enfouissement, stockage,
-        traitement chimique, etc.). Plus d'informations sur [
-        ecologie.gouv.fr](https://www.ecologie.gouv.fr/traitement-des-dechets). """,
-                    width=6,
-                ),
-            ]
-        ),
-        add_figure(
-            quantity_processed_weekly,
-            "bsdd_processed_weekly",
-        ),
-        add_figure(
-            bs_created_weekly,
-            "bsdd_created_weekly",
-        ),
-        html.H2("Établissements et utilisateurs"),
-        dbc.Row(
-            [
-                add_callout(
-                    number=company_created_total,
-                    text="établissements inscrits depuis le 1er janvier 2022",
-                    width=3,
-                ),
-                add_callout(
-                    number=company_created_total_life,
-                    text="établissements inscrits au total",
-                    width=3,
-                ),
-                add_callout(
-                    number=user_created_total,
-                    text="utilisateurs inscrits depuis le 1er janvier 2022",
-                    width=3,
-                ),
-                add_callout(
-                    number=user_created_total_life,
-                    text="utilisateurs inscrits au total",
-                    width=3,
-                ),
-            ]
-        ),
-        add_figure(
-            company_user_created_weekly,
-            "company_user_created_weekly",
-        ),
-        dcc.Markdown(
-            "Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ("
-            "[code source](https://github.com/MTES-MCT/trackdechets-public-stats/))",
-            className="source-code",
-        ),
-    ]
+    public_stats_container = create_public_stats_container(
+        quantity_processed_total,
+        bsdd_created_total,
+        quantity_processed_weekly_fig,
+        bsdd_created_weekly_fig,
+        bsda_created_weekly_fig,
+        bsff_created_weekly_fig,
+        bsdasri_created_weekly_fig,
+        company_created_total,
+        company_created_total_life,
+        user_created_total,
+        user_created_total_life,
+        company_user_created_weekly,
+    )
     return public_stats_container
