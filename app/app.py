@@ -17,7 +17,6 @@ dash_app = dash.Dash(
     external_scripts=external_scripts,
 )
 
-
 dash_app.layout = serve_layout()
 # Add the @lang attribute to the root <html>
 dash_app.index_string = dash_app.index_string.replace("<html>", '<html lang="fr">')

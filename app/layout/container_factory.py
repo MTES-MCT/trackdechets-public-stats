@@ -1,3 +1,4 @@
+from turtle import width
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from app.layout.utils import add_callout, add_figure
@@ -16,7 +17,8 @@ def create_public_stats_container(
     company_created_total_life: int,
     user_created_total: int,
     user_created_total_life: int,
-    company_user_created_weekly: go.Figure,
+    company_created_weekly: go.Figure,
+    user_created_weekly: go.Figure,
 ):
     container = [
         dbc.Row(
@@ -27,20 +29,14 @@ def create_public_stats_container(
                         dcc.Markdown(
                             """
 L'application Trackdéchets est utilisée en France par des milliers de professionnels
-du  déchet pour tracer les déchets dangereux et/ou polluants ([POP](
-https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) produits, ainsi que différentes
-étapes de leur traçabilité et ce, jusqu'au traitement final. Les déchets traités à l'étranger ne sont
+du déchet pour tracer plusieurs types de déchets:
+- déchets dangereux et/ou polluants ([POP](https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) ;
+- déchets d'amiantes ;
+- fluides frigorigènes ;
+- déchets d'activités de soins à risques infectieux et véhicules hors d'usage.   
+
+Les déchets sont suivis de la production jusqu'au traitement final. Les déchets traités à l'étranger ne sont
 pas tracés par Trackdéchets.
-
-Un borderau de suivi de déchet (BSD) est créé pour chaque déchet et il contient de nombreuses
-informations (acteurs, déchets, poids, traitement réalisé, etc.). Ces informations sont transmises à
-Trackdéchets par un usage direct ou par API.
-
-Depuis le 1er janvier, l'utilisation de Trackdéchets est obligatoire pour les déchets  dangereux (DD)
-et les déchets d'amiante (DA).
-
-Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir régulièrement
-avec de nouvelles statistiques.
                 """
                         ),
                     ],
@@ -48,11 +44,76 @@ avec de nouvelles statistiques.
                 )
             ]
         ),
-        html.H2("Déchets dangereux"),
-        dcc.Markdown(
-            """
+        dbc.Row(
+            children=[
+                dbc.Col(
+                    [
+                        html.Section(
+                            [
+                                html.H3(
+                                    [
+                                        html.Button(
+                                            [
+                                                html.Span(
+                                                    className="fr-icon-info-fill",
+                                                    **{"aria-hidden": "true"}
+                                                ),
+                                                "En savoir plus",
+                                            ],
+                                            className="fr-accordion__btn",
+                                            **{
+                                                "aria-expanded": "false",
+                                                "aria-controls": "accordion-106",
+                                            }
+                                        )
+                                    ],
+                                    className="fr-accordion__title",
+                                ),
+                                html.Div(
+                                    [
+                                        dcc.Markdown(
+                                            [
+                                                """
+Un borderau de suivi de déchet (BSD) est créé pour chaque déchet et il contient de nombreuses
+informations (acteurs, déchets, poids, traitement réalisé, etc.). Ces informations sont transmises à
+Trackdéchets par un usage direct ou par API.
+
+Depuis le 1er janvier 2022, l'utilisation de Trackdéchets est obligatoire pour les déchets dangereux (DD)
+et les déchets d'amiante (DA).
+
+Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir régulièrement
+avec de nouvelles statistiques.                                    
+                                    """
+                                            ]
+                                        )
+                                    ],
+                                    className="fr-collapse",
+                                    id="accordion-106",
+                                ),
+                            ],
+                            className="fr-accordion",
+                        )
+                    ],
+                    width=12,
+                )
+            ]
+        ),
+        dbc.Row(
+            children=[
+                dbc.Col(
+                    [
+                        html.H2("Déchets dangereux"),
+                        dcc.Markdown(
+                            [
+                                """
 Les nombres présentés ici incluent tous les types de déchets nécessitant un suivi particulier : **déchets dangereux** (DD), **déchets d'amiante** (DA), déchets de **fluide frigorigène** (FF) et **déchets d'activités de soins à risques infectieux** (DASRI).
         """
+                            ]
+                        ),
+                    ],
+                    width=12,
+                )
+            ],
         ),
         dbc.Row(
             [
@@ -76,20 +137,29 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                 ),
             ]
         ),
-        add_figure(
-            quantity_processed_weekly,
-            "bsdd_processed_weekly",
-            "Quantité de déchets dangereux traités par semaine",
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        add_figure(
+                            quantity_processed_weekly,
+                            "bsdd_processed_weekly",
+                            "Quantité de déchets dangereux traités par semaine",
+                        )
+                    ],
+                    width=12,
+                )
+            ]
         ),
         html.Div(
             className="fr-tabs",
             children=[
                 html.Ul(
-                    children=[
+                    [
                         html.Li(
-                            children=[
+                            [
                                 html.Button(
-                                    children=["Déchets dangereux"],
+                                    ["Déchets dangereux"],
                                     id="tabpanel-404",
                                     tabIndex="0",
                                     role="tab",
@@ -99,9 +169,14 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                                         "aria-selected": "true",
                                         "aria-controls": "tabpanel-404-panel",
                                     }
-                                ),
+                                )
+                            ],
+                            role="presentation",
+                        ),
+                        html.Li(
+                            [
                                 html.Button(
-                                    children=["Amiante"],
+                                    ["Amiante"],
                                     id="tabpanel-405",
                                     tabIndex="-1",
                                     role="tab",
@@ -111,9 +186,14 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                                         "aria-selected": "false",
                                         "aria-controls": "tabpanel-405-panel",
                                     }
-                                ),
+                                )
+                            ],
+                            role="presentation",
+                        ),
+                        html.Li(
+                            [
                                 html.Button(
-                                    children=["Fluides Frigo"],
+                                    ["Fluides Frigo"],
                                     id="tabpanel-406",
                                     tabIndex="-1",
                                     role="tab",
@@ -123,11 +203,14 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                                         "aria-selected": "false",
                                         "aria-controls": "tabpanel-406-panel",
                                     }
-                                ),
+                                )
+                            ],
+                            role="presentation",
+                        ),
+                        html.Li(
+                            [
                                 html.Button(
-                                    children=[
-                                        "Activités de Soins à Risques Infectieux"
-                                    ],
+                                    ["Activités de Soins à Risques Infectieux"],
                                     id="tabpanel-407",
                                     tabIndex="-1",
                                     role="tab",
@@ -149,9 +232,9 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                     }
                 ),
                 html.Div(
-                    children=[
+                    [
                         html.H4(
-                            children=[
+                            [
                                 "Nombre de Bordereaux de Suivi de Déchets Dangereux créés par semaine"
                             ]
                         ),
@@ -164,9 +247,9 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                     **{"aria-labelledby": "tabpanel-404"}
                 ),
                 html.Div(
-                    children=[
+                    [
                         html.H4(
-                            children=[
+                            [
                                 "Nombre de Bordereaux de Suivi de Déchets d'Amiante créés par semaine"
                             ]
                         ),
@@ -179,9 +262,9 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                     **{"aria-labelledby": "tabpanel-405"}
                 ),
                 html.Div(
-                    children=[
+                    [
                         html.H4(
-                            children=[
+                            [
                                 "Nombre de Bordereaux de Suivi de Fluides Frigorigènes créés par semaine"
                             ]
                         ),
@@ -194,9 +277,9 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                     **{"aria-labelledby": "tabpanel-406"}
                 ),
                 html.Div(
-                    children=[
+                    [
                         html.H4(
-                            children=[
+                            [
                                 "Nombre de Bordereaux de Suivi de Déchets d'Activités de Soins à Risques Infectieux créés par semaine"
                             ]
                         ),
@@ -235,10 +318,92 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                 ),
             ]
         ),
-        add_figure(
-            company_user_created_weekly,
-            "company_user_created_weekly",
-            "Nombre d'utilisateurs et d'établissements créés par semaine",
+        dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        html.Div(
+                            [
+                                html.Ul(
+                                    [
+                                        html.Li(
+                                            [
+                                                html.Button(
+                                                    ["Utilisateurs"],
+                                                    id="tabpanel-201",
+                                                    tabIndex="0",
+                                                    role="tab",
+                                                    className="fr-tabs__tab",
+                                                    title="Nombre d'utilisateurs inscrits par semaine",
+                                                    **{
+                                                        "aria-selected": "true",
+                                                        "aria-controls": "tabpanel-201-panel",
+                                                    }
+                                                )
+                                            ],
+                                            role="presentation",
+                                        ),
+                                        html.Li(
+                                            [
+                                                html.Button(
+                                                    ["Établissements"],
+                                                    id="tabpanel-202",
+                                                    tabIndex="-1",
+                                                    role="tab",
+                                                    className="fr-tabs__tab",
+                                                    title="Nombre d'établissements inscrits par semaine",
+                                                    **{
+                                                        "aria-selected": "false",
+                                                        "aria-controls": "tabpanel-202-panel",
+                                                    }
+                                                )
+                                            ],
+                                            role="presentation",
+                                        ),
+                                    ],
+                                    className="fr-tabs__list",
+                                    role="tablist",
+                                    **{
+                                        "aria-label": "Onglets pour sélectionner le graphique pour le type de bordereau voulu"
+                                    }
+                                ),
+                                html.Div(
+                                    [
+                                        html.H4(
+                                            [
+                                                "Nombre de comptes utilisateurs créés par semaine"
+                                            ]
+                                        ),
+                                        dcc.Graph(figure=user_created_weekly),
+                                    ],
+                                    id="tabpanel-201-panel",
+                                    className="fr-tabs__panel fr-tabs__panel--selected",
+                                    role="tabpanel",
+                                    tabIndex="0",
+                                    **{"aria-labelledby": "tabpanel-201"}
+                                ),
+                                html.Div(
+                                    [
+                                        html.H4(
+                                            [
+                                                "Nombre de compte d'établissements créés par semaine"
+                                            ]
+                                        ),
+                                        dcc.Graph(figure=company_created_weekly),
+                                    ],
+                                    id="tabpanel-202-panel",
+                                    className="fr-tabs__panel",
+                                    role="tabpanel",
+                                    tabIndex="0",
+                                    **{"aria-labelledby": "tabpanel-202"}
+                                ),
+                            ],
+                            className="fr-tabs",
+                        )
+                    ],
+                    width=12,
+                )
+            ]
         ),
         dcc.Markdown(
             "Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ("

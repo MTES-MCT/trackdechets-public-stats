@@ -9,26 +9,26 @@ from app.layout.utils import format_number
 from app.layout.utils import format_number
 
 
-def create_weekly_bs_created_figure(
-    bs_data: pd.DataFrame,
+def create_weekly_created_figure(
+    data: pd.DataFrame,
 ) -> go.Figure:
-    """Create the figure showing number of weekly created BSx"""
+    """Create the figure showing number of weekly created Bsx, companies, users..."""
 
     text_positions = [
-        "top center" if i % 2 else "bottom center" for i in range(bs_data.shape[0])
+        "top center" if i % 2 else "bottom center" for i in range(data.shape[0])
     ]
 
     texts = [
         f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> créations"
-        for e in bs_data.itertuples(index=False)
+        for e in data.itertuples(index=False)
     ]
 
     fig = go.Figure(
         [
             go.Scatter(
-                x=bs_data["createdAt"],
-                y=bs_data["id"],
-                text=bs_data["id"],
+                x=data["createdAt"],
+                y=data["id"],
+                text=data["id"],
                 mode="lines+markers+text",
                 hovertext=texts,
                 hoverinfo="text",
@@ -49,20 +49,20 @@ def create_weekly_bs_created_figure(
 
 
 def create_weekly_quantity_processed_figure(
-    bs_recovered_data: pd.DataFrame,
-    bs_destroyed_data: pd.DataFrame,
-    bs_other_data: Optional[pd.DataFrame],
+    bs_recovered_data: pd.Series,
+    bs_destroyed_data: pd.Series,
+    bs_other_data: Optional[pd.Series],
 ) -> go.Figure:
 
     data_conf = [
         {
-            "data": bs_recovered_data,
+            "data": bs_recovered_data.reset_index(),
             "name": "Déchets valorisés",
             "text": "Semaine du {0:%d/%m} au {1:%d/%m}<br><b>{2}</b> tonnes de déchets valorisées",
             "color": "#66673D",
         },
         {
-            "data": bs_destroyed_data,
+            "data": bs_destroyed_data.reset_index(),
             "name": "Déchets éliminés",
             "text": "Semaine du {0:%d/%m} au {1:%d/%m}<br><b>{2}</b> tonnes de déchets éliminées",
             "color": "#5E2A2B",
@@ -71,7 +71,7 @@ def create_weekly_quantity_processed_figure(
     if bs_other_data is not None:
         data_conf.append(
             {
-                "data": bs_other_data,
+                "data": bs_other_data.reset_index(),
                 "name": "Autre",
                 "text": "Semaine du {0:%d/%m} au {1:%d/%m}<br><b>{2}</b> tonnes de déchets",
                 "color": "#6A6A6A",
@@ -93,10 +93,10 @@ def create_weekly_quantity_processed_figure(
                         e.processedAt,
                         format_number(e.weightValue),
                     )
-                    for e in bs_recovered_data.itertuples(index=False)
+                    for e in data.itertuples(index=False)
                 ],
                 hoverinfo="text",
-                text=bs_recovered_data["weightValue"].apply(format_number),
+                text=data["weightValue"].apply(format_number),
                 marker_color=conf["color"],
             )
         )
@@ -104,7 +104,7 @@ def create_weekly_quantity_processed_figure(
     fig = go.Figure(data=traces)
 
     fig.update_layout(
-        xaxis_title="Semaine de création",
+        xaxis_title="Semaine de traitement",
         legend=dict(
             orientation="h",
             yanchor="bottom",

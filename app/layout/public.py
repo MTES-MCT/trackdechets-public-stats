@@ -8,13 +8,13 @@ from dash import dcc, html
 from app.data.data_extract import get_bs_data, get_company_data, get_user_data
 from app.data.public import (
     get_company_user_data_df,
-    get_weekly_bs_created_df,
+    get_weekly_created_df,
     get_weekly_bs_processed_df,
 )
 from app.layout.container_factory import create_public_stats_container
 from app.layout.figures_factory import (
     create_weekly_quantity_processed_figure,
-    create_weekly_bs_created_figure,
+    create_weekly_created_figure,
 )
 from app.layout.utils import add_callout, add_figure
 
@@ -41,19 +41,17 @@ def get_public_stats_container() -> List[dbc.Row]:
     )
 
     # BSx created weekly figure
-    bsdd_created_weekly_df = get_weekly_bs_created_df(
+    bsdd_created_weekly_df = get_weekly_created_df(
         bsd_data_df,
     )
-    bsda_created_weekly_df = get_weekly_bs_created_df(bsda_data_df)
-    bsff_created_weekly_df = get_weekly_bs_created_df(bsff_data_df)
-    bsdasri_created_weekly_df = get_weekly_bs_created_df(bsdasri_data_df)
+    bsda_created_weekly_df = get_weekly_created_df(bsda_data_df)
+    bsff_created_weekly_df = get_weekly_created_df(bsff_data_df)
+    bsdasri_created_weekly_df = get_weekly_created_df(bsdasri_data_df)
 
-    bsdd_created_weekly_fig = create_weekly_bs_created_figure(bsdd_created_weekly_df)
-    bsda_created_weekly_fig = create_weekly_bs_created_figure(bsda_created_weekly_df)
-    bsff_created_weekly_fig = create_weekly_bs_created_figure(bsff_created_weekly_df)
-    bsdasri_created_weekly_fig = create_weekly_bs_created_figure(
-        bsdasri_created_weekly_df
-    )
+    bsdd_created_weekly_fig = create_weekly_created_figure(bsdd_created_weekly_df)
+    bsda_created_weekly_fig = create_weekly_created_figure(bsda_created_weekly_df)
+    bsff_created_weekly_fig = create_weekly_created_figure(bsff_created_weekly_df)
+    bsdasri_created_weekly_fig = create_weekly_created_figure(bsdasri_created_weekly_df)
 
     bsdd_created_total = bsd_data_df.index.size
 
@@ -83,9 +81,9 @@ def get_public_stats_container() -> List[dbc.Row]:
         quantity_other = quantity_processed_weekly_df[(slice(None), "Autre")]
 
     quantity_processed_weekly_fig = create_weekly_quantity_processed_figure(
-        quantity_recovered.reset_index(),
-        quantity_destroyed.reset_index(),
-        quantity_other.reset_index(),
+        quantity_recovered,
+        quantity_destroyed,
+        quantity_other,
     )
 
     quantity_processed_total = quantity_processed_weekly_df.sum()
@@ -103,19 +101,11 @@ def get_public_stats_container() -> List[dbc.Row]:
     company_created_total_life = company_data_df.index.size
     user_created_total_life = user_data_df.index.size
 
-    company_user_data_df = get_company_user_data_df(company_data_df, user_data_df)
+    company_created_weekly_df = get_weekly_created_df(company_data_df)
+    company_created_weekly_df = get_weekly_created_df(company_data_df)
 
-    company_user_created_weekly = px.line(
-        company_user_data_df,
-        y="id",
-        x="createdAt",
-        color="type",
-        title="Établissements et utilisateurs inscrits par semaine",
-        labels={"id": "Inscriptions", "createdAt": "Date d'inscription", "type": ""},
-        markers=True,
-        text="id",
-    )
-    company_user_created_weekly.update_traces(textposition="top center")
+    company_created_weekly = create_weekly_created_figure(company_created_weekly_df)
+    user_created_weekly = create_weekly_created_figure(company_created_weekly_df)
 
     public_stats_container = create_public_stats_container(
         quantity_processed_total,
@@ -129,6 +119,7 @@ def get_public_stats_container() -> List[dbc.Row]:
         company_created_total_life,
         user_created_total,
         user_created_total_life,
-        company_user_created_weekly,
+        company_created_weekly,
+        user_created_weekly,
     )
     return public_stats_container
