@@ -3,7 +3,6 @@ from typing import Optional
 
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 from app.layout.utils import format_number
 
 from app.layout.utils import format_number

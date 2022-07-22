@@ -2,8 +2,6 @@ from pathlib import Path
 from typing import List
 
 import dash_bootstrap_components as dbc
-import plotly.express as px
-from dash import dcc, html
 
 from app.data.data_extract import get_bs_data, get_company_data, get_user_data
 from app.data.public import (

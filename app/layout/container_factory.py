@@ -1,4 +1,3 @@
-from turtle import width
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from app.layout.utils import add_callout, add_figure
