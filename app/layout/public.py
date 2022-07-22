@@ -7,7 +7,6 @@ from dash import dcc, html
 
 from app.data.data_extract import get_bs_data, get_company_data, get_user_data
 from app.data.public import (
-    get_company_user_data_df,
     get_weekly_created_df,
     get_weekly_bs_processed_df,
 )
@@ -16,7 +15,6 @@ from app.layout.figures_factory import (
     create_weekly_quantity_processed_figure,
     create_weekly_created_figure,
 )
-from app.layout.utils import add_callout, add_figure
 
 SQL_PATH = Path.cwd().absolute() / "app/data/sql"
 
