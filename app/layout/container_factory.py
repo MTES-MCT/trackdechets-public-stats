@@ -28,11 +28,12 @@ def create_public_stats_container(
                         dcc.Markdown(
                             """
 L'application Trackdéchets est utilisée en France par des milliers de professionnels
-du déchet pour tracer plusieurs types de déchets:
+du déchet pour tracer plusieurs types de déchets :
 - déchets dangereux et/ou polluants ([POP](https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) ;
 - déchets d'amiantes ;
 - fluides frigorigènes ;
-- déchets d'activités de soins à risques infectieux et véhicules hors d'usage.   
+- déchets d'activités de soins à risques infectieux
+- véhicules hors d'usage.   
 
 Les déchets sont suivis de la production jusqu'au traitement final. Les déchets traités à l'étranger ne sont
 pas tracés par Trackdéchets.
