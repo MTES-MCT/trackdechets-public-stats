@@ -53,10 +53,6 @@ pas tracés par Trackdéchets.
                                     [
                                         html.Button(
                                             [
-                                                html.Span(
-                                                    className="fr-icon-info-fill",
-                                                    **{"aria-hidden": "true"}
-                                                ),
                                                 "En savoir plus",
                                             ],
                                             className="fr-accordion__btn",

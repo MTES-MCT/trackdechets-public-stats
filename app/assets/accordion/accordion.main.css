@@ -72,8 +72,8 @@
   height: var(--icon-size);
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
-  -webkit-mask-image: url("../../icons/system/add-line.svg");
-  mask-image: url("../../icons/system/add-line.svg");
+  -webkit-mask-image: url("/assets/icons/system/add-line.svg");
+  mask-image: url("/assets/icons/system/add-line.svg");
   content: "";
   margin-right: 0;
   margin-left: auto;
@@ -88,8 +88,8 @@
 }
 
 .fr-accordion__btn[aria-expanded=true]::after {
-  -webkit-mask-image: url("../../icons/system/subtract-line.svg");
-  mask-image: url("../../icons/system/subtract-line.svg");
+  -webkit-mask-image: url("/assets/icons/system/subtract-line.svg");
+  mask-image: url("/assets/icons/system/subtract-line.svg");
 }
 
 .fr-accordion .fr-collapse {
