@@ -113,7 +113,7 @@ def create_weekly_quantity_processed_figure(
             x=1,
             title="Type de traitement :",
         ),
-        margin=dict(r=0, l=70),
+        margin=dict(t=30, r=0, l=70),
         barmode="stack",
         yaxis_title="Quantité (en tonnes)",
         yaxis_range=[0, max_value * 1.1],
