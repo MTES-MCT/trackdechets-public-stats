@@ -15,6 +15,7 @@ dash_app = dash.Dash(
     title="Trackdéchets : statistiques et impact",
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     external_scripts=external_scripts,
+    assets_external_path="",
 )
 
 dash_app.layout = serve_layout()

@@ -40,7 +40,7 @@ def create_weekly_created_figure(
         xaxis_title="Semaine de création",
         showlegend=False,
         paper_bgcolor="#fff",
-        margin=dict(r=0, l=50),
+        margin=dict(t=20, r=0, l=50),
     )
     fig.update_xaxes(tick0="2022-01-03")
 
@@ -102,6 +102,7 @@ def create_weekly_quantity_processed_figure(
 
     fig = go.Figure(data=traces)
 
+    max_value = sum([conf["data"]["weightValue"].max() for conf in data_conf])
     fig.update_layout(
         xaxis_title="Semaine de traitement",
         legend=dict(
@@ -115,6 +116,7 @@ def create_weekly_quantity_processed_figure(
         margin=dict(r=0, l=70),
         barmode="stack",
         yaxis_title="Quantité (en tonnes)",
+        yaxis_range=[0, max_value * 1.1],
     )
 
     return fig
