@@ -147,151 +147,156 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                 )
             ]
         ),
-        html.Div(
-            className="fr-tabs",
-            children=[
-                html.Ul(
-                    [
-                        html.Li(
+        dbc.Row(
+            dbc.Col(
+                html.Div(
+                    className="fr-tabs",
+                    children=[
+                        html.Ul(
                             [
-                                html.Button(
-                                    ["Déchets dangereux"],
-                                    id="tabpanel-404",
-                                    tabIndex="0",
-                                    role="tab",
-                                    className="fr-tabs__tab",
-                                    title="Bordereaux de Suivi de Déchets Dangereux",
-                                    **{
-                                        "aria-selected": "true",
-                                        "aria-controls": "tabpanel-404-panel",
-                                    }
-                                )
-                            ],
-                            role="presentation",
-                        ),
-                        html.Li(
-                            [
-                                html.Button(
-                                    ["Amiante"],
-                                    id="tabpanel-405",
-                                    tabIndex="-1",
-                                    role="tab",
-                                    className="fr-tabs__tab",
-                                    title="Bordereaux de Suivi de Déchets d'Amiante",
-                                    **{
-                                        "aria-selected": "false",
-                                        "aria-controls": "tabpanel-405-panel",
-                                    }
-                                )
-                            ],
-                            role="presentation",
-                        ),
-                        html.Li(
-                            [
-                                html.Button(
-                                    ["Fluides Frigo"],
-                                    id="tabpanel-406",
-                                    tabIndex="-1",
-                                    role="tab",
-                                    className="fr-tabs__tab",
-                                    title="Bordereaux de Suivi de Fluides Frigorigènes",
-                                    **{
-                                        "aria-selected": "false",
-                                        "aria-controls": "tabpanel-406-panel",
-                                    }
-                                )
-                            ],
-                            role="presentation",
-                        ),
-                        html.Li(
-                            [
-                                html.Button(
-                                    ["Activités de Soins à Risques Infectieux"],
-                                    id="tabpanel-407",
-                                    tabIndex="-1",
-                                    role="tab",
-                                    className="fr-tabs__tab",
-                                    title="Bordereaux de Suivi de Déchets d'Activités de Soins à Risques Infectieux",
-                                    **{
-                                        "aria-selected": "false",
-                                        "aria-controls": "tabpanel-407-panel",
-                                    }
+                                html.Li(
+                                    [
+                                        html.Button(
+                                            ["Déchets dangereux"],
+                                            id="tabpanel-404",
+                                            tabIndex="0",
+                                            role="tab",
+                                            className="fr-tabs__tab",
+                                            title="Bordereaux de Suivi de Déchets Dangereux",
+                                            **{
+                                                "aria-selected": "true",
+                                                "aria-controls": "tabpanel-404-panel",
+                                            }
+                                        )
+                                    ],
+                                    role="presentation",
+                                ),
+                                html.Li(
+                                    [
+                                        html.Button(
+                                            ["Amiante"],
+                                            id="tabpanel-405",
+                                            tabIndex="-1",
+                                            role="tab",
+                                            className="fr-tabs__tab",
+                                            title="Bordereaux de Suivi de Déchets d'Amiante",
+                                            **{
+                                                "aria-selected": "false",
+                                                "aria-controls": "tabpanel-405-panel",
+                                            }
+                                        )
+                                    ],
+                                    role="presentation",
+                                ),
+                                html.Li(
+                                    [
+                                        html.Button(
+                                            ["Fluides Frigo"],
+                                            id="tabpanel-406",
+                                            tabIndex="-1",
+                                            role="tab",
+                                            className="fr-tabs__tab",
+                                            title="Bordereaux de Suivi de Fluides Frigorigènes",
+                                            **{
+                                                "aria-selected": "false",
+                                                "aria-controls": "tabpanel-406-panel",
+                                            }
+                                        )
+                                    ],
+                                    role="presentation",
+                                ),
+                                html.Li(
+                                    [
+                                        html.Button(
+                                            ["Activités de Soins à Risques Infectieux"],
+                                            id="tabpanel-407",
+                                            tabIndex="-1",
+                                            role="tab",
+                                            className="fr-tabs__tab",
+                                            title="Bordereaux de Suivi de Déchets d'Activités de Soins à Risques Infectieux",
+                                            **{
+                                                "aria-selected": "false",
+                                                "aria-controls": "tabpanel-407-panel",
+                                            }
+                                        ),
+                                    ],
+                                    role="presentation",
                                 ),
                             ],
-                            role="presentation",
+                            className="fr-tabs__list",
+                            role="tablist",
+                            **{
+                                "aria-label": "Onglets pour sélectionner le graphique pour le type de bordereau voulu"
+                            }
                         ),
-                    ],
-                    className="fr-tabs__list",
-                    role="tablist",
-                    **{
-                        "aria-label": "Onglets pour sélectionner le graphique pour le type de bordereau voulu"
-                    }
-                ),
-                html.Div(
-                    [
-                        html.H4(
+                        html.Div(
                             [
-                                "Nombre de Bordereaux de Suivi de Déchets Dangereux créés par semaine"
-                            ]
+                                html.H4(
+                                    [
+                                        "Nombre de Bordereaux de Suivi de Déchets Dangereux créés par semaine"
+                                    ]
+                                ),
+                                dcc.Graph(figure=bsdd_created_weekly),
+                            ],
+                            id="tabpanel-404-panel",
+                            className="fr-tabs__panel fr-tabs__panel--selected",
+                            role="tabpanel",
+                            tabIndex="0",
+                            **{"aria-labelledby": "tabpanel-404"}
                         ),
-                        dcc.Graph(figure=bsdd_created_weekly),
-                    ],
-                    id="tabpanel-404-panel",
-                    className="fr-tabs__panel fr-tabs__panel--selected",
-                    role="tabpanel",
-                    tabIndex="0",
-                    **{"aria-labelledby": "tabpanel-404"}
-                ),
-                html.Div(
-                    [
-                        html.H4(
+                        html.Div(
                             [
-                                "Nombre de Bordereaux de Suivi de Déchets d'Amiante créés par semaine"
-                            ]
+                                html.H4(
+                                    [
+                                        "Nombre de Bordereaux de Suivi de Déchets d'Amiante créés par semaine"
+                                    ]
+                                ),
+                                dcc.Graph(figure=bsda_created_weekly),
+                            ],
+                            id="tabpanel-405-panel",
+                            className="fr-tabs__panel",
+                            role="tabpanel",
+                            tabIndex="0",
+                            **{"aria-labelledby": "tabpanel-405"}
                         ),
-                        dcc.Graph(figure=bsda_created_weekly),
-                    ],
-                    id="tabpanel-405-panel",
-                    className="fr-tabs__panel",
-                    role="tabpanel",
-                    tabIndex="0",
-                    **{"aria-labelledby": "tabpanel-405"}
-                ),
-                html.Div(
-                    [
-                        html.H4(
+                        html.Div(
                             [
-                                "Nombre de Bordereaux de Suivi de Fluides Frigorigènes créés par semaine"
-                            ]
+                                html.H4(
+                                    [
+                                        "Nombre de Bordereaux de Suivi de Fluides Frigorigènes créés par semaine"
+                                    ]
+                                ),
+                                dcc.Graph(figure=bsff_created_weekly),
+                            ],
+                            id="tabpanel-406-panel",
+                            className="fr-tabs__panel",
+                            role="tabpanel",
+                            tabIndex="0",
+                            **{"aria-labelledby": "tabpanel-406"}
                         ),
-                        dcc.Graph(figure=bsff_created_weekly),
-                    ],
-                    id="tabpanel-406-panel",
-                    className="fr-tabs__panel",
-                    role="tabpanel",
-                    tabIndex="0",
-                    **{"aria-labelledby": "tabpanel-406"}
-                ),
-                html.Div(
-                    [
-                        html.H4(
+                        html.Div(
                             [
-                                "Nombre de Bordereaux de Suivi de Déchets d'Activités de Soins à Risques Infectieux créés par semaine"
-                            ]
+                                html.H4(
+                                    [
+                                        "Nombre de Bordereaux de Suivi de Déchets d'Activités de Soins à Risques Infectieux créés par semaine"
+                                    ]
+                                ),
+                                dcc.Graph(figure=bsdasri_created_weekly),
+                            ],
+                            id="tabpanel-407-panel",
+                            className="fr-tabs__panel",
+                            role="tabpanel",
+                            tabIndex="0",
+                            **{"aria-labelledby": "tabpanel-407"}
                         ),
-                        dcc.Graph(figure=bsdasri_created_weekly),
                     ],
-                    id="tabpanel-407-panel",
-                    className="fr-tabs__panel",
-                    role="tabpanel",
-                    tabIndex="0",
-                    **{"aria-labelledby": "tabpanel-407"}
                 ),
-            ],
+                width=12,
+            )
         ),
-        html.H2("Établissements et utilisateurs"),
         dbc.Row(
             [
+                html.H2("Établissements et utilisateurs"),
                 add_callout(
                     number=company_created_total,
                     text="établissements inscrits depuis le 1er janvier 2022",
@@ -401,10 +406,15 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                 )
             ]
         ),
-        dcc.Markdown(
-            "Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ("
-            "[code source](https://github.com/MTES-MCT/trackdechets-public-stats/))",
-            className="source-code",
+        dbc.Row(
+            dbc.Col(
+                dcc.Markdown(
+                    "Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ("
+                    "[code source](https://github.com/MTES-MCT/trackdechets-public-stats/))",
+                    className="source-code",
+                ),
+                width=12,
+            )
         ),
     ]
     return container

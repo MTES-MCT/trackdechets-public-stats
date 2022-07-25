@@ -87,8 +87,12 @@ def get_public_stats_container() -> List[dbc.Row]:
     company_data_df = get_company_data()
     user_data_df = get_user_data()
 
-    company_created_total = company_data_df.index.size
-    user_created_total = user_data_df.index.size
+    company_created_total = company_data_df[
+        company_data_df["createdAt"] >= "2022-01-01"
+    ].index.size
+    user_created_total = user_data_df[
+        user_data_df["createdAt"] >= "2022-01-01"
+    ].index.size
 
     company_created_total_life = company_data_df.index.size
     user_created_total_life = user_data_df.index.size

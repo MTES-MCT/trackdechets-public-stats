@@ -27,8 +27,8 @@ def get_weekly_created_df(data: pd.DataFrame) -> pd.DataFrame:
     bs_data: DataFrame
         DataFrame containing BSx data.
     """
-
-    df = data.groupby(by=pd.Grouper(key="createdAt", freq="1W")).count().reset_index()
+    df = data[data["createdAt"] >= "2022-01-03"]
+    df = df.groupby(by=pd.Grouper(key="createdAt", freq="1W")).count().reset_index()
 
     return df
 
@@ -55,7 +55,7 @@ def get_weekly_bs_processed_df(
             | bs_data["processedAt"].isna()
         )
         & (bs_data["status"] == "PROCESSED")
-        & (bs_data["processedAt"] >= "2022-01-01")
+        & (bs_data["processedAt"] >= "2022-01-03")
     ].copy()
 
     df["processingOperation"] = normalize_processing_operation(

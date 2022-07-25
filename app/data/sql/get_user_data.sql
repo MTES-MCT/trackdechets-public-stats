@@ -8,4 +8,3 @@ WHERE "User"."isActive" = True
             FROM CURRENT_DATE
         ) AS int
     )
-    and "createdAt" >= '2022-01-03'

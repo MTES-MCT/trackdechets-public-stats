@@ -113,6 +113,8 @@ https://getbootstrap.com/docs/5.1/layout/breakpoints/#available-breakpoints */
 /* Reduce the big callout number size for md and below */
 @media (max-width: 768px) {
     .callout-number {
-        font-size: 2rem
+        font-size: 1.7rem;
+        white-space: nowrap;
+        text-align: center;
     }
 }
