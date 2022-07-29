@@ -27,16 +27,10 @@ def create_public_stats_container(
                         html.H1("Statistiques de Trackdéchets"),
                         dcc.Markdown(
                             """
-L'application Trackdéchets est utilisée en France par des milliers de professionnels
-du déchet pour tracer plusieurs types de déchets :
-- déchets dangereux et/ou polluants ([POP](https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) ;
-- déchets d'amiantes ;
-- fluides frigorigènes ;
-- déchets d'activités de soins à risques infectieux
-- véhicules hors d'usage.   
+Cette page publique, est le reflet des données disponibles sur Trackdéchets.
 
-Les déchets sont suivis de la production jusqu'au traitement final. Les déchets traités à l'étranger ne sont
-pas tracés par Trackdéchets.
+Depuis le 1er janvier 2022, l'utilisation de Trackdéchets est obligatoire pour les déchets dangereux et les déchets d'amiante. Cependant, 2022  est une année de transition qui comprend une période de tolérance jusqu'au 1er juillet (usage du format papier possible durant cette période).
+Nous utilisons donc les seules données qui ont fait l'objet d'une dématérialisation via Trackdéchets.
                 """
                         ),
                     ],
@@ -70,16 +64,17 @@ pas tracés par Trackdéchets.
                                         dcc.Markdown(
                                             [
                                                 """
-Un borderau de suivi de déchet (BSD) est créé pour chaque déchet et il contient de nombreuses
-informations (acteurs, déchets, poids, traitement réalisé, etc.). Ces informations sont transmises à
-Trackdéchets par un usage direct ou par API.
+L'application Trackdéchets est utilisée en France pour tracer plusieurs types de déchets:
+- déchets dangereux et/ou contenant des Polluants Organiques Persistants ([POP](https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) ;
+- déchets contenant de l'amiante ;
+- déchets de fluides frigorigènes ;
+- déchets d'activités de soins à risques infectieux (DASRI) ;
+- véhicules hors d'usage.
 
-Depuis le 1er janvier 2022, l'utilisation de Trackdéchets est obligatoire pour les déchets dangereux (DD)
-et les déchets d'amiante (DA).
-
-Le contenu de cette page, alimenté par des milliers de bordereaux, est amené à s'enrichir régulièrement
-avec de nouvelles statistiques.                                    
-                                    """
+Les déchets doivent être tracés depuis le producteur/détenteur jusqu'au traitement final.
+Les déchets qui vont d'une installation en métropole, à destination de l'étranger (ou l'inverse) ne sont pas tracés par Trackdéchets.
+Un bordereau de suivi de déchet (BSD) est créé pour chaque déchet et chaque mouvement. Les nombreuses informations qu'il contient alimentent ces statistiques.                   
+"""
                                             ]
                                         )
                                     ],
@@ -102,8 +97,8 @@ avec de nouvelles statistiques.
                         dcc.Markdown(
                             [
                                 """
-Les nombres présentés ici incluent tous les types de déchets nécessitant un suivi particulier : **déchets dangereux** (DD), **déchets d'amiante** (DA), déchets de **fluide frigorigène** (FF) et **déchets d'activités de soins à risques infectieux** (DASRI).
-        """
+Les données présentées ici comprennent tous les types de déchets nécessitant un suivi particulier : **déchets dangereux** (DD), **déchets d'amiante** (DA), déchets de **fluide frigorigène** (FF) et **déchets d'activités de soins à risques infectieux** (DASRI).        
+"""
                             ]
                         ),
                     ],
@@ -124,11 +119,8 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
                     width=3,
                 ),
                 add_callout(
-                    text="""En fin de chaîne, un déchet dangereux est traité. Les **déchets valorisés**
-        sont réutilisés (combustion pour du chauffage, recyclage, revente, compostage, etc.)
-        tandis que les **déchets éliminés** sont en fin de cycle de vie (enfouissement, stockage,
-        traitement chimique, etc.). Plus d'informations sur [
-        ecologie.gouv.fr](https://www.ecologie.gouv.fr/traitement-des-dechets). """,
+                    text="""Les modes de traitement des déchets dangereux s'inscrivent dans la [hiérarchie des traitements de déchets](https://www.ecologie.gouv.fr/gestion-des-dechets-principes-generaux#:~:text=La%20hi%C3%A9rarchie%20des%20modes%20de%20traitement%20est%20un%20ordre%20de,d%C3%A9marches%20de%20pr%C3%A9vention%20des%20d%C3%A9chets).
+Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme "valorisés" dans Trackdéchets, et sont comparés à l'élimination (pas de réutilisation, recyclage ou valorisation possible dans les conditions techniques et économiques du moment)""",
                     width=6,
                 ),
             ]
@@ -298,24 +290,14 @@ Les nombres présentés ici incluent tous les types de déchets nécessitant un 
             [
                 html.H2("Établissements et utilisateurs"),
                 add_callout(
-                    number=company_created_total,
-                    text="établissements inscrits depuis le 1er janvier 2022",
-                    width=3,
-                ),
-                add_callout(
                     number=company_created_total_life,
                     text="établissements inscrits au total",
-                    width=3,
-                ),
-                add_callout(
-                    number=user_created_total,
-                    text="utilisateurs inscrits depuis le 1er janvier 2022",
-                    width=3,
+                    width=6,
                 ),
                 add_callout(
                     number=user_created_total_life,
                     text="utilisateurs inscrits au total",
-                    width=3,
+                    width=6,
                 ),
             ]
         ),
