@@ -86,13 +86,13 @@ def get_internal_stats_container() -> List[dbc.Row]:
         ),
         dbc.Row(
             dbc.Col(
-                [add_figure(internal_bsdd_created_week, "internal_bsdd_created_week")],
-                width=10,
-            )
-        ),
-        dbc.Row(
-            dbc.Col(
-                [add_figure(internal_bsdd_sent_week, "internal_bsdd_sent_week")],
+                [
+                    add_figure(
+                        internal_bsdd_created_week,
+                        "internal_bsdd_created_week",
+                        "Nombre de BSDD créés",
+                    )
+                ],
                 width=10,
             )
         ),
@@ -100,7 +100,21 @@ def get_internal_stats_container() -> List[dbc.Row]:
             dbc.Col(
                 [
                     add_figure(
-                        internal_bsdd_received_week, "internal_bsdd_received_week"
+                        internal_bsdd_sent_week,
+                        "internal_bsdd_sent_week",
+                        "Nombre de BSDD envoyés",
+                    )
+                ],
+                width=10,
+            )
+        ),
+        dbc.Row(
+            dbc.Col(
+                [
+                    add_figure(
+                        internal_bsdd_received_week,
+                        "internal_bsdd_received_week",
+                        "Nombre de BSDD reçus",
                     )
                 ],
                 width=10,

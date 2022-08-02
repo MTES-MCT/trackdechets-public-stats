@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 from dash import dcc, html
 
 
-def add_figure(fig: go.Figure, fig_id: str) -> dbc.Row:
+def add_figure(fig: go.Figure, fig_id: str, figure_title: str) -> dbc.Row:
     """
     Boilerplate for figure rows.
 
@@ -19,19 +19,14 @@ def add_figure(fig: go.Figure, fig_id: str) -> dbc.Row:
     HTML Row to be added in a Dash layout
     """
 
-    row = dbc.Row(
+    row = html.Div(
         [
-            dbc.Col(
-                [
-                    html.Div(
-                        [dcc.Graph(id=fig_id, figure=fig, config={"locale": "fr"})],
-                        className="fr-callout",
-                    )
-                ],
-                width=12,
-            )
-        ]
+            html.H4(children=[figure_title]),
+            dcc.Graph(id=fig_id, figure=fig, config={"locale": "fr"}),
+        ],
+        className="fr-callout",
     )
+
     return row
 
 

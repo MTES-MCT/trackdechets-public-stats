@@ -13,10 +13,10 @@ extra_config = {"locale": "fr"}
 dash_app = dash.Dash(
     __name__,
     title="Trackdéchets : statistiques et impact",
-    external_stylesheets=[dbc.themes.GRID],
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
     external_scripts=external_scripts,
+    assets_external_path="",
 )
-
 
 dash_app.layout = serve_layout()
 # Add the @lang attribute to the root <html>
