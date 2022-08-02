@@ -112,16 +112,19 @@ Les données présentées ici comprennent tous les types de déchets nécessitan
                     number=quantity_processed_total,
                     text="tonnes de déchets dangereux traités depuis le 1er janvier 2022",
                     width=3,
+                    sm_width=12,
                 ),
                 add_callout(
                     number=bsdd_created_total,
                     text="bordereaux créés sur depuis le 1er janvier 2022",
                     width=3,
+                    sm_width=12,
                 ),
                 add_callout(
                     text="""Les modes de traitement des déchets dangereux s'inscrivent dans la [hiérarchie des traitements de déchets](https://www.ecologie.gouv.fr/gestion-des-dechets-principes-generaux#:~:text=La%20hi%C3%A9rarchie%20des%20modes%20de%20traitement%20est%20un%20ordre%20de,d%C3%A9marches%20de%20pr%C3%A9vention%20des%20d%C3%A9chets).
 Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme "valorisés" dans Trackdéchets, et sont comparés à l'élimination (pas de réutilisation, recyclage ou valorisation possible dans les conditions techniques et économiques du moment)""",
                     width=6,
+                    sm_width=12,
                 ),
             ]
         ),
@@ -292,12 +295,14 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                 add_callout(
                     number=company_created_total_life,
                     text="établissements inscrits au total",
-                    width=6,
+                    width=3,
+                    sm_width=12,
                 ),
                 add_callout(
                     number=user_created_total_life,
                     text="utilisateurs inscrits au total",
-                    width=6,
+                    width=3,
+                    sm_width=12,
                 ),
             ]
         ),
