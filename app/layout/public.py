@@ -17,6 +17,7 @@ from app.layout.figures_factory import (
 SQL_PATH = Path.cwd().absolute() / "app/data/sql"
 
 
+
 def get_public_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the public stats page
     and returns an Dash HTML layout ready to be displayed.
@@ -39,6 +40,7 @@ def get_public_stats_container() -> List[dbc.Row]:
     # BSx created weekly figure
     bsdd_created_weekly_df = get_weekly_created_df(
         bsd_data_df,
+
     )
     bsda_created_weekly_df = get_weekly_created_df(bsda_data_df)
     bsff_created_weekly_df = get_weekly_created_df(bsff_data_df)

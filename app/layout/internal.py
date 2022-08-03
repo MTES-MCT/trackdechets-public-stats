@@ -16,6 +16,7 @@ from app.layout.utils import add_figure
 SQL_PATH = Path.cwd().absolute() / "app/data/sql"
 
 
+
 def get_internal_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the internal stats page
     and returns an Dash HTML layout ready to be displayed.
