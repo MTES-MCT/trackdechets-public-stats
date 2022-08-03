@@ -7,13 +7,14 @@ select id,
     case
         when "quantityReceived" > 60 then "quantityReceived" / 1000
         else "quantityReceived"
-    END as "quantityReceived",
-    "recipientProcessingOperation",
-    "wasteDetailsCode",
-    "wasteDetailsPop"
+    END as "weightValue",
+    "recipientProcessingOperation" as "processingOperation",
+    "wasteDetailsCode" as "wasteCode",
+    "wasteDetailsPop" as "wastePop"
 from "default$default"."Form"
 where "Form"."isDeleted" = false
-    and "createdAt" >= '2022-01-01'
+    and "createdAt" >= '2022-01-03'
+    /* First day of the first week of the year */
     and "default$default"."Form"."createdAt"::date AT TIME ZONE 'Europe/Paris' <= CURRENT_DATE - cast(
         extract(
             dow

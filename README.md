@@ -37,6 +37,10 @@ pipenv run run.py
 
 ### Notes de versions
 
+**1.6 12/07/2022**
+- Ajout des données sur les autres bordereaux
+- Revue du layout avec le design system de l'état
+
 **1.5.1 12/07/2022**
 - Suppression de toute mention de cache
 
