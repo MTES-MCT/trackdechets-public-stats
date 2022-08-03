@@ -1,6 +1,6 @@
 # Statistiques publiques Trackdéchets
 
-**version 1.5.1**
+**version 1.6**
 
 
 
