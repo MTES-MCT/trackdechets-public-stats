@@ -6,19 +6,51 @@ from dash import dcc, html
 
 def create_public_stats_container(
     quantity_processed_total: int,
-    bsdd_created_total: int,
+    bs_created_total: int,
     quantity_processed_weekly: go.Figure,
     bsdd_created_weekly: go.Figure,
     bsda_created_weekly: go.Figure,
     bsff_created_weekly: go.Figure,
     bsdasri_created_weekly: go.Figure,
-    company_created_total: int,
     company_created_total_life: int,
-    user_created_total: int,
     user_created_total_life: int,
     company_created_weekly: go.Figure,
     user_created_weekly: go.Figure,
-):
+) -> list:
+    """
+    Creates the main container that will be displayed using all the precomputed metrics and Plotly Figures objects.
+    Currently data is supposed to be for the year 2022.
+
+    Parameters
+    ----------
+    quantity_processed_total: int
+        Number of tons of waste processed.
+    bsdd_created_total: int
+        Total number of bordereaux created (BSDD, BSDA, BSFF and BSDASRI).
+    quantity_processed_weekly: Plotly Figure object
+        Bar plot showing the quantity of waste processed by week and by process type.
+    bsdd_created_weekly: Plotly Figure object
+        Scatter plot showing the number of BSDD created weekly.
+    bsda_created_weekly: Plotly Figure object
+        Scatter plot showing the number of BSDA created weekly.
+    bsff_created_weekly: Plotly Figure object
+        Scatter plot showing the number of BSFF created weekly.
+    bsdasri_created_weekly: Plotly Figure object
+        Scatter plot showing the number of BSDASRI created weekly.
+    company_created_total_life: int
+        Number of companies with an account on the Trackdéchets platform (all time).
+    user_created_total_life: int
+        Number of users with an account on the Trackdéchets platform (all time).
+    company_created_weekly: Plotly Figure object
+        Scatter plot showing the number of company accounts created weekly.
+    user_created_weekly: Plotly Figure object
+        Scatter plot showing the number of user accounts created weekly.
+
+    Returns
+    -------
+    list
+        Layout as a list of Dash components, ready to be rendered.
+    """
     container = [
         dbc.Row(
             [
@@ -115,7 +147,7 @@ Les données présentées ici comprennent tous les types de déchets nécessitan
                     sm_width=12,
                 ),
                 add_callout(
-                    number=bsdd_created_total,
+                    number=bs_created_total,
                     text="bordereaux créés sur depuis le 1er janvier 2022",
                     width=3,
                     sm_width=12,

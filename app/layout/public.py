@@ -17,14 +17,13 @@ from app.layout.figures_factory import (
 SQL_PATH = Path.cwd().absolute() / "app/data/sql"
 
 
-
 def get_public_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the public stats page
     and returns an Dash HTML layout ready to be displayed.
     """
 
     # Load all needed data
-    bsd_data_df = get_bs_data(
+    bsdd_data_df = get_bs_data(
         sql_path=SQL_PATH / "get_bsdd_data.sql",
     )
     bsda_data_df = get_bs_data(
@@ -39,8 +38,7 @@ def get_public_stats_container() -> List[dbc.Row]:
 
     # BSx created weekly figure
     bsdd_created_weekly_df = get_weekly_created_df(
-        bsd_data_df,
-
+        bsdd_data_df,
     )
     bsda_created_weekly_df = get_weekly_created_df(bsda_data_df)
     bsff_created_weekly_df = get_weekly_created_df(bsff_data_df)
@@ -51,11 +49,13 @@ def get_public_stats_container() -> List[dbc.Row]:
     bsff_created_weekly_fig = create_weekly_created_figure(bsff_created_weekly_df)
     bsdasri_created_weekly_fig = create_weekly_created_figure(bsdasri_created_weekly_df)
 
-    bsdd_created_total = bsd_data_df.index.size
+    bs_created_total = 0
+    for df in [bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df]:
+        bs_created_total += df.index.size
 
     # Waste weight processed weekly
 
-    bsdd_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsd_data_df)
+    bsdd_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsdd_data_df)
     bsda_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsda_data_df)
     bsff_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsff_data_df)
     bsdasri_quantity_processed_weekly_df = get_weekly_bs_processed_df(bsdasri_data_df)
@@ -89,13 +89,6 @@ def get_public_stats_container() -> List[dbc.Row]:
     company_data_df = get_company_data()
     user_data_df = get_user_data()
 
-    company_created_total = company_data_df[
-        company_data_df["createdAt"] >= "2022-01-01"
-    ].index.size
-    user_created_total = user_data_df[
-        user_data_df["createdAt"] >= "2022-01-01"
-    ].index.size
-
     company_created_total_life = company_data_df.index.size
     user_created_total_life = user_data_df.index.size
 
@@ -107,15 +100,13 @@ def get_public_stats_container() -> List[dbc.Row]:
 
     public_stats_container = create_public_stats_container(
         quantity_processed_total,
-        bsdd_created_total,
+        bs_created_total,
         quantity_processed_weekly_fig,
         bsdd_created_weekly_fig,
         bsda_created_weekly_fig,
         bsff_created_weekly_fig,
         bsdasri_created_weekly_fig,
-        company_created_total,
         company_created_total_life,
-        user_created_total,
         user_created_total_life,
         company_created_weekly,
         user_created_weekly,

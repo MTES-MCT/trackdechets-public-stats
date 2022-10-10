@@ -29,6 +29,8 @@ def get_bs_data(
         Path of the sql query file. Query must select at least a "createdAt" column.
     include_drafts: bool
         Wether to include drafts BSx in the result.
+    include_only_dangerous_waste: bool
+        If true, only 'bordereaux' for dangerous waste are returned.
 
     Returns
     -------
