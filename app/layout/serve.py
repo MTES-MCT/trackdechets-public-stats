@@ -9,10 +9,13 @@ from app.layout.public import get_public_stats_container
 PUBLIC_STATS_CONTAINER = get_public_stats_container()
 INTERNAL_STATS_CONTAINER = get_internal_stats_container()
 # Router
-@callback(Output("layout-container", "children"), [Input("url", "pathname")])
+@callback(
+    Output("layout-container", "children"),
+    [Input("url", "pathname")],
+)
 def display_page(pathname: str) -> List[dbc.Row]:
     """Returns either public stats or internal stats container
-    dependeing on request path.
+    depending on request path.
 
     Parameters
     -----------

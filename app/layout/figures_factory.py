@@ -11,7 +11,18 @@ from app.layout.utils import format_number
 def create_weekly_created_figure(
     data: pd.DataFrame,
 ) -> go.Figure:
-    """Create the figure showing number of weekly created Bsx, companies, users..."""
+    """Creates the figure showing number of weekly created Bsx, companies, users...
+
+    Parameters
+    ----------
+    data: DataFrame
+        DataFrame containing the data to aggregate. Must have 'id' and 'createdAt' columns.
+
+    Returns
+    -------
+    Plotly Figure Object
+        Figure object ready to be plotted.
+    """
 
     text_positions = [
         "top center" if i % 2 else "bottom center" for i in range(data.shape[0])
@@ -52,6 +63,22 @@ def create_weekly_quantity_processed_figure(
     bs_destroyed_data: pd.Series,
     bs_other_data: Optional[pd.Series],
 ) -> go.Figure:
+    """Creates the figure showing the weekly waste quantity processed by type of process (destroyed or recovered).
+
+    Parameters
+    ----------
+    bs_recovered_data: DataFrame
+        DataFrame containing the quantity of recovered waste aggregated by week.
+    bs_destroyed_data: DataFrame
+        DataFrame containing the quantity of destroyed waste aggregated by week.
+    bs_other_data: DataFrame
+        Optional. DataFrame containing the quantity of waste that is neither recovered or destroyed aggregated by week.
+
+    Returns
+    -------
+    Plotly Figure Object
+        Figure object ready to be plotted.
+    """
 
     data_conf = [
         {
