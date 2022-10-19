@@ -76,11 +76,10 @@ def get_public_stats_container() -> List[dbc.Row]:
     bsff_counts_weekly_fig = create_weekly_counts_scatter_figure(
         bsff_created_weekly_df, bsff_sent_weekly_df, bsff_processed_weekly_df
     )
-    bsdasri_count_weekly_fig = create_weekly_counts_scatter_figure(
+    bsdasri_counts_weekly_fig = create_weekly_counts_scatter_figure(
         bsdasri_created_weekly_df, bsdasri_sent_weekly_df, bsdasri_processed_weekly_df
     )
 
-    bsdd_created_total = bsdd_data_df.index.size
 
     # Waste weight processed weekly
 
@@ -96,6 +95,12 @@ def get_public_stats_container() -> List[dbc.Row]:
     bsdasri_quantity_processed_weekly_df = get_weekly_waste_quantity_processed_df(
         bsdasri_data_df
     )
+    bs_created_total = 0
+    for df in [bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df]:
+        bs_created_total += df.index.size
+
+    # Waste weight processed weekly
+
 
     quantity_processed_weekly_df = bsdd_quantity_processed_weekly_df
     for df in [
@@ -126,13 +131,6 @@ def get_public_stats_container() -> List[dbc.Row]:
     company_data_df = get_company_data()
     user_data_df = get_user_data()
 
-    company_created_total = company_data_df[
-        company_data_df["createdAt"] >= "2022-01-01"
-    ].index.size
-    user_created_total = user_data_df[
-        user_data_df["createdAt"] >= "2022-01-01"
-    ].index.size
-
     company_created_total_life = company_data_df.index.size
     user_created_total_life = user_data_df.index.size
 
@@ -144,12 +142,12 @@ def get_public_stats_container() -> List[dbc.Row]:
 
     public_stats_container = create_public_stats_container(
         quantity_processed_total,
-        bsdd_created_total,
+        bs_created_total,
         quantity_processed_weekly_fig,
         bsdd_counts_weekly_fig,
         bsda_counts_weekly_fig,
         bsff_counts_weekly_fig,
-        bsdasri_count_weekly_fig,
+        bsdasri_counts_weekly_fig,
         company_created_total_life,
         user_created_total_life,
         company_created_weekly,

@@ -149,6 +149,22 @@ def create_weekly_quantity_processed_figure(
     bs_destroyed_data: pd.Series,
     bs_other_data: Optional[pd.Series],
 ) -> go.Figure:
+    """Creates the figure showing the weekly waste quantity processed by type of process (destroyed or recovered).
+
+    Parameters
+    ----------
+    bs_recovered_data: DataFrame
+        DataFrame containing the quantity of recovered waste aggregated by week.
+    bs_destroyed_data: DataFrame
+        DataFrame containing the quantity of destroyed waste aggregated by week.
+    bs_other_data: DataFrame
+        Optional. DataFrame containing the quantity of waste that is neither recovered or destroyed aggregated by week.
+
+    Returns
+    -------
+    Plotly Figure Object
+        Figure object ready to be plotted.
+    """
 
     data_conf = [
         {
