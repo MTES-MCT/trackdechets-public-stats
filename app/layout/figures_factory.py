@@ -11,7 +11,18 @@ from app.layout.utils import format_number
 def create_weekly_created_figure(
     data: pd.DataFrame,
 ) -> go.Figure:
-    """Create the figure showing number of weekly created Bsx, companies, users..."""
+    """Creates the figure showing number of weekly created Bsx, companies, users...
+
+    Parameters
+    ----------
+    data: DataFrame
+        DataFrame containing the data to plot. Must have 'id' and 'at' columns.
+
+    Returns
+    -------
+    Plotly Figure Object
+        Figure object ready to be plotted.
+    """
 
     text_positions = [
         "top center" if i % 2 else "bottom center" for i in range(data.shape[0])
@@ -25,7 +36,7 @@ def create_weekly_created_figure(
     fig = go.Figure(
         [
             go.Scatter(
-                x=data["createdAt"],
+                x=data["at"],
                 y=data["id"],
                 text=data["id"],
                 mode="lines+markers+text",
@@ -43,6 +54,92 @@ def create_weekly_created_figure(
         margin=dict(t=20, r=0, l=50),
     )
     fig.update_xaxes(tick0="2022-01-03")
+
+    return fig
+
+
+def create_weekly_counts_scatter_figure(
+    bs_created_data: pd.DataFrame,
+    bs_sent_data: pd.DataFrame,
+    bs_processed_data: pd.DataFrame,
+) -> go.Figure:
+    """Creates a scatter figure showing the weekly number of 'bordereaux' by status (created, sent..)
+
+    Parameters
+    ----------
+    bs_created_data: DataFrame
+        DataFrame containing the count of 'bordereaux' created. Must have 'id' and 'at' columns.
+    bs_sent_data: DataFrame
+        DataFrame containing the count of 'bordereaux' sent. Must have 'id' and 'at' columns.
+    bs_processed_data: DataFrame
+        DataFrame containing the count of 'bordereaux' processed. Must have 'id' and 'at' columns.
+
+    Returns
+    -------
+    Plotly Figure Object
+        Figure object ready to be plotted.
+    """
+
+    plot_configs = [
+        {
+            "data": bs_created_data,
+            "name": "Bordereaux créés",
+            "suffix": "créations",
+        },
+        {
+            "data": bs_sent_data,
+            "name": "Bordereaux envoyés",
+            "suffix": "envois",
+        },
+        {
+            "data": bs_processed_data,
+            "name": "Bordereaux traités",
+            "suffix": "traitements",
+        },
+    ]
+
+    scatter_list = []
+
+    for config in plot_configs:
+
+        data = config["data"]
+        name = config["name"]
+        suffix = config["suffix"]
+
+        # Creates a list of text to only show value on last point of the line
+        texts = [""] * (len(data) - 1) + [format_number(data["id"].iloc[-1])]
+
+        hover_texts = [
+            f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> {suffix}"
+            for e in data.itertuples(index=False)
+        ]
+
+        scatter_list.append(
+            go.Scatter(
+                x=data["at"],
+                y=data["id"],
+                mode="lines+text",
+                name=name,
+                text=texts,
+                textfont_size=15,
+                textposition="top right",
+                hovertext=hover_texts,
+                hoverinfo="text",
+                line_shape="spline",
+                line_smoothing=0.3,
+                line_width=3,
+            )
+        )
+
+    fig = go.Figure(scatter_list)
+
+    fig.update_layout(
+        paper_bgcolor="#fff",
+        margin=dict(t=5, r=70, l=5),
+        legend=dict(orientation="h", y=1, font_size=13, itemwidth=40),
+    )
+    fig.update_xaxes(tick0="2022-01-03")
+    fig.update_yaxes(side="right")
 
     return fig
 
@@ -113,10 +210,11 @@ def create_weekly_quantity_processed_figure(
             x=1,
             title="Type de traitement :",
         ),
-        margin=dict(t=30, r=0, l=70),
+        margin=dict(t=30, r=70, l=0),
         barmode="stack",
         yaxis_title="Quantité (en tonnes)",
         yaxis_range=[0, max_value * 1.1],
     )
+    fig.update_yaxes(side="right")
 
     return fig

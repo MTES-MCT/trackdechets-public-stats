@@ -18,7 +18,9 @@ def normalize_processing_operation(col: pd.Series) -> pd.Series:
     return col.replace(regex=regex_dict)
 
 
-def get_weekly_created_df(data: pd.DataFrame) -> pd.DataFrame:
+def get_weekly_counts_df(
+    data: pd.DataFrame, aggregate_column: str = "createdAt"
+) -> pd.DataFrame:
     """
     Creates a DataFrame with number of BSx, users, company... created by week.
 
@@ -27,13 +29,22 @@ def get_weekly_created_df(data: pd.DataFrame) -> pd.DataFrame:
     bs_data: DataFrame
         DataFrame containing BSx data.
     """
-    df = data[data["createdAt"] >= "2022-01-03"]
-    df = df.groupby(by=pd.Grouper(key="createdAt", freq="1W")).count().reset_index()
+    now = datetime.now(tz=ZoneInfo("Europe/Paris"))
+    max_date = (now - timedelta(days=now.weekday() + 1)).replace(
+        hour=23, minute=59, second=59, microsecond=99
+    )
+    df = data[data[aggregate_column].between("2022-01-03", max_date)]
+    df = (
+        df.groupby(by=pd.Grouper(key=aggregate_column, freq="1W"))
+        .count()
+        .reset_index()
+        .rename(columns={aggregate_column: "at"})
+    )
 
     return df
 
 
-def get_weekly_bs_processed_df(
+def get_weekly_waste_quantity_processed_df(
     bs_data: pd.DataFrame,
 ) -> pd.DataFrame:
     """
