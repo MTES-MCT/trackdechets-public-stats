@@ -22,7 +22,7 @@ def get_bsd_created(bsdd_data: pd.DataFrame) -> pd.DataFrame:
     """
 
     df = (
-        bsdd_data.groupby(by=pd.Grouper(key="createdAt", freq="1W"))
+        bsdd_data.groupby(by=pd.Grouper(key="created_at", freq="1W"))
         .count()
         .reset_index()
     )
@@ -46,13 +46,13 @@ def get_recent_bsdd_sent(bsdd_data: pd.DataFrame) -> pd.DataFrame:
 
     bsdd_data = bsdd_data[
         (
-            (bsdd_data["sentAt"] >= "2022-01-01")
-            & (bsdd_data["sentAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
+            (bsdd_data["sent_at"] >= "2022-01-01")
+            & (bsdd_data["sent_at"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
         )
-        | bsdd_data["sentAt"].isna()
+        | bsdd_data["sent_at"].isna()
     ]
     grouped = (
-        bsdd_data.groupby(by=pd.Grouper(key="sentAt", freq="1W"))["id"]
+        bsdd_data.groupby(by=pd.Grouper(key="sent_at", freq="1W"))["id"]
         .count()
         .reset_index()
     )
@@ -77,16 +77,16 @@ def get_recent_bsdd_received(bsdd_data: pd.DataFrame) -> pd.DataFrame:
 
     bsdd_data = bsdd_data[
         (
-            (bsdd_data["receivedAt"] >= "2022-01-01")
+            (bsdd_data["received_at"] >= "2022-01-01")
             & (
-                bsdd_data["receivedAt"]
+                bsdd_data["received_at"]
                 < (now - timedelta(days=(now.toordinal() % 7) - 1))
             )
         )
-        | bsdd_data["receivedAt"].isna()
+        | bsdd_data["received_at"].isna()
     ]
     grouped = (
-        bsdd_data.groupby(by=pd.Grouper(key="receivedAt", freq="1W"))["id"]
+        bsdd_data.groupby(by=pd.Grouper(key="received_at", freq="1W"))["id"]
         .count()
         .reset_index()
     )

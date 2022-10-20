@@ -46,25 +46,25 @@ def get_public_stats_container() -> List[dbc.Row]:
     bsdasri_created_weekly_df = get_weekly_counts_df(bsdasri_data_df)
 
     # BSx sent weekly figure
-    bsdd_sent_weekly_df = get_weekly_counts_df(bsdd_data_df, aggregate_column="sentAt")
-    bsda_sent_weekly_df = get_weekly_counts_df(bsda_data_df, aggregate_column="sentAt")
-    bsff_sent_weekly_df = get_weekly_counts_df(bsff_data_df, aggregate_column="sentAt")
+    bsdd_sent_weekly_df = get_weekly_counts_df(bsdd_data_df, aggregate_column="sent_at")
+    bsda_sent_weekly_df = get_weekly_counts_df(bsda_data_df, aggregate_column="sent_at")
+    bsff_sent_weekly_df = get_weekly_counts_df(bsff_data_df, aggregate_column="sent_at")
     bsdasri_sent_weekly_df = get_weekly_counts_df(
-        bsdasri_data_df, aggregate_column="sentAt"
+        bsdasri_data_df, aggregate_column="sent_at"
     )
 
     # BSx processed weekly figure
     bsdd_processed_weekly_df = get_weekly_counts_df(
-        bsdd_data_df, aggregate_column="processedAt"
+        bsdd_data_df, aggregate_column="processed_at"
     )
     bsda_processed_weekly_df = get_weekly_counts_df(
-        bsda_data_df, aggregate_column="processedAt"
+        bsda_data_df, aggregate_column="processed_at"
     )
     bsff_processed_weekly_df = get_weekly_counts_df(
-        bsff_data_df, aggregate_column="processedAt"
+        bsff_data_df, aggregate_column="processed_at"
     )
     bsdasri_processed_weekly_df = get_weekly_counts_df(
-        bsdasri_data_df, aggregate_column="processedAt"
+        bsdasri_data_df, aggregate_column="processed_at"
     )
 
     bsdd_counts_weekly_fig = create_weekly_counts_scatter_figure(
@@ -79,7 +79,6 @@ def get_public_stats_container() -> List[dbc.Row]:
     bsdasri_counts_weekly_fig = create_weekly_counts_scatter_figure(
         bsdasri_created_weekly_df, bsdasri_sent_weekly_df, bsdasri_processed_weekly_df
     )
-
 
     # Waste weight processed weekly
 
@@ -101,7 +100,6 @@ def get_public_stats_container() -> List[dbc.Row]:
 
     # Waste weight processed weekly
 
-
     quantity_processed_weekly_df = bsdd_quantity_processed_weekly_df
     for df in [
         bsda_quantity_processed_weekly_df,
@@ -116,7 +114,7 @@ def get_public_stats_container() -> List[dbc.Row]:
     quantity_destroyed = quantity_processed_weekly_df[(slice(None), "Déchet éliminé")]
     quantity_other = None
     if "Autre" in quantity_processed_weekly_df.index.get_level_values(
-        "processingOperation"
+        "processing_operation"
     ):
         quantity_other = quantity_processed_weekly_df[(slice(None), "Autre")]
 

@@ -1,8 +1,8 @@
 SELECT id,
-    "createdAt"
-FROM "default$default"."User"
-WHERE "User"."isActive" = True
-    and "createdAt"::date <= CURRENT_DATE - cast(
+    "created_at"
+FROM "trusted_zone_trackdechets"."user"
+WHERE "is_active" = True
+    and "created_at" <= CURRENT_DATE - cast(
         extract(
             dow
             FROM CURRENT_DATE
