@@ -1,37 +1,8 @@
-from typing import List
-
 import dash_bootstrap_components as dbc
-from dash import Input, Output, callback, dcc, html
-
-from app.layout.internal import get_internal_stats_container
 from app.layout.public import get_public_stats_container
+from dash import dcc, html
 
 PUBLIC_STATS_CONTAINER = get_public_stats_container()
-INTERNAL_STATS_CONTAINER = get_internal_stats_container()
-# Router
-@callback(
-    Output("layout-container", "children"),
-    [Input("url", "pathname")],
-)
-def display_page(pathname: str) -> List[dbc.Row]:
-    """Returns either public stats or internal stats container
-    depending on request path.
-
-    Parameters
-    -----------
-    pathname: str
-        path requested
-
-    Returns
-    --------
-    A Dash HTML layout that depends on the path and that is ready to be displayed.
-    """
-    if pathname == "/":
-        return PUBLIC_STATS_CONTAINER
-    elif pathname == "/internal-stats":
-        return INTERNAL_STATS_CONTAINER
-    else:
-        return 'Page inconnue : "' + pathname + '"'
 
 
 def serve_layout() -> html.Main:
@@ -42,7 +13,9 @@ def serve_layout() -> html.Main:
     layout = html.Main(
         children=[
             dcc.Location(id="url", refresh=False),
-            dbc.Container(fluid=True, id="layout-container", children=[]),
+            dbc.Container(
+                fluid=True, id="layout-container", children=PUBLIC_STATS_CONTAINER
+            ),
         ]
     )
     print("layout served")
