@@ -16,7 +16,6 @@ from app.layout.utils import add_figure
 SQL_PATH = Path.cwd().absolute() / "app/data/sql"
 
 
-
 def get_internal_stats_container() -> List[dbc.Row]:
     """Create all figures needed for the internal stats page
     and returns an Dash HTML layout ready to be displayed.
@@ -32,13 +31,13 @@ def get_internal_stats_container() -> List[dbc.Row]:
     # Created BSDD
     internal_bsdd_created_week = px.line(
         bsd_created_weekly_df,
-        x="createdAt",
+        x="created_at",
         y="id",
         text="id",
         title="BSDD créés par semaine",
         labels={
             "count": "BSDD créés",
-            "createdAt": "Semaine de création",
+            "created_at": "Semaine de création",
         },
         markers=True,
     )
@@ -48,13 +47,13 @@ def get_internal_stats_container() -> List[dbc.Row]:
     # Sent BSDD
     internal_bsdd_sent_week = px.line(
         recent_bsdd_sent_df,
-        x="sentAt",
+        x="sent_at",
         y="id",
         text="id",
         title="BSDD enlevés par semaine",
         labels={
             "count": "BSDD enlevés",
-            "sentAt": "Semaine d'enlèvement",
+            "sent_at": "Semaine d'enlèvement",
         },
         markers=True,
     )
@@ -64,13 +63,13 @@ def get_internal_stats_container() -> List[dbc.Row]:
     # Received BSDD
     internal_bsdd_received_week = px.line(
         bsd_received_week,
-        x="receivedAt",
+        x="received_at",
         y="id",
         text="id",
         title="BSDD réceptionnés par semaine",
         labels={
             "count": "BSDD réceptionnés",
-            "receivedAt": "Semaine de réception",
+            "received_at": "Semaine de réception",
         },
         markers=True,
     )

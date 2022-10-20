@@ -1,21 +1,21 @@
 select id,
-    "default$default"."Form"."createdAt",
-    "processedAt",
-    "sentAt",
-    "receivedAt",
+    "created_at",
+    "processed_at",
+    "sent_at",
+    "received_at",
     status,
     case
-        when "quantityReceived" > 60 then "quantityReceived" / 1000
-        else "quantityReceived"
-    END as "weightValue",
-    "recipientProcessingOperation" as "processingOperation",
-    "wasteDetailsCode" as "wasteCode",
-    "wasteDetailsPop" as "wastePop"
-from "default$default"."Form"
-where "Form"."isDeleted" = false
-    and "createdAt" >= '2022-01-03'
+        when "quantity_received" > 60 then "quantity_received" / 1000
+        else "quantity_received"
+    END as "quantity",
+    "processing_operation_done" as "processing_operation",
+    "waste_details_code" as "waste_code",
+    "waste_details_pop" as "waste_pop"
+from "trusted_zone_trackdechets"."bsdd"
+where "is_deleted" = false
+    and "created_at" >= '2022-01-03'
     /* First day of the first week of the year */
-    and "default$default"."Form"."createdAt"::date AT TIME ZONE 'Europe/Paris' <= CURRENT_DATE - cast(
+    and "created_at" <= CURRENT_DATE - cast(
         extract(
             dow
             from CURRENT_DATE
@@ -23,23 +23,23 @@ where "Form"."isDeleted" = false
     )
     and (
         (
-            "processedAt" >= '1970-01-01'
-            and "processedAt" < '2262-04-11'
+            "processed_at" >= '1970-01-01'
+            and "processed_at" < '2262-04-11'
             /* Due to pandas timestamp limitations */
         )
-        or "processedAt" is null
+        or "processed_at" is null
     )
     and (
         (
-            "sentAt" >= '1970-01-01'
-            and "sentAt" < '2262-04-11'
+            "sent_at" >= '1970-01-01'
+            and "sent_at" < '2262-04-11'
         )
-        or "sentAt" is null
+        or "sent_at" is null
     )
     and (
         (
-            "receivedAt" >= '1970-01-01'
-            and "receivedAt" < '2262-04-11'
+            "received_at" >= '1970-01-01'
+            and "received_at" < '2262-04-11'
         )
-        or "receivedAt" is null
+        or "received_at" is null
     )

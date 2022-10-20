@@ -196,26 +196,26 @@ def create_weekly_quantity_processed_figure(
         data = conf["data"]
         traces.append(
             go.Bar(
-                x=data["processedAt"],
-                y=data["weightValue"],
+                x=data["processed_at"],
+                y=data["quantity"],
                 name=conf["name"],
                 hovertext=[
                     conf["text"].format(
                         e[0] - timedelta(days=6),
-                        e.processedAt,
-                        format_number(e.weightValue),
+                        e.processed_at,
+                        format_number(e.quantity),
                     )
                     for e in data.itertuples(index=False)
                 ],
                 hoverinfo="text",
-                text=data["weightValue"].apply(format_number),
+                text=data["quantity"].apply(format_number),
                 marker_color=conf["color"],
             )
         )
 
     fig = go.Figure(data=traces)
 
-    max_value = sum([conf["data"]["weightValue"].max() for conf in data_conf])
+    max_value = sum([conf["data"]["quantity"].max() for conf in data_conf])
     fig.update_layout(
         xaxis_title="Semaine de traitement",
         legend=dict(

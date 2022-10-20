@@ -1,20 +1,20 @@
 select id,
-    "createdAt",
-    "transporterTakenOverAt" as "sentAt",
-    "destinationReceptionDate" as "receivedAt",
-    "destinationOperationDate" as "processedAt",
+    "created_at",
+    "transporter_taken_over_at" as "sent_at",
+    "destination_reception_date" as "received_at",
+    "destination_operation_date" as "processed_at",
     "status",
     case
-        when "emitterWasteWeightValue" > 60 then "emitterWasteWeightValue" / 1000
-        else "emitterWasteWeightValue"
-    END as "weightValue",
-    "destinationOperationCode" as "processingOperation",
-    "wasteCode"
-from "default$default"."Bsdasri"
-where "isDeleted" = false
-    and "createdAt" >= '2022-01-03'
+        when "destination_reception_waste_weight_value" > 60 then "destination_reception_waste_weight_value" / 1000
+        else "destination_reception_waste_weight_value"
+    END as "quantity",
+    "destination_operation_code" as "processing_operation",
+    "waste_code"
+from "trusted_zone_trackdechets"."bsdasri"
+where "is_deleted" = false
+    and "created_at" >= '2022-01-03'
     /* First day of the first week of the year */
-    and "createdAt"::date <= CURRENT_DATE - cast(
+    and "created_at"::date <= CURRENT_DATE - cast(
         extract(
             dow
             from CURRENT_DATE
@@ -23,22 +23,22 @@ where "isDeleted" = false
     /* Due to pandas timestamp limitations */
     and (
         (
-            "transporterTakenOverAt" >= '1970-01-01'
-            and "transporterTakenOverAt" < '2262-04-11'
+            "transporter_taken_over_at" >= '1970-01-01'
+            and "transporter_taken_over_at" < '2262-04-11'
         )
-        or "transporterTakenOverAt" is null
+        or "transporter_taken_over_at" is null
     )
     and (
         (
-            "destinationReceptionDate" >= '1970-01-01'
-            and "destinationReceptionDate" < '2262-04-11'
+            "destination_reception_date" >= '1970-01-01'
+            and "destination_reception_date" < '2262-04-11'
         )
-        or "destinationReceptionDate" is null
+        or "destination_reception_date" is null
     )
     and (
         (
-            "destinationOperationDate" >= '1970-01-01'
-            and "destinationOperationDate" < '2262-04-11'
+            "destination_operation_date" >= '1970-01-01'
+            and "destination_operation_date" < '2262-04-11'
         )
-        or "destinationOperationDate" is null
+        or "destination_operation_date" is null
     )

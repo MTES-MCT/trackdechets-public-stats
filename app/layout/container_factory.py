@@ -196,7 +196,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             }
                                         )
                                     ],
-                                    role="presentation",
+                                    role="present_ation",
                                 ),
                                 html.Li(
                                     [
@@ -213,7 +213,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             }
                                         )
                                     ],
-                                    role="presentation",
+                                    role="present_ation",
                                 ),
                                 html.Li(
                                     [
@@ -230,7 +230,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             }
                                         )
                                     ],
-                                    role="presentation",
+                                    role="present_ation",
                                 ),
                                 html.Li(
                                     [
@@ -247,7 +247,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             }
                                         ),
                                     ],
-                                    role="presentation",
+                                    role="present_ation",
                                 ),
                             ],
                             className="fr-tabs__list",
@@ -361,7 +361,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                                     }
                                                 )
                                             ],
-                                            role="presentation",
+                                            role="present_ation",
                                         ),
                                         html.Li(
                                             [
@@ -378,7 +378,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                                     }
                                                 )
                                             ],
-                                            role="presentation",
+                                            role="present_ation",
                                         ),
                                     ],
                                     className="fr-tabs__list",

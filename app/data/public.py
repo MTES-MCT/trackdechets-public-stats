@@ -19,7 +19,7 @@ def normalize_processing_operation(col: pd.Series) -> pd.Series:
 
 
 def get_weekly_counts_df(
-    data: pd.DataFrame, aggregate_column: str = "createdAt"
+    data: pd.DataFrame, aggregate_column: str = "created_at"
 ) -> pd.DataFrame:
     """
     Creates a DataFrame with number of BSx, users, company... created by week.
@@ -62,24 +62,27 @@ def get_weekly_waste_quantity_processed_df(
 
     df = bs_data[
         (
-            (bs_data["processedAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
-            | bs_data["processedAt"].isna()
+            (
+                bs_data["processed_at"]
+                < (now - timedelta(days=(now.toordinal() % 7) - 1))
+            )
+            | bs_data["processed_at"].isna()
         )
         & (bs_data["status"] == "PROCESSED")
-        & (bs_data["processedAt"] >= "2022-01-03")
+        & (bs_data["processed_at"] >= "2022-01-03")
     ].copy()
 
-    df["processingOperation"] = normalize_processing_operation(
-        df["processingOperation"]
+    df["processing_operation"] = normalize_processing_operation(
+        df["processing_operation"]
     )
 
     df = (
         df.groupby(
             by=[
-                pd.Grouper(key="processedAt", freq="1W"),
-                "processingOperation",
+                pd.Grouper(key="processed_at", freq="1W"),
+                "processing_operation",
             ]
-        )["weightValue"]
+        )["quantity"]
         .sum()
         .round()
     )
