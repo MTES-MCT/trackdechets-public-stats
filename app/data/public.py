@@ -75,6 +75,24 @@ def get_weekly_waste_quantity_processed_df(
         )
         & (bs_data["status"].isin(["PROCESSED", "FOLLOWED_WITH_PNTTD"]))
         & (bs_data["processed_at"] >= "2022-01-03")
+        & (
+            ~bs_data["processing_operation"].isin(
+                [
+                    "D9",
+                    "D13",
+                    "D14",
+                    "D15",
+                    "R12",
+                    "R13",
+                    "D 9",
+                    "D 13",
+                    "D 14",
+                    "D 15",
+                    "R 12",
+                    "R 13",
+                ]
+            )
+        )
     ].copy()
 
     df["processing_operation"] = normalize_processing_operation(
