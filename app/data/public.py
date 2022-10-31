@@ -54,6 +54,11 @@ def get_weekly_waste_quantity_processed_df(
     ----------
     bs_data: DataFrame
         DataFrame containing BSx data.
+
+    Returns
+    -------
+    DataFrame
+        DataFrame containing aggregated data by week.
     """
 
     now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
@@ -68,7 +73,7 @@ def get_weekly_waste_quantity_processed_df(
             )
             | bs_data["processed_at"].isna()
         )
-        & (bs_data["status"] == "PROCESSED")
+        & (bs_data["status"].isin(["PROCESSED", "FOLLOWED_WITH_PNTTD"]))
         & (bs_data["processed_at"] >= "2022-01-03")
     ].copy()
 
