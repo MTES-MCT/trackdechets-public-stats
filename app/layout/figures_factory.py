@@ -299,7 +299,7 @@ def create_quantity_processed_sunburst_figure(
     hover_text_template = "{code} : {description}<br><b>{quantity}t</b>"
     hover_texts = (
         [
-            f"<b>{format_number(e)}t</b> {index.split(' ')[1]}s"
+            f"<b>{format_number(e)}t</b> {index.split(' ')[1]}es"
             for index, e in total_data.items()
         ]
         + [
