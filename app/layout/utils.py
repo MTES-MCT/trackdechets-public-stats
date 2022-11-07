@@ -1,3 +1,4 @@
+import re
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dash import dcc, html
@@ -30,9 +31,10 @@ def add_figure(fig: go.Figure, fig_id: str, figure_title: str) -> dbc.Row:
     return row
 
 
-def format_number(input_number: float) -> str:
-    """Format number, rounding it and adding spaces every three digits."""
-    return f"{input_number:,.0f}".replace(",", " ")
+def format_number(input_number: float, precision: int = 0) -> str:
+    """Format a float to a string with thousands separated by space and rounding it at the given precision."""
+    input_number = round(input_number, precision)
+    return re.sub(r"\.0+", "", "{:,}".format(input_number).replace(",", " "))
 
 
 def add_callout(

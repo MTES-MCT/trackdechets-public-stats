@@ -3,11 +3,23 @@ import plotly.graph_objects as go
 from app.layout.utils import add_callout, add_figure
 from dash import dcc, html
 
+PLOTLY_PLOT_CONFIGS = {
+    "toImageButtonOptions": {
+        "format": "png",  # one of png, svg, jpeg, webp
+        "filename": "trackdechets",
+        "height": 720,
+        "width": 1280,
+        "scale": 1,  # Multiply title/legend/axis/canvas sizes by this factor
+    },
+    "displaylogo": False,
+}
+
 
 def create_public_stats_container(
     quantity_processed_total: int,
     bs_created_total: int,
     quantity_processed_weekly: go.Figure,
+    quantity_processed_sunburst_figure: go.Figure,
     bsdd_created_weekly: go.Figure,
     bsda_created_weekly: go.Figure,
     bsff_created_weekly: go.Figure,
@@ -29,6 +41,8 @@ def create_public_stats_container(
         Total number of bordereaux created (BSDD, BSDA, BSFF and BSDASRI).
     quantity_processed_weekly: Plotly Figure object
         Bar plot showing the quantity of waste processed by week and by process type.
+    quantity_processed_sunburst_figure: Plotly Figure object
+        Sunburst plot showing the waste quantity by processing code.
     bsdd_created_weekly: Plotly Figure object
         Scatter plot showing the number of BSDD created weekly.
     bsda_created_weekly: Plotly Figure object
@@ -175,6 +189,25 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             ]
         ),
         dbc.Row(
+            [
+                dbc.Col(
+                    [
+                        add_figure(
+                            quantity_processed_sunburst_figure,
+                            "bsdd_processed_by_operation",
+                            "Quantité de déchets traités par opération de traitement",
+                        )
+                    ],
+                    width=8,
+                ),
+                add_callout(
+                    text="""Les codes R (recovery, valorisation) et D (disposal, élimination) définis par la convention de Bâle, et repris aux annexes I et II de la directive cadre déchets n° 2008/98/CE, sont régulièrement exploités dans le contexte de la traçabilité des déchets et de la déclaration annuelle des émissions et des transferts de polluants et des déchets (déclaration GEREP). Ces codes permettent de discerner les différentes opérations de valorisation et d’élimination des déchets. La liste des codes déchets peut être retrouvées en annexe de la [notice BSDD](https://faq.trackdechets.fr/dechets-dangereux-classiques/telecharger-la-notice-et-le-recepisse-du-bsdd).""",
+                    width=4,
+                    sm_width=12,
+                ),
+            ]
+        ),
+        dbc.Row(
             dbc.Col(
                 html.Div(
                     className="fr-tabs",
@@ -260,10 +293,13 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             [
                                 html.H4(
                                     [
-                                        "Nombre de Bordereaux de Suivi de Déchets Dangereux créés par semaine"
+                                        "Nombre de Bordereaux de Suivi de Déchets Dangereux par semaine"
                                     ]
                                 ),
-                                dcc.Graph(figure=bsdd_created_weekly),
+                                dcc.Graph(
+                                    figure=bsdd_created_weekly,
+                                    config=PLOTLY_PLOT_CONFIGS,
+                                ),
                             ],
                             id="tabpanel-404-panel",
                             className="fr-tabs__panel fr-tabs__panel--selected",
@@ -275,10 +311,13 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             [
                                 html.H4(
                                     [
-                                        "Nombre de Bordereaux de Suivi de Déchets d'Amiante créés par semaine"
+                                        "Nombre de Bordereaux de Suivi de Déchets d'Amiante par semaine"
                                     ]
                                 ),
-                                dcc.Graph(figure=bsda_created_weekly),
+                                dcc.Graph(
+                                    figure=bsda_created_weekly,
+                                    config=PLOTLY_PLOT_CONFIGS,
+                                ),
                             ],
                             id="tabpanel-405-panel",
                             className="fr-tabs__panel",
@@ -290,10 +329,13 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             [
                                 html.H4(
                                     [
-                                        "Nombre de Bordereaux de Suivi de Fluides Frigorigènes créés par semaine"
+                                        "Nombre de Bordereaux de Suivi de Fluides Frigorigènes par semaine"
                                     ]
                                 ),
-                                dcc.Graph(figure=bsff_created_weekly),
+                                dcc.Graph(
+                                    figure=bsff_created_weekly,
+                                    config=PLOTLY_PLOT_CONFIGS,
+                                ),
                             ],
                             id="tabpanel-406-panel",
                             className="fr-tabs__panel",
@@ -305,10 +347,13 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             [
                                 html.H4(
                                     [
-                                        "Nombre de Bordereaux de Suivi de Déchets d'Activités de Soins à Risques Infectieux créés par semaine"
+                                        "Nombre de Bordereaux de Suivi de Déchets d'Activités de Soins à Risques Infectieux par semaine"
                                     ]
                                 ),
-                                dcc.Graph(figure=bsdasri_created_weekly),
+                                dcc.Graph(
+                                    figure=bsdasri_created_weekly,
+                                    config=PLOTLY_PLOT_CONFIGS,
+                                ),
                             ],
                             id="tabpanel-407-panel",
                             className="fr-tabs__panel",
@@ -394,7 +439,10 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                                 "Nombre de comptes utilisateurs créés par semaine"
                                             ]
                                         ),
-                                        dcc.Graph(figure=user_created_weekly),
+                                        dcc.Graph(
+                                            figure=user_created_weekly,
+                                            config=PLOTLY_PLOT_CONFIGS,
+                                        ),
                                     ],
                                     id="tabpanel-201-panel",
                                     className="fr-tabs__panel fr-tabs__panel--selected",
@@ -409,7 +457,10 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                                 "Nombre de compte d'établissements créés par semaine"
                                             ]
                                         ),
-                                        dcc.Graph(figure=company_created_weekly),
+                                        dcc.Graph(
+                                            figure=company_created_weekly,
+                                            config=PLOTLY_PLOT_CONFIGS,
+                                        ),
                                     ],
                                     id="tabpanel-202-panel",
                                     className="fr-tabs__panel",

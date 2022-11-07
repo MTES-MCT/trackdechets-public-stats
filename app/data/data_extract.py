@@ -75,6 +75,10 @@ def get_bs_data(
                 bs_data_df["waste_code"].str.match(r".*\*$", na=False)
             ]
 
+    # Depending on the type of 'bordereau', the processing operations codes can contain space or not, so we normalize it :
+    bs_data_df["processing_operation"] = bs_data_df["processing_operation"].replace(
+        to_replace=r"([RD])([0-9]{1,2})", value=r"\g<1> \g<2>", regex=True
+    )
     print(f"get_bs_data duration: {time.time()-started_time} ")
 
     return bs_data_df
@@ -147,3 +151,18 @@ def get_user_data() -> pd.DataFrame:
     print(f"get_user_data duration: {time.time()-started_time} ")
 
     return user_data_df
+
+
+def get_processing_operation_codes_data() -> pd.DataFrame:
+    """
+    Returns description for each processing operation codes
+
+    Returns
+    --------
+    DataFrame
+        dataframe with processing operations codes and description
+    """
+    data = pd.read_sql_table(
+        table_name="codes_operations_traitements", schema="trusted_zone", con=DB_ENGINE
+    )
+    return data
