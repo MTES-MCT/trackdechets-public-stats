@@ -5,11 +5,15 @@ import dash_bootstrap_components as dbc
 
 from app.data.data_extract import get_bs_data, get_company_data, get_user_data
 from app.data.public import (
+    get_recovered_and_eliminated_quantity_processed_by_week_series,
+    get_waste_quantity_processed_df,
     get_weekly_counts_df,
-    get_weekly_waste_quantity_processed_df,
+    get_weekly_waste_quantity_processed_by_operation_code_df,
+    get_waste_quantity_processed_by_processing_code_df,
 )
 from app.layout.container_factory import create_public_stats_container
 from app.layout.figures_factory import (
+    create_quantity_processed_sunburst_figure,
     create_weekly_quantity_processed_figure,
     create_weekly_counts_scatter_figure,
     create_weekly_created_figure,
@@ -82,49 +86,52 @@ def get_public_stats_container() -> List[dbc.Row]:
 
     # Waste weight processed weekly
 
-    bsdd_quantity_processed_weekly_df = get_weekly_waste_quantity_processed_df(
-        bsdd_data_df
+    bsdd_quantity_processed_weekly_series = (
+        get_weekly_waste_quantity_processed_by_operation_code_df(bsdd_data_df)
     )
-    bsda_quantity_processed_weekly_df = get_weekly_waste_quantity_processed_df(
-        bsda_data_df
+    bsda_quantity_processed_weekly_series = (
+        get_weekly_waste_quantity_processed_by_operation_code_df(bsda_data_df)
     )
-    bsff_quantity_processed_weekly_df = get_weekly_waste_quantity_processed_df(
-        bsff_data_df
+    bsff_quantity_processed_weekly_series = (
+        get_weekly_waste_quantity_processed_by_operation_code_df(bsff_data_df)
     )
-    bsdasri_quantity_processed_weekly_df = get_weekly_waste_quantity_processed_df(
-        bsdasri_data_df
+    bsdasri_quantity_processed_weekly_series = (
+        get_weekly_waste_quantity_processed_by_operation_code_df(bsdasri_data_df)
     )
+
+    quantity_processed_weekly_df = get_waste_quantity_processed_df(
+        bsdd_quantity_processed_weekly_series,
+        bsda_quantity_processed_weekly_series,
+        bsff_quantity_processed_weekly_series,
+        bsdasri_quantity_processed_weekly_series,
+    )
+
+    # Total bordereaux created
     bs_created_total = 0
     for df in [bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df]:
         bs_created_total += df.index.size
 
     # Waste weight processed weekly
 
-    quantity_processed_weekly_df = bsdd_quantity_processed_weekly_df
-    for df in [
-        bsda_quantity_processed_weekly_df,
-        bsff_quantity_processed_weekly_df,
-        bsdasri_quantity_processed_weekly_df,
-    ]:
-        quantity_processed_weekly_df.add(df, fill_value=0)
-
-    quantity_recovered = quantity_processed_weekly_df.loc[
-        (slice(None), "Déchet valorisé")
-    ]
-    quantity_destroyed = quantity_processed_weekly_df[(slice(None), "Déchet éliminé")]
-    quantity_other = None
-    if "Autre" in quantity_processed_weekly_df.index.get_level_values(
-        "processing_operation"
-    ):
-        quantity_other = quantity_processed_weekly_df[(slice(None), "Autre")]
-
+    (
+        recovered_quantity_series,
+        eliminated_quantity_series,
+    ) = get_recovered_and_eliminated_quantity_processed_by_week_series(
+        quantity_processed_weekly_df
+    )
     quantity_processed_weekly_fig = create_weekly_quantity_processed_figure(
-        quantity_recovered,
-        quantity_destroyed,
-        quantity_other,
+        recovered_quantity_series, eliminated_quantity_series
     )
 
-    quantity_processed_total = quantity_processed_weekly_df.sum()
+    waste_quantity_processed_by_processing_code_df = (
+        get_waste_quantity_processed_by_processing_code_df(quantity_processed_weekly_df)
+    )
+
+    quantity_processed_sunburst_fig = create_quantity_processed_sunburst_figure(
+        waste_quantity_processed_by_processing_code_df
+    )
+
+    quantity_processed_total = quantity_processed_weekly_df["quantity"].sum()
 
     company_data_df = get_company_data()
     user_data_df = get_user_data()
@@ -142,6 +149,7 @@ def get_public_stats_container() -> List[dbc.Row]:
         quantity_processed_total,
         bs_created_total,
         quantity_processed_weekly_fig,
+        quantity_processed_sunburst_fig,
         bsdd_counts_weekly_fig,
         bsda_counts_weekly_fig,
         bsff_counts_weekly_fig,
