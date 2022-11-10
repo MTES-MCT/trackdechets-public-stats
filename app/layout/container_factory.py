@@ -482,7 +482,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                 add_figure(
                     company_counts_by_category,
                     "company_counts_by_category",
-                    "Nombre d'entreprises inscrites pour chaque catégorie de de code NAF.",
+                    "Nombre d'entreprises inscrites pour chaque catégorie de code NAF",
                 )
             ]
         ),
