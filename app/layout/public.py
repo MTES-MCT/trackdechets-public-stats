@@ -10,6 +10,7 @@ from app.data.public import (
     get_weekly_counts_df,
     get_weekly_waste_quantity_processed_by_operation_code_df,
     get_waste_quantity_processed_by_processing_code_df,
+    get_company_counts_by_naf_dfs,
 )
 from app.layout.container_factory import create_public_stats_container
 from app.layout.figures_factory import (
@@ -17,6 +18,7 @@ from app.layout.figures_factory import (
     create_weekly_quantity_processed_figure,
     create_weekly_counts_scatter_figure,
     create_weekly_created_figure,
+    create_treemap_companies_figure,
 )
 
 SQL_PATH = Path.cwd().absolute() / "app/data/sql"
@@ -145,6 +147,13 @@ def get_public_stats_container() -> List[dbc.Row]:
     company_created_weekly = create_weekly_created_figure(company_created_weekly_df)
     user_created_weekly = create_weekly_created_figure(user_created_weekly_df)
 
+    (
+        company_counts_by_section,
+        company_counts_by_division,
+    ) = get_company_counts_by_naf_dfs(company_data_df)
+    treemap_companies_figure = create_treemap_companies_figure(
+        company_counts_by_section, company_counts_by_division
+    )
     public_stats_container = create_public_stats_container(
         quantity_processed_total,
         bs_created_total,
@@ -158,5 +167,6 @@ def get_public_stats_container() -> List[dbc.Row]:
         user_created_total_life,
         company_created_weekly,
         user_created_weekly,
+        treemap_companies_figure,
     )
     return public_stats_container

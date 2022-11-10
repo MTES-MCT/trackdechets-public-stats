@@ -7,8 +7,8 @@ PLOTLY_PLOT_CONFIGS = {
     "toImageButtonOptions": {
         "format": "png",  # one of png, svg, jpeg, webp
         "filename": "trackdechets",
-        "height": 720,
-        "width": 1280,
+        "height": 1080,
+        "width": 1920,
         "scale": 1,  # Multiply title/legend/axis/canvas sizes by this factor
     },
     "displaylogo": False,
@@ -28,6 +28,7 @@ def create_public_stats_container(
     user_created_total_life: int,
     company_created_weekly: go.Figure,
     user_created_weekly: go.Figure,
+    company_counts_by_category: go.Figure,
 ) -> list:
     """
     Creates the main container that will be displayed using all the precomputed metrics and Plotly Figures objects.
@@ -473,6 +474,15 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                         )
                     ],
                     width=12,
+                )
+            ]
+        ),
+        dbc.Row(
+            [
+                add_figure(
+                    company_counts_by_category,
+                    "company_counts_by_category",
+                    "Nombre d'entreprises inscrites pour chaque catégorie de de code NAF.",
                 )
             ]
         ),

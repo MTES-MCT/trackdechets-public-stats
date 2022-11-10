@@ -4,7 +4,7 @@ from typing import Optional
 import pandas as pd
 import plotly.graph_objects as go
 
-from app.layout.utils import format_number
+from app.layout.utils import break_long_line, format_number
 
 
 def create_weekly_created_figure(
@@ -207,7 +207,7 @@ def create_weekly_quantity_processed_figure(
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1.02,
+            y=1,
             xanchor="left",
             x=0,
             title="Type de traitement :",
@@ -335,4 +335,185 @@ def create_quantity_processed_sunburst_figure(
     )
     fig.update_layout(margin=dict(t=0, l=0, r=0, b=0))
 
+    return fig
+
+
+def create_treemap_companies_figure(
+    company_counts_by_section: pd.DataFrame, company_counts_by_division: pd.DataFrame
+) -> go.Figure:
+    """Creates the figure showing the number of companies by NAF category.
+
+    Parameters
+    ----------
+    company_counts_by_section: DataFrame
+        DataFrame containing the company counts by section.
+    company_counts_by_division: DataFrame
+        DataFrame containing the company counts by division
+
+    Returns
+    -------
+    Plotly Figure Object
+        Figure object ready to be plotted.
+    """
+
+    company_counts_by_section["colors"] = [
+        "rgba(64, 64, 122,0.4)",
+        "rgba(112, 111, 211,0.4)",
+        "rgba(247, 241, 227,0.4)",
+        "rgba(52, 172, 224,0.4)",
+        "rgba(51, 217, 178,0.4)",
+        "rgba(44, 44, 84,0.4)",
+        "rgba(71, 71, 135,0.4)",
+        "rgba(170, 166, 157,0.4)",
+        "rgba(34, 112, 147,0.4)",
+        "rgba(33, 140, 116,0.4)",
+        "rgba(255, 82, 82,0.4)",
+        "rgba(255, 121, 63,0.4)",
+        "rgba(209, 204, 192,0.4)",
+        "rgba(255, 177, 66,0.4)",
+        "rgba(255, 218, 121,0.4)",
+        "rgba(179, 57, 57,0.4)",
+        "rgba(132, 129, 122,0.4)",
+        "rgba(204, 142, 53,0.4)",
+        "rgba(204, 174, 98,0.4)",
+        "rgba(205, 97, 51,0.4)",
+        "rgba(77, 52, 42,0.4)",
+    ]
+
+    company_counts_by_division["colors"] = company_counts_by_division[
+        "libelle_section"
+    ].apply(
+        lambda x: company_counts_by_section.loc[
+            company_counts_by_section.libelle_section == x, "colors"
+        ].item()[:-4]
+        + "1)",
+    )
+
+    company_counts_by_division = company_counts_by_division[
+        company_counts_by_division["libelle_section"] != "Section NAF non renseignée."
+    ]
+    ids = (
+        ["Tous les établissements"]
+        + (
+            "Tous les établissements/" + company_counts_by_section["libelle_section"]
+        ).tolist()
+        + (
+            "Tous les établissements/"
+            + company_counts_by_division["libelle_section"]
+            + "/"
+            + company_counts_by_division["libelle_division"]
+        ).to_list()
+    )
+
+    labels = (
+        [
+            f"Tous les établissements - <b>{company_counts_by_section.num_entreprises.sum()/1000:.2f}k</b>"
+        ]
+        + (
+            company_counts_by_section["libelle_section"].apply(
+                break_long_line, max_line_length=36
+            )
+            + " - <b>"
+            + company_counts_by_section["num_entreprises"].apply(
+                lambda x: f"{x/1000:.1f}k" if x > 1000 else str(x)
+            )
+            + "</b>"
+        ).tolist()
+        + (
+            company_counts_by_division["libelle_division"].apply(
+                break_long_line, max_line_length=36
+            )
+            + " - <b>"
+            + company_counts_by_division["num_entreprises"].apply(
+                lambda x: f"{x/1000:.2f}k" if x > 1000 else str(x)
+            )
+            + "</b>"
+        ).tolist()
+    )
+
+    parents = (
+        [""]
+        + ["Tous les établissements"] * len(company_counts_by_section)
+        + (
+            "Tous les établissements/" + company_counts_by_division["libelle_section"]
+        ).tolist()
+    )
+
+    values = (
+        [company_counts_by_section["num_entreprises"].sum()]
+        + company_counts_by_section["num_entreprises"].tolist()
+        + company_counts_by_division["num_entreprises"].to_list()
+    )
+
+    custom_data = (
+        [""]
+        + company_counts_by_section["code_section"].tolist()
+        + company_counts_by_division["code_division"].to_list()
+    )
+
+    text_templates = (
+        [
+            f"Tous les établissements - <b>{company_counts_by_section.num_entreprises.sum()/1000:.2f}k</b><extra></extra>"
+        ]
+        + (
+            "<b>"
+            + company_counts_by_section["num_entreprises"].astype(str)
+            + "</b> établissements inscrits dans la section NAF "
+            + company_counts_by_section["code_section"]
+            + " - <i>"
+            + company_counts_by_section["libelle_section"]
+            + "</i><br>soit <b>"
+            + (
+                100
+                * company_counts_by_section["num_entreprises"]
+                / company_counts_by_section["num_entreprises"].sum()
+            )
+            .round(2)
+            .astype(str)
+            + "%</b> du total des établissements inscrits.<extra></extra>"
+        ).tolist()
+        + (
+            "<b>"
+            + company_counts_by_division["num_entreprises"].astype(str)
+            + "</b> établissements inscrits dans la division NAF "
+            + company_counts_by_division["code_division"]
+            + " - <i>"
+            + company_counts_by_division["libelle_division"]
+            + "</i><br>soit <b>"
+            + (
+                100
+                * company_counts_by_division["num_entreprises"]
+                / company_counts_by_division["num_entreprises"].sum()
+            )
+            .round(2)
+            .astype(str)
+            + "%</b> du total des établissements inscrits.<extra></extra>"
+        ).tolist()
+    )
+
+    colors = (
+        ["#eeeeee"]
+        + company_counts_by_section.colors.tolist()
+        + company_counts_by_division.colors.tolist()
+    )
+
+    fig = go.Figure(
+        go.Treemap(
+            ids=ids,
+            labels=labels,
+            values=values,
+            parents=parents,
+            branchvalues="total",
+            hovertemplate=text_templates,
+            customdata=custom_data,
+            pathbar_thickness=25,
+            marker_colors=colors,
+            textposition="middle center",
+            insidetextfont_size=100,
+            tiling_packing="squarify",
+            tiling_pad=5,
+            outsidetextfont_size=100,
+        )
+    )
+    fig.update_layout(margin={"l": 5, "r": 5, "t": 35, "b": 5}, height=800)
     return fig
