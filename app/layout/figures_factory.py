@@ -135,7 +135,7 @@ def create_weekly_counts_scatter_figure(
     fig.update_layout(
         paper_bgcolor="#fff",
         margin=dict(t=5, r=70, l=5),
-        legend=dict(orientation="h", y=1, font_size=13, itemwidth=40),
+        legend=dict(orientation="h", y=1.1, font_size=13, itemwidth=40),
     )
     fig.update_xaxes(tick0="2022-01-03")
     fig.update_yaxes(side="right")
