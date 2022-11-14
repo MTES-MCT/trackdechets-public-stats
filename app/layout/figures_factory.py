@@ -451,13 +451,13 @@ def create_treemap_companies_figure(
         + company_counts_by_division["code_division"].to_list()
     )
 
-    text_templates = (
+    hover_texts = (
         [
             f"Tous les établissements - <b>{company_counts_by_section.num_entreprises.sum()/1000:.2f}k</b><extra></extra>"
         ]
         + (
             "<b>"
-            + company_counts_by_section["num_entreprises"].astype(str)
+            + company_counts_by_section["num_entreprises"].apply(format_number)
             + "</b> établissements inscrits dans la section NAF "
             + company_counts_by_section["code_section"]
             + " - <i>"
@@ -474,7 +474,7 @@ def create_treemap_companies_figure(
         ).tolist()
         + (
             "<b>"
-            + company_counts_by_division["num_entreprises"].astype(str)
+            + company_counts_by_division["num_entreprises"].apply(format_number)
             + "</b> établissements inscrits dans la division NAF "
             + company_counts_by_division["code_division"]
             + " - <i>"
@@ -504,7 +504,7 @@ def create_treemap_companies_figure(
             values=values,
             parents=parents,
             branchvalues="total",
-            hovertemplate=text_templates,
+            hovertemplate=hover_texts,
             customdata=custom_data,
             pathbar_thickness=25,
             marker_colors=colors,
