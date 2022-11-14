@@ -23,7 +23,21 @@ def add_figure(fig: go.Figure, fig_id: str, figure_title: str) -> dbc.Row:
     row = html.Div(
         [
             html.H4(children=[figure_title]),
-            dcc.Graph(id=fig_id, figure=fig, config={"locale": "fr"}),
+            dcc.Graph(
+                id=fig_id,
+                figure=fig,
+                config={
+                    "locale": "fr",
+                    "toImageButtonOptions": {
+                        "format": "png",  # one of png, svg, jpeg, webp
+                        "filename": "trackdechets",
+                        "height": 1080,
+                        "width": 1920,
+                        "scale": 1,  # Multiply title/legend/axis/canvas sizes by this factor
+                    },
+                    "displaylogo": False,
+                },
+            ),
         ],
         className="fr-callout",
     )
@@ -87,3 +101,18 @@ def add_callout(
     )
 
     return col
+
+
+def break_long_line(line: str, max_line_length: str = 26) -> str:
+    """Format a string to add HTML line breaks (<br>) if it exceeds max_line_length."""
+    length = 0
+
+    new_pieces = []
+    for piece in line.split(" "):
+        length += len(piece)
+        if length > max_line_length:
+            piece = "<br>" + piece
+            length = 0
+        new_pieces.append(piece)
+
+    return " ".join(new_pieces).replace(" <br>", "<br>")

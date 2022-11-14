@@ -234,3 +234,45 @@ def get_waste_quantity_processed_by_processing_code_df(
     )
 
     return agg_data
+
+
+def get_company_counts_by_naf_dfs(
+    company_data_df: pd.DataFrame,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Builds two DataFrames used for the Treemap showing the company counts by company activities (code NAF):
+    - The first one is aggregated by "libelle_section", the outermost hierarchical level;
+    - The second one is aggregated by "libelle_division", the innermost hierarchical level chosen for the visualization.
+
+    Parameter
+    ---------
+    company_data_df: DataFrame
+        DataFrame containing company data along with NAF data.
+
+    Returns
+    -------
+    Tuple of two dataframes
+        One aggregated by "libelle_section" and one aggregated by "libelle_division".
+    """
+    company_data_df["libelle_section"] = company_data_df["libelle_section"].fillna(
+        "Section NAF non renseignée."
+    )
+    company_data_df["libelle_division"] = company_data_df["libelle_division"].fillna(
+        "Division NAF non renseignée."
+    )
+    company_data_df["code_section"] = company_data_df["code_section"].fillna("")
+    company_data_df["code_division"] = company_data_df["code_division"].fillna("")
+
+    agg_data_1 = company_data_df.groupby("libelle_section", as_index=False).agg(
+        code_section=pd.NamedAgg("code_section", max),
+        num_entreprises=pd.NamedAgg("id", "count"),
+    )
+
+    agg_data_2 = company_data_df.groupby("libelle_division", as_index=False).agg(
+        code_division=pd.NamedAgg("code_division", max),
+        libelle_section=pd.NamedAgg("libelle_section", max),
+        code_section=pd.NamedAgg("code_section", max),
+        num_entreprises=pd.NamedAgg("id", "count"),
+    )
+
+    return agg_data_1, agg_data_2
