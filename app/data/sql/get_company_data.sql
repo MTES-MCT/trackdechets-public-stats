@@ -1,9 +1,23 @@
-select id,
-    "createdAt"
-from "default$default"."Company"
-where "createdAt"::date <= CURRENT_DATE - cast(
-        extract(
+SELECT
+    id,
+    "created_at",
+    code_sous_classe,
+    libelle_sous_classe,
+    libelle_classe,
+    code_classe,
+    libelle_groupe,
+    code_groupe,
+    libelle_division,
+    code_division,
+    libelle_section,
+    code_section
+FROM
+    "refined_zone_enriched"."company_enriched"
+WHERE
+    "created_at" <= CURRENT_DATE - CAST(
+        EXTRACT(
             dow
-            from CURRENT_DATE
-        ) as int
+            FROM
+                CURRENT_DATE
+        ) AS INT
     )

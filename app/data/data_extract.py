@@ -26,9 +26,11 @@ def get_bs_data(
     Parameters
     ----------
     sql_path: PathLike
-        Path of the sql query file. Query must select at least a "createdAt" column.
+        Path of the sql query file. Query must select at least a "created_at" column.
     include_drafts: bool
         Wether to include drafts BSx in the result.
+    include_only_dangerous_waste: bool
+        If true, only 'bordereaux' for dangerous waste are returned.
 
     Returns
     -------
@@ -44,7 +46,7 @@ def get_bs_data(
         con=DB_ENGINE,
     )
 
-    for col_name in ["createdAt", "sentAt", "receivedAt", "processedAt"]:
+    for col_name in ["created_at", "sent_at", "received_at", "processed_at"]:
         bs_data_df[col_name] = pd.to_datetime(
             bs_data_df[col_name], utc=True, errors="coerce"
         ).dt.tz_convert("Europe/Paris")
@@ -56,8 +58,8 @@ def get_bs_data(
     # and there is data at midnight Paris time the last day of the time window we want to keep
     # that is return by the query but shouldn't
     bs_data_df = bs_data_df.loc[
-        (bs_data_df["createdAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
-        | bs_data_df["createdAt"].isna()
+        (bs_data_df["created_at"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
+        | bs_data_df["created_at"].isna()
     ]
 
     if not include_drafts:
@@ -65,14 +67,18 @@ def get_bs_data(
     if include_only_dangerous_waste:
         if "wastePop" in bs_data_df.columns:
             bs_data_df = bs_data_df[
-                bs_data_df["wasteCode"].str.match(r".*\*$", na=False)
+                bs_data_df["waste_code"].str.match(r".*\*$", na=False)
                 | bs_data_df["wastePop"]
             ]
         else:
             bs_data_df = bs_data_df[
-                bs_data_df["wasteCode"].str.match(r".*\*$", na=False)
+                bs_data_df["waste_code"].str.match(r".*\*$", na=False)
             ]
 
+    # Depending on the type of 'bordereau', the processing operations codes can contain space or not, so we normalize it :
+    bs_data_df["processing_operation"] = bs_data_df["processing_operation"].replace(
+        to_replace=r"([RD])([0-9]{1,2})", value=r"\g<1> \g<2>", regex=True
+    )
     print(f"get_bs_data duration: {time.time()-started_time} ")
 
     return bs_data_df
@@ -91,8 +97,8 @@ def get_company_data() -> pd.DataFrame:
 
     sql_query = (SQL_PATH / "get_company_data.sql").read_text()
     company_data_df = pd.read_sql_query(sql_query, con=DB_ENGINE)
-    company_data_df["createdAt"] = pd.to_datetime(
-        company_data_df["createdAt"], utc=True
+    company_data_df["created_at"] = pd.to_datetime(
+        company_data_df["created_at"], utc=True
     ).dt.tz_convert("Europe/Paris")
 
     now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
@@ -103,10 +109,10 @@ def get_company_data() -> pd.DataFrame:
     # that is return by the query but shouldn't
     company_data_df = company_data_df.loc[
         (
-            company_data_df["createdAt"]
+            company_data_df["created_at"]
             < (now - timedelta(days=(now.toordinal() % 7) - 1))
         )
-        | company_data_df["createdAt"].isna()
+        | company_data_df["created_at"].isna()
     ]
 
     print(f"get_company_data duration: {time.time()-started_time} ")
@@ -127,8 +133,8 @@ def get_user_data() -> pd.DataFrame:
 
     sql_query = (SQL_PATH / "get_user_data.sql").read_text()
     user_data_df = pd.read_sql_query(sql_query, con=DB_ENGINE)
-    user_data_df["createdAt"] = pd.to_datetime(
-        user_data_df["createdAt"], utc=True
+    user_data_df["created_at"] = pd.to_datetime(
+        user_data_df["created_at"], utc=True
     ).dt.tz_convert("Europe/Paris")
 
     now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
@@ -138,10 +144,25 @@ def get_user_data() -> pd.DataFrame:
     # and there is data at midnight Paris time the last day of the time window we want to keep
     # that is return by the query but shouldn't
     user_data_df = user_data_df.loc[
-        (user_data_df["createdAt"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
-        | user_data_df["createdAt"].isna()
+        (user_data_df["created_at"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
+        | user_data_df["created_at"].isna()
     ]
 
     print(f"get_user_data duration: {time.time()-started_time} ")
 
     return user_data_df
+
+
+def get_processing_operation_codes_data() -> pd.DataFrame:
+    """
+    Returns description for each processing operation codes
+
+    Returns
+    --------
+    DataFrame
+        dataframe with processing operations codes and description
+    """
+    data = pd.read_sql_table(
+        table_name="codes_operations_traitements", schema="trusted_zone", con=DB_ENGINE
+    )
+    return data
