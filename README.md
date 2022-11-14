@@ -1,6 +1,6 @@
 # Statistiques publiques Trackdéchets
 
-**version 1.6**
+**version 1.7**
 
 > Application basée sur Plotly Dash consacrée à la publication d'un tableau de bord illustrant l'activité de [l'application
 > Trackdéchets](https://app.trackdechets.beta.gouv.fr/). Ce tableau de bord vise à donner au grand public aux
@@ -35,6 +35,11 @@ pipenv run run.py
 ```
 
 ### Notes de versions
+
+**1.7 14/11/2022**
+- Ajout du nombre de bordereaux envoyés et traités
+- Ajout de la quantité totale de déchet traités ventilée par type de traitement
+- Ajout du nombre d'établissements inscrits en fonction de leur type d'activité
 
 **1.6 12/07/2022**
 - Ajout des données sur les autres bordereaux
