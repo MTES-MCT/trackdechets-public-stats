@@ -60,6 +60,7 @@ def create_weekly_created_figure(
 def create_weekly_counts_scatter_figure(
     bs_created_data: pd.DataFrame,
     bs_sent_data: pd.DataFrame,
+    bs_received_data: pd.DataFrame,
     bs_processed_data: pd.DataFrame,
 ) -> go.Figure:
     """Creates a scatter figure showing the weekly number of 'bordereaux' by status (created, sent..)
@@ -70,6 +71,8 @@ def create_weekly_counts_scatter_figure(
         DataFrame containing the count of 'bordereaux' created. Must have 'id' and 'at' columns.
     bs_sent_data: DataFrame
         DataFrame containing the count of 'bordereaux' sent. Must have 'id' and 'at' columns.
+    bs_received_data: DataFrame
+        DataFrame containing the count of 'bordereaux' received. Must have 'id' and 'at' columns.
     bs_processed_data: DataFrame
         DataFrame containing the count of 'bordereaux' processed. Must have 'id' and 'at' columns.
 
@@ -87,12 +90,17 @@ def create_weekly_counts_scatter_figure(
         },
         {
             "data": bs_sent_data,
-            "name": "Bordereaux envoyés",
+            "name": "Bordereaux marqués comme envoyés",
             "suffix": "envois",
         },
         {
+            "data": bs_received_data,
+            "name": "Bordereaux marqués comme reçus",
+            "suffix": "réceptions",
+        },
+        {
             "data": bs_processed_data,
-            "name": "Bordereaux traités",
+            "name": "Bordereaux marqués comme traités",
             "suffix": "traitements",
         },
     ]

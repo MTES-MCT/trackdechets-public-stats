@@ -59,6 +59,20 @@ def get_public_stats_container() -> List[dbc.Row]:
         bsdasri_data_df, aggregate_column="sent_at"
     )
 
+    # BSx received weekly figure
+    bsdd_received_weekly_df = get_weekly_counts_df(
+        bsdd_data_df, aggregate_column="received_at"
+    )
+    bsda_received_weekly_df = get_weekly_counts_df(
+        bsda_data_df, aggregate_column="received_at"
+    )
+    bsff_received_weekly_df = get_weekly_counts_df(
+        bsff_data_df, aggregate_column="received_at"
+    )
+    bsdasri_received_weekly_df = get_weekly_counts_df(
+        bsdasri_data_df, aggregate_column="received_at"
+    )
+
     # BSx processed weekly figure
     bsdd_processed_weekly_df = get_weekly_counts_df(
         bsdd_data_df, aggregate_column="processed_at"
@@ -74,16 +88,28 @@ def get_public_stats_container() -> List[dbc.Row]:
     )
 
     bsdd_counts_weekly_fig = create_weekly_counts_scatter_figure(
-        bsdd_created_weekly_df, bsdd_sent_weekly_df, bsdd_processed_weekly_df
+        bsdd_created_weekly_df,
+        bsdd_sent_weekly_df,
+        bsdd_received_weekly_df,
+        bsdd_processed_weekly_df,
     )
     bsda_counts_weekly_fig = create_weekly_counts_scatter_figure(
-        bsda_created_weekly_df, bsda_sent_weekly_df, bsda_processed_weekly_df
+        bsda_created_weekly_df,
+        bsda_sent_weekly_df,
+        bsda_received_weekly_df,
+        bsda_processed_weekly_df,
     )
     bsff_counts_weekly_fig = create_weekly_counts_scatter_figure(
-        bsff_created_weekly_df, bsff_sent_weekly_df, bsff_processed_weekly_df
+        bsff_created_weekly_df,
+        bsff_sent_weekly_df,
+        bsff_received_weekly_df,
+        bsff_processed_weekly_df,
     )
     bsdasri_counts_weekly_fig = create_weekly_counts_scatter_figure(
-        bsdasri_created_weekly_df, bsdasri_sent_weekly_df, bsdasri_processed_weekly_df
+        bsdasri_created_weekly_df,
+        bsdasri_sent_weekly_df,
+        bsdasri_received_weekly_df,
+        bsdasri_processed_weekly_df,
     )
 
     # Waste weight processed weekly
