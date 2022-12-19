@@ -1,45 +1,51 @@
-select id,
+SELECT
+    id,
     "created_at",
     "processed_at",
     "sent_at",
     "received_at",
     status,
-    case
-        when "quantity_received" > 60 then "quantity_received" / 1000
-        else "quantity_received"
-    END as "quantity",
-    "processing_operation_done" as "processing_operation",
-    "waste_details_code" as "waste_code",
-    "waste_details_pop" as "waste_pop"
-from "trusted_zone_trackdechets"."bsdd"
-where "is_deleted" = false
-    and "created_at" >= '2022-01-03'
+    CASE
+        WHEN "quantity_received" > 60 THEN "quantity_received" / 1000
+        ELSE "quantity_received"
+    END AS "quantity",
+    "processing_operation_done" AS "processing_operation",
+    "waste_details_code" AS "waste_code",
+    "waste_details_pop" AS "waste_pop"
+FROM
+    "trusted_zone_trackdechets"."bsdd"
+WHERE
+    "is_deleted" = FALSE
+    AND "created_at" >= '2022-01-03'
     /* First day of the first week of the year */
-    and "created_at" <= CURRENT_DATE - cast(
-        extract(
+    AND "created_at" <= CURRENT_DATE - CAST(
+        EXTRACT(
             dow
-            from CURRENT_DATE
-        ) as int
+            FROM
+                CURRENT_DATE
+        ) AS INT
     )
-    and (
+    AND (
         (
             "processed_at" >= '1970-01-01'
-            and "processed_at" < '2262-04-11'
+            AND "processed_at" < '2262-04-11'
             /* Due to pandas timestamp limitations */
         )
-        or "processed_at" is null
+        OR "processed_at" IS NULL
     )
-    and (
+    AND (
         (
             "sent_at" >= '1970-01-01'
-            and "sent_at" < '2262-04-11'
+            AND "sent_at" < '2262-04-11'
         )
-        or "sent_at" is null
+        OR "sent_at" IS NULL
     )
-    and (
+    AND (
         (
             "received_at" >= '1970-01-01'
-            and "received_at" < '2262-04-11'
+            AND "received_at" < '2262-04-11'
         )
-        or "received_at" is null
+        OR "received_at" IS NULL
     )
+    AND ((quantity_received < 700000)
+    OR (quantity_received IS NULL))

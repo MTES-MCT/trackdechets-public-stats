@@ -20,10 +20,14 @@ def create_public_stats_container(
     bs_created_total: int,
     quantity_processed_weekly: go.Figure,
     quantity_processed_sunburst_figure: go.Figure,
-    bsdd_created_weekly: go.Figure,
-    bsda_created_weekly: go.Figure,
-    bsff_created_weekly: go.Figure,
-    bsdasri_created_weekly: go.Figure,
+    bsdd_counts_weekly: go.Figure,
+    bsda_counts_weekly: go.Figure,
+    bsff_counts_weekly: go.Figure,
+    bsdasri_counts_weekly: go.Figure,
+    bsdd_quantities_weekly: go.Figure,
+    bsda_quantities_weekly: go.Figure,
+    bsff_quantities_weekly: go.Figure,
+    bsdasri_quantities_weekly: go.Figure,
     company_created_total_life: int,
     user_created_total_life: int,
     company_created_weekly: go.Figure,
@@ -44,14 +48,22 @@ def create_public_stats_container(
         Bar plot showing the quantity of waste processed by week and by process type.
     quantity_processed_sunburst_figure: Plotly Figure object
         Sunburst plot showing the waste quantity by processing code.
-    bsdd_created_weekly: Plotly Figure object
-        Scatter plot showing the number of BSDD created weekly.
-    bsda_created_weekly: Plotly Figure object
-        Scatter plot showing the number of BSDA created weekly.
-    bsff_created_weekly: Plotly Figure object
-        Scatter plot showing the number of BSFF created weekly.
-    bsdasri_created_weekly: Plotly Figure object
-        Scatter plot showing the number of BSDASRI created weekly.
+    bsdd_counts_weekly: Plotly Figure object
+        Scatter plot showing the number of BSDD weekly created, sent, received and processed.
+    bsda_counts_weekly: Plotly Figure object
+        Scatter plot showing the number of BSDA weekly created, sent, received and processed.
+    bsff_counts_weekly: Plotly Figure object
+        Scatter plot showing the number of BSFF weekly created, sent, received and processed.
+    bsdasri_counts_weekly: Plotly Figure object
+        Scatter plot showing the number of BSDASRI weekly created, sent, received and processed.
+    bsdd_quantities_weekly: Plotly Figure object
+        Scatter plot showing the waste weekly quantities created, sent, received and processed.
+    bsda_quantities_weekly: Plotly Figure object
+        Scatter plot showing the waste weekly quantities created, sent, received and processed.
+    bsff_quantities_weekly: Plotly Figure object
+        Scatter plot showing the waste weekly quantities created, sent, received and processed.
+    bsdasri_quantities_weekly: Plotly Figure object
+        Scatter plot showing the waste weekly quantities created, sent, received and processed.
     company_created_total_life: int
         Number of companies with an account on the Trackdéchets platform (all time).
     user_created_total_life: int
@@ -168,7 +180,7 @@ Les données présentées ici comprennent tous les types de déchets nécessitan
                     sm_width=12,
                 ),
                 add_callout(
-                    text="""Les modes de traitement des déchets dangereux s'inscrivent dans la [hiérarchie des traitements de déchets](https://www.ecologie.gouv.fr/gestion-des-dechets-principes-generaux#:~:text=La%20hi%C3%A9rarchie%20des%20modes%20de%20traitement%20est%20un%20ordre%20de,d%C3%A9marches%20de%20pr%C3%A9vention%20des%20d%C3%A9chets).
+                    text="""Les modes de traitement des déchets dangereux s'inscrivent dans la [hiérarchie des traitements de déchets](https://www.ecologie.gouv.fr/gestion-des-dechets-principes-generaux#scroll-nav__4).
 Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme "valorisés" dans Trackdéchets, et sont comparés à l'élimination (pas de réutilisation, recyclage ou valorisation possible dans les conditions techniques et économiques du moment)""",
                     width=6,
                     sm_width=12,
@@ -208,6 +220,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                 ),
             ]
         ),
+        html.H3(["Détails par types de déchets"]),
         dbc.Row(
             dbc.Col(
                 html.Div(
@@ -298,7 +311,16 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                     ]
                                 ),
                                 dcc.Graph(
-                                    figure=bsdd_created_weekly,
+                                    figure=bsdd_counts_weekly,
+                                    config=PLOTLY_PLOT_CONFIGS,
+                                ),
+                                html.H4(
+                                    [
+                                        "Quantités de Déchets Dangereux tracés par semaine"
+                                    ]
+                                ),
+                                dcc.Graph(
+                                    figure=bsdd_quantities_weekly,
                                     config=PLOTLY_PLOT_CONFIGS,
                                 ),
                             ],
@@ -316,7 +338,16 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                     ]
                                 ),
                                 dcc.Graph(
-                                    figure=bsda_created_weekly,
+                                    figure=bsda_counts_weekly,
+                                    config=PLOTLY_PLOT_CONFIGS,
+                                ),
+                                html.H4(
+                                    [
+                                        "Quantités de Déchets D'amiante tracés par semaine"
+                                    ]
+                                ),
+                                dcc.Graph(
+                                    figure=bsda_quantities_weekly,
                                     config=PLOTLY_PLOT_CONFIGS,
                                 ),
                             ],
@@ -334,7 +365,16 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                     ]
                                 ),
                                 dcc.Graph(
-                                    figure=bsff_created_weekly,
+                                    figure=bsff_counts_weekly,
+                                    config=PLOTLY_PLOT_CONFIGS,
+                                ),
+                                html.H4(
+                                    [
+                                        "Quantités de Fluides Frigorigènes tracés par semaine"
+                                    ]
+                                ),
+                                dcc.Graph(
+                                    figure=bsff_quantities_weekly,
                                     config=PLOTLY_PLOT_CONFIGS,
                                 ),
                             ],
@@ -352,7 +392,16 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                     ]
                                 ),
                                 dcc.Graph(
-                                    figure=bsdasri_created_weekly,
+                                    figure=bsdasri_counts_weekly,
+                                    config=PLOTLY_PLOT_CONFIGS,
+                                ),
+                                html.H4(
+                                    [
+                                        "Quantités de Déchets d'Activités de Soins à Risques Infectieux tracés par semaine"
+                                    ]
+                                ),
+                                dcc.Graph(
+                                    figure=bsdasri_quantities_weekly,
                                     config=PLOTLY_PLOT_CONFIGS,
                                 ),
                             ],
