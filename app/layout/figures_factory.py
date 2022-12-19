@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Optional
+from typing import Dict, List
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -36,8 +36,8 @@ def create_weekly_created_figure(
         [
             go.Scatter(
                 x=data["at"],
-                y=data["id"],
-                text=data["id"],
+                y=data["count"],
+                text=data["count"],
                 mode="lines+markers+text",
                 hovertext=texts,
                 hoverinfo="text",
@@ -57,24 +57,30 @@ def create_weekly_created_figure(
     return fig
 
 
-def create_weekly_counts_scatter_figure(
+def create_weekly_scatter_figure(
     bs_created_data: pd.DataFrame,
     bs_sent_data: pd.DataFrame,
     bs_received_data: pd.DataFrame,
+    bs_processed_non_final_data: pd.DataFrame,
     bs_processed_data: pd.DataFrame,
+    lines_configs: List[Dict[str, str]],
 ) -> go.Figure:
     """Creates a scatter figure showing the weekly number of 'bordereaux' by status (created, sent..)
 
     Parameters
     ----------
     bs_created_data: DataFrame
-        DataFrame containing the count of 'bordereaux' created. Must have 'id' and 'at' columns.
+        DataFrame containing the count of 'bordereaux' created. Must have 'at' and metric corresponding columns.
     bs_sent_data: DataFrame
-        DataFrame containing the count of 'bordereaux' sent. Must have 'id' and 'at' columns.
+        DataFrame containing the count of 'bordereaux' sent. Must have 'at' and metric corresponding columns.
     bs_received_data: DataFrame
-        DataFrame containing the count of 'bordereaux' received. Must have 'id' and 'at' columns.
+        DataFrame containing the count of 'bordereaux' received. Must have 'at' and metric corresponding columns.
     bs_processed_data: DataFrame
-        DataFrame containing the count of 'bordereaux' processed. Must have 'id' and 'at' columns.
+        DataFrame containing the count of 'bordereaux' processed with non final processing operation code.
+        Must have 'at' and metric corresponding columns.
+    bs_processed_data: DataFrame
+        DataFrame containing the count of 'bordereaux' processed with final processing operation code.
+        Must have 'at' and metric corresponding columns.
 
     Returns
     -------
@@ -82,39 +88,40 @@ def create_weekly_counts_scatter_figure(
         Figure object ready to be plotted.
     """
 
+    # Those colors are colorblind safe and printable.
+    # Source : https://personal.sron.nl/~pault/#sec:qualitative
+    line_colors = [
+        "#009988",
+        "#EE7733",
+        "#33BBEE",
+        "#EE3377",
+        "#CC3311",
+    ]
+
     plot_configs = [
+        {"data": bs_created_data, "color": line_colors[0], **lines_configs[0]},
+        {"data": bs_sent_data, "color": line_colors[1], **lines_configs[1]},
+        {"data": bs_received_data, "color": line_colors[2], **lines_configs[2]},
         {
-            "data": bs_created_data,
-            "name": "Bordereaux créés",
-            "suffix": "créations",
+            "data": bs_processed_non_final_data,
+            "color": line_colors[3],
+            **lines_configs[3],
         },
-        {
-            "data": bs_sent_data,
-            "name": "Bordereaux marqués comme envoyés",
-            "suffix": "envois",
-        },
-        {
-            "data": bs_received_data,
-            "name": "Bordereaux marqués comme reçus",
-            "suffix": "réceptions",
-        },
-        {
-            "data": bs_processed_data,
-            "name": "Bordereaux marqués comme traités",
-            "suffix": "traitements",
-        },
+        {"data": bs_processed_data, "color": line_colors[4], **lines_configs[4]},
     ]
 
     scatter_list = []
+
+    metric_name = "count" if "count" in bs_created_data.columns else "quantity"
 
     for config in plot_configs:
 
         data = config["data"]
         name = config["name"]
         suffix = config["suffix"]
-
+        color = config["color"]
         # Creates a list of text to only show value on last point of the line
-        texts = [""] * (len(data) - 1) + [format_number(data["id"].iloc[-1])]
+        texts = [""] * (len(data) - 1) + [format_number(data[metric_name].iloc[-1])]
 
         hover_texts = [
             f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> {suffix}"
@@ -124,17 +131,18 @@ def create_weekly_counts_scatter_figure(
         scatter_list.append(
             go.Scatter(
                 x=data["at"],
-                y=data["id"],
+                y=data[metric_name],
                 mode="lines+text",
                 name=name,
                 text=texts,
                 textfont_size=15,
-                textposition="top right",
+                textposition="middle right",
                 hovertext=hover_texts,
                 hoverinfo="text",
                 line_shape="spline",
                 line_smoothing=0.3,
                 line_width=3,
+                line_color=color,
             )
         )
 
@@ -143,7 +151,9 @@ def create_weekly_counts_scatter_figure(
     fig.update_layout(
         paper_bgcolor="#fff",
         margin=dict(t=5, r=70, l=5),
-        legend=dict(orientation="h", y=1.1, font_size=13, itemwidth=40),
+        legend=dict(
+            orientation="h", y=1.1, font_size=13, itemwidth=40, bgcolor="rgba(0,0,0,0)"
+        ),
     )
     fig.update_xaxes(tick0="2022-01-03")
     fig.update_yaxes(side="right")
@@ -339,6 +349,7 @@ def create_quantity_processed_sunburst_figure(
             hovertext=hover_texts,
             hoverinfo="text",
             sort=False,
+            insidetextorientation="auto",
         )
     )
     fig.update_layout(margin=dict(t=0, l=0, r=0, b=0))

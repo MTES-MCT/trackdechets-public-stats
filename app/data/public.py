@@ -1,8 +1,9 @@
 """
 Data gathering and processing
 """
+from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Tuple
+from typing import Dict, List, Tuple
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -17,12 +18,15 @@ def normalize_processing_operation(col: pd.Series) -> pd.Series:
         r"^D.*": "Déchet éliminé",
         r"^(?!R|D).*": "Autre",
     }
-
+    # type: ignore
     return col.replace(regex=regex_dict)
 
 
-def get_weekly_counts_df(
-    data: pd.DataFrame, aggregate_column: str = "created_at"
+def get_weekly_aggregated_df(
+    data: pd.DataFrame,
+    aggregate_column: str = "created_at",
+    agg_config: Dict[str, Tuple[str, str]] = {"count": ("id", "count")},
+    only_non_final_processing_operation: bool = False,
 ) -> pd.DataFrame:
     """
     Creates a DataFrame with number of BSx, users, company... created by week.
@@ -31,15 +35,49 @@ def get_weekly_counts_df(
     ----------
     bs_data: DataFrame
         DataFrame containing BSx data.
+    aggregate_column: str
+        Date column used to group data.
+    agg_config: dict
+        Dictionary that will be passed to pandas `agg` method in order to perform group operation.
+    only_non_final_processing_operation: bool
+        If true and `aggregate_column` is equal to "processed_at",
+        then only non final processing operation code will be kept in dataset.
+        If false and `aggregate_column` is equal to "processed_at",
+        then only non final processing operation will be keptin dataset.
     """
+
     now = datetime.now(tz=ZoneInfo("Europe/Paris"))
     max_date = (now - timedelta(days=now.weekday() + 1)).replace(
         hour=23, minute=59, second=59, microsecond=99
     )
     df = data[data[aggregate_column].between("2022-01-03", max_date)]
+
+    non_final_processing_operation_codes = [
+        "D9",
+        "D13",
+        "D14",
+        "D15",
+        "R12",
+        "R13",
+        "D 9",
+        "D 13",
+        "D 14",
+        "D 15",
+        "R 12",
+        "R 13",
+    ]
+    match (aggregate_column, only_non_final_processing_operation):
+        case ("processed_at", False):
+            df = df[
+                ~df["processing_operation"].isin(non_final_processing_operation_codes)
+            ]
+        case ("processed_at", True):
+            df = df[
+                df["processing_operation"].isin(non_final_processing_operation_codes)
+            ]
     df = (
         df.groupby(by=pd.Grouper(key=aggregate_column, freq="1W"))
-        .count()
+        .agg(**agg_config)
         .reset_index()
         .rename(columns={aggregate_column: "at"})
     )
@@ -47,12 +85,57 @@ def get_weekly_counts_df(
     return df
 
 
+def get_weekly_preprocessed_dfs(bs_data: pd.DataFrame) -> Dict[str, List[pd.DataFrame]]:
+    """Preprocess raw 'bordereau' data in order to aggregate it at weekly frequency.
+    Useful to make several aggregation to prepare data to weekly aggregated figures.
+    
+    Parameters
+    ----------
+    bs_data: DataFrame
+        DataFrame containing raw 'bordereau' data.
+
+    Returns
+    -------
+    dict
+    Dict containing two keys : "counts" and "quantity" representing the two metrics computed,
+    Each key is bounded to a list of DataFrames containing the aggregated data for the metric.
+    Each item is aggregated by a particular date column.
+    """
+
+    bs_datasets = defaultdict(list)
+    for aggregate_column, only_non_final_operations in [
+        ("created_at", False),
+        ("sent_at", False),
+        ("received_at", False),
+        ("processed_at", True),
+        ("processed_at", False),
+    ]:
+
+        bs_datasets["counts"].append(
+            get_weekly_aggregated_df(
+                bs_data,
+                aggregate_column,
+                only_non_final_processing_operation=only_non_final_operations,
+            )
+        )
+        bs_datasets["quantity"].append(
+            get_weekly_aggregated_df(
+                bs_data,
+                aggregate_column,
+                {"quantity": ("quantity", "sum")},
+                only_non_final_operations,
+            )
+        )
+
+    return bs_datasets
+
+
 def get_weekly_waste_quantity_processed_by_operation_code_df(
     bs_data: pd.DataFrame,
-) -> pd.DataFrame:
+) -> pd.Series:
     """
     Creates a DataFrame with total weight of dangerous waste processed by week and by processing operation codes.
-
+    Processing operation codes that does not designate final operations are discarded.
     Parameters
     ----------
     bs_data: DataFrame
@@ -141,7 +224,9 @@ def get_waste_quantity_processed_df(
         bsff_waste_processed_series,
         bsdasri_waste_processed_series,
     ]:
-        quantity_processed_weekly_df.add(series, fill_value=0)
+        quantity_processed_weekly_df = quantity_processed_weekly_df.add(
+            series, fill_value=0
+        )
 
     quantity_processed_weekly_df = quantity_processed_weekly_df.reset_index()
 
@@ -167,7 +252,7 @@ def get_waste_quantity_processed_df(
 
 
 def get_recovered_and_eliminated_quantity_processed_by_week_series(
-    quantity_processed_weekly_df,
+    quantity_processed_weekly_df: pd.DataFrame,
 ) -> Tuple[pd.Series, pd.Series]:
     """Extract the weekly quantity of recovered waste and eliminated waste in two separate Series.
 
@@ -192,8 +277,8 @@ def get_recovered_and_eliminated_quantity_processed_by_week_series(
                     "processing_operation"
                 ).str.match(regex)
             ]
-            .groupby("processed_at")
-            .quantity.sum()
+            .groupby("processed_at")["quantity"]
+            .sum()
             .round()
         )
         res.append(series)
