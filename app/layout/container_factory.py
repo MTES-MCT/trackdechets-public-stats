@@ -1,7 +1,10 @@
+from datetime import datetime
+
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-from app.layout.utils import add_callout, add_figure
 from dash import dcc, html
+
+from app.layout.utils import add_callout, add_figure
 
 PLOTLY_PLOT_CONFIGS = {
     "toImageButtonOptions": {
@@ -84,12 +87,19 @@ def create_public_stats_container(
                 dbc.Col(
                     [
                         html.H1("Statistiques de Trackdéchets"),
+                        html.P(
+                            [
+                                f"Dernière mise à jour des données le {datetime.now().strftime('%d/%m/%Y')}"
+                            ],
+                            className="fr-badge fr-badge--info",
+                            id="update-date",
+                        ),
                         dcc.Markdown(
                             """
-Cette page publique, est le reflet des données disponibles sur Trackdéchets.
+Cette page publique présente les données disponibles sur Trackdéchets.
 
-Depuis le 1er janvier 2022, l'utilisation de Trackdéchets est obligatoire pour les déchets dangereux et les déchets d'amiante. Cependant, 2022  est une année de transition qui comprend une période de tolérance jusqu'au 1er juillet (usage du format papier possible durant cette période).
-Nous utilisons donc les seules données qui ont fait l'objet d'une dématérialisation via Trackdéchets.
+Depuis le 1er janvier 2022, l'utilisation de Trackdéchets est obligatoire pour les déchets dangereux et/ou contenant des POP et les déchets d'amiante. 
+Cependant, 2022 est une année de transition qui comprenait une période de tolérance jusqu'au 1er juillet (usage du format papier possible durant cette période). Nous utilisons donc les seules données qui ont fait l'objet d'une dématérialisation via Trackdéchets.
                 """
                         ),
                     ],
@@ -113,7 +123,7 @@ Nous utilisons donc les seules données qui ont fait l'objet d'une dématériali
                                             **{
                                                 "aria-expanded": "false",
                                                 "aria-controls": "accordion-106",
-                                            }
+                                            },
                                         )
                                     ],
                                     className="fr-accordion__title",
@@ -152,11 +162,11 @@ Un bordereau de suivi de déchet (BSD) est créé pour chaque déchet et chaque 
             children=[
                 dbc.Col(
                     [
-                        html.H2("Déchets dangereux"),
+                        html.H2("Déchets tracés"),
                         dcc.Markdown(
                             [
                                 """
-Les données présentées ici comprennent tous les types de déchets nécessitant un suivi particulier : **déchets dangereux** (DD), **déchets d'amiante** (DA), déchets de **fluide frigorigène** (FF) et **déchets d'activités de soins à risques infectieux** (DASRI).        
+Les données présentées ici comprennent tous les types de déchets nécessitant un suivi particulier : **déchets dangereux** (DD) et/ou **POP**, **déchets d'amiante** (DA), déchets de **fluide frigorigène** (FF) et **déchets d'activités de soins à risques infectieux** (DASRI).        
 """
                             ]
                         ),
@@ -169,7 +179,7 @@ Les données présentées ici comprennent tous les types de déchets nécessitan
             [
                 add_callout(
                     number=quantity_processed_total,
-                    text="tonnes de déchets dangereux traités depuis le 1er janvier 2022",
+                    text="tonnes de déchets dangereux tracés et traités depuis le 1er janvier 2022",
                     width=3,
                     sm_width=12,
                 ),
@@ -194,7 +204,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                         add_figure(
                             quantity_processed_weekly,
                             "bsdd_processed_weekly",
-                            "Quantité de déchets dangereux traités par semaine",
+                            "Quantité de déchets dangereux tracés et traités par semaine",
                         )
                     ],
                     width=12,
@@ -208,7 +218,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                         add_figure(
                             quantity_processed_sunburst_figure,
                             "bsdd_processed_by_operation",
-                            "Quantité de déchets traités par opération de traitement",
+                            "Quantité de déchets tracés et traités par opération de traitement",
                         )
                     ],
                     width=8,
@@ -220,7 +230,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                 ),
             ]
         ),
-        html.H3(["Détails par types de déchets"]),
+        html.H3(["Détail par types de déchets"]),
         dbc.Row(
             dbc.Col(
                 html.Div(
@@ -240,7 +250,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             **{
                                                 "aria-selected": "true",
                                                 "aria-controls": "tabpanel-404-panel",
-                                            }
+                                            },
                                         )
                                     ],
                                     role="present_ation",
@@ -257,7 +267,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             **{
                                                 "aria-selected": "false",
                                                 "aria-controls": "tabpanel-405-panel",
-                                            }
+                                            },
                                         )
                                     ],
                                     role="present_ation",
@@ -274,7 +284,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             **{
                                                 "aria-selected": "false",
                                                 "aria-controls": "tabpanel-406-panel",
-                                            }
+                                            },
                                         )
                                     ],
                                     role="present_ation",
@@ -291,17 +301,17 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             **{
                                                 "aria-selected": "false",
                                                 "aria-controls": "tabpanel-407-panel",
-                                            }
+                                            },
                                         ),
                                     ],
-                                    role="present_ation",
+                                    role="presentation",
                                 ),
                             ],
                             className="fr-tabs__list",
                             role="tablist",
                             **{
                                 "aria-label": "Onglets pour sélectionner le graphique pour le type de bordereau voulu"
-                            }
+                            },
                         ),
                         html.Div(
                             [
@@ -328,7 +338,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             className="fr-tabs__panel fr-tabs__panel--selected",
                             role="tabpanel",
                             tabIndex="0",
-                            **{"aria-labelledby": "tabpanel-404"}
+                            **{"aria-labelledby": "tabpanel-404"},
                         ),
                         html.Div(
                             [
@@ -355,7 +365,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             className="fr-tabs__panel",
                             role="tabpanel",
                             tabIndex="0",
-                            **{"aria-labelledby": "tabpanel-405"}
+                            **{"aria-labelledby": "tabpanel-405"},
                         ),
                         html.Div(
                             [
@@ -382,7 +392,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             className="fr-tabs__panel",
                             role="tabpanel",
                             tabIndex="0",
-                            **{"aria-labelledby": "tabpanel-406"}
+                            **{"aria-labelledby": "tabpanel-406"},
                         ),
                         html.Div(
                             [
@@ -409,7 +419,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             className="fr-tabs__panel",
                             role="tabpanel",
                             tabIndex="0",
-                            **{"aria-labelledby": "tabpanel-407"}
+                            **{"aria-labelledby": "tabpanel-407"},
                         ),
                     ],
                 ),
@@ -453,7 +463,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                                     **{
                                                         "aria-selected": "true",
                                                         "aria-controls": "tabpanel-201-panel",
-                                                    }
+                                                    },
                                                 )
                                             ],
                                             role="present_ation",
@@ -470,7 +480,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                                     **{
                                                         "aria-selected": "false",
                                                         "aria-controls": "tabpanel-202-panel",
-                                                    }
+                                                    },
                                                 )
                                             ],
                                             role="present_ation",
@@ -480,7 +490,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                     role="tablist",
                                     **{
                                         "aria-label": "Onglets pour sélectionner le graphique pour le type de bordereau voulu"
-                                    }
+                                    },
                                 ),
                                 html.Div(
                                     [
@@ -498,7 +508,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                     className="fr-tabs__panel fr-tabs__panel--selected",
                                     role="tabpanel",
                                     tabIndex="0",
-                                    **{"aria-labelledby": "tabpanel-201"}
+                                    **{"aria-labelledby": "tabpanel-201"},
                                 ),
                                 html.Div(
                                     [
@@ -516,7 +526,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                     className="fr-tabs__panel",
                                     role="tabpanel",
                                     tabIndex="0",
-                                    **{"aria-labelledby": "tabpanel-202"}
+                                    **{"aria-labelledby": "tabpanel-202"},
                                 ),
                             ],
                             className="fr-tabs",

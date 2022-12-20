@@ -75,7 +75,7 @@ def create_weekly_scatter_figure(
         DataFrame containing the count of 'bordereaux' sent. Must have 'at' and metric corresponding columns.
     bs_received_data: DataFrame
         DataFrame containing the count of 'bordereaux' received. Must have 'at' and metric corresponding columns.
-    bs_processed_data: DataFrame
+    bs_processed_non_final_data: DataFrame
         DataFrame containing the count of 'bordereaux' processed with non final processing operation code.
         Must have 'at' and metric corresponding columns.
     bs_processed_data: DataFrame
@@ -91,13 +91,12 @@ def create_weekly_scatter_figure(
     # Those colors are colorblind safe and printable.
     # Source : https://personal.sron.nl/~pault/#sec:qualitative
     line_colors = [
-        "#009988",
-        "#EE7733",
-        "#33BBEE",
-        "#EE3377",
-        "#CC3311",
+        "#6A6AF4",
+        "#E1000F",
+        "#B7A73F",
+        "#E4794A",
+        "#009099",
     ]
-
     plot_configs = [
         {"data": bs_created_data, "color": line_colors[0], **lines_configs[0]},
         {"data": bs_sent_data, "color": line_colors[1], **lines_configs[1]},
