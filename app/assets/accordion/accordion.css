@@ -72,8 +72,8 @@
   height: var(--icon-size);
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
-  -webkit-mask-image: url("../../assets/icons/system/add-line.svg");
-  mask-image: url("../../assets/icons/system/add-line.svg");
+  -webkit-mask-image: url("../assets/icons/system/add-line.svg");
+  mask-image: url("../assets/icons/system/add-line.svg");
   content: "";
   margin-right: 0;
   margin-left: auto;
@@ -88,8 +88,8 @@
 }
 
 .fr-accordion__btn[aria-expanded=true]::after {
-  -webkit-mask-image: url("../../assets/icons/system/subtract-line.svg");
-  mask-image: url("../../assets/icons/system/subtract-line.svg");
+  -webkit-mask-image: url("../assets/icons/system/subtract-line.svg");
+  mask-image: url("../assets/icons/system/subtract-line.svg");
 }
 
 .fr-accordion .fr-collapse {
@@ -118,6 +118,7 @@
   --li-bottom: 0;
   --ol-content: none;
 }
+
 @media (min-width: 48em) {
   .fr-accordion__btn {
     padding: 0.75rem 1rem;
@@ -129,7 +130,9 @@
     padding-right: 1rem;
   }
 }
+
 @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+
   /**
   * Reset liste à puce
   */
@@ -168,14 +171,14 @@
     background-color: transparent;
     background-size: 100%;
     background-repeat: no-repeat;
-    background-image: url("../../assets/icons/system/add-line.svg");
+    background-image: url("../assets/icons/system/add-line.svg");
     width: 1rem;
     height: 1rem;
   }
 
   .fr-accordion__btn[aria-expanded=true]::before,
   .fr-accordion__btn[aria-expanded=true]::after {
-    background-image: url("../../assets/icons/system/subtract-line.svg");
+    background-image: url("../assets/icons/system/subtract-line.svg");
   }
 
   .fr-accordion::before {

@@ -98,6 +98,10 @@ Copied and renamed from DSFR core CSS */
     background-color: var(--background-contrast-grey);
 }
 
+#update-date {
+    margin-bottom: 20px;
+}
+
 
 /*
 Bootstrap berakpoints:
