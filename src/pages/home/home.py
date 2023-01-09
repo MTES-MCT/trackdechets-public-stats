@@ -1,15 +1,6 @@
 from dash import html, register_page
 
 from src.data.data_extract import get_company_data, get_user_data
-from src.pages import (
-    BSDD_DATA,
-    BSDA_DATA,
-    BSFF_DATA,
-    BSDASRI_DATA,
-    COMPANY_DATA,
-    USER_DATA,
-)
-
 from src.data.public import (
     get_company_counts_by_naf_dfs,
     get_recovered_and_eliminated_quantity_processed_by_week_series,
@@ -18,6 +9,14 @@ from src.data.public import (
     get_weekly_aggregated_df,
     get_weekly_preprocessed_dfs,
     get_weekly_waste_quantity_processed_by_operation_code_df,
+)
+from src.pages import (
+    BSDA_DATA,
+    BSDASRI_DATA,
+    BSDD_DATA,
+    BSFF_DATA,
+    COMPANY_DATA,
+    USER_DATA,
 )
 from src.pages.figures_factory import (
     create_quantity_processed_sunburst_figure,
