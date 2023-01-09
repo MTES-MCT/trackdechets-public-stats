@@ -15,7 +15,7 @@ SQL_PATH = Path(__file__).parent.absolute() / "sql"
 
 
 def get_bs_data(
-    sql_path: Path,
+    query_filename: str,
     include_drafts: bool = False,
     include_only_dangerous_waste: bool = True,
 ) -> pd.DataFrame:
@@ -40,7 +40,7 @@ def get_bs_data(
 
     started_time = time.time()
 
-    sql_query = sql_path.read_text()
+    sql_query = (SQL_PATH / query_filename).read_text()
     bs_data_df = pd.read_sql_query(
         sql_query,
         con=DB_ENGINE,
