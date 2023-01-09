@@ -4,7 +4,7 @@ from typing import Dict, List
 import pandas as pd
 import plotly.graph_objects as go
 
-from app.layout.utils import break_long_line, format_number
+from src.pages.utils import break_long_line, format_number
 
 
 def create_weekly_created_figure(
@@ -90,23 +90,16 @@ def create_weekly_scatter_figure(
 
     # Those colors are colorblind safe and printable.
     # Source : https://personal.sron.nl/~pault/#sec:qualitative
-    line_colors = [
-        "#6A6AF4",
-        "#E1000F",
-        "#B7A73F",
-        "#E4794A",
-        "#009099",
-    ]
+
     plot_configs = [
-        {"data": bs_created_data, "color": line_colors[0], **lines_configs[0]},
-        {"data": bs_sent_data, "color": line_colors[1], **lines_configs[1]},
-        {"data": bs_received_data, "color": line_colors[2], **lines_configs[2]},
+        {"data": bs_created_data, **lines_configs[0]},
+        {"data": bs_sent_data, **lines_configs[1]},
+        {"data": bs_received_data, **lines_configs[2]},
         {
             "data": bs_processed_non_final_data,
-            "color": line_colors[3],
             **lines_configs[3],
         },
-        {"data": bs_processed_data, "color": line_colors[4], **lines_configs[4]},
+        {"data": bs_processed_data, **lines_configs[4]},
     ]
 
     scatter_list = []
@@ -118,7 +111,6 @@ def create_weekly_scatter_figure(
         data = config["data"]
         name = config["name"]
         suffix = config["suffix"]
-        color = config["color"]
         # Creates a list of text to only show value on last point of the line
         texts = [""] * (len(data) - 1) + [format_number(data[metric_name].iloc[-1])]
 
@@ -141,7 +133,6 @@ def create_weekly_scatter_figure(
                 line_shape="spline",
                 line_smoothing=0.3,
                 line_width=3,
-                line_color=color,
             )
         )
 
@@ -228,6 +219,7 @@ def create_weekly_quantity_processed_figure(
             xanchor="left",
             x=0,
             title="Type de traitement :",
+            bgcolor="rgba(0,0,0,0)",
         ),
         margin=dict(t=30, r=70, l=0),
         barmode="stack",

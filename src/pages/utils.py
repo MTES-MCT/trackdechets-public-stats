@@ -1,10 +1,10 @@
 import re
-import dash_bootstrap_components as dbc
+
 import plotly.graph_objects as go
 from dash import dcc, html
 
 
-def add_figure(fig: go.Figure, fig_id: str, figure_title: str) -> dbc.Row:
+def add_figure(fig: go.Figure, fig_id: str, figure_title: str) -> html.Div:
     """
     Boilerplate for figure rows.
 
@@ -51,9 +51,7 @@ def format_number(input_number: float, precision: int = 0) -> str:
     return re.sub(r"\.0+", "", "{:,}".format(input_number).replace(",", " "))
 
 
-def add_callout(
-    text: str, width: int, sm_width: int = 0, number: int = None
-) -> dbc.Col:
+def add_callout(text: str, number: int = None) -> html.Div:
     """
     Create a callout element with text and optional number.
 
@@ -74,7 +72,6 @@ def add_callout(
     """
     text_class = "number-text" if number else "fr-callout__text"
     number_class = "callout-number small-number"
-    small_width = width * 2 if sm_width == 0 else sm_width
     if number:
         # Below 1M
         if number < 1000000:
@@ -85,19 +82,12 @@ def add_callout(
         # From 1M to 10M-1
         # don't change initial value
 
-    col = dbc.Col(
-        html.Div(
-            [
-                html.P(format_number(number), className=number_class)
-                if number
-                else None,
-                dcc.Markdown(text, className=text_class),
-            ],
-            className="fr-callout",
-        ),
-        width=small_width,
-        lg=width,
-        class_name="flex",
+    col = html.Div(
+        [
+            html.P(format_number(number), className=number_class) if number else None,
+            dcc.Markdown(text, className=text_class),
+        ],
+        className="fr-callout",
     )
 
     return col
