@@ -1,7 +1,7 @@
 """
 Dash dash_app configuration
 """
-from dash import Dash, html, dcc, page_container, page_registry
+from dash import Dash, html, page_container
 
 
 external_scripts = ["https://cdn.plot.ly/plotly-locale-fr-latest.js"]
@@ -12,6 +12,7 @@ app = Dash(
     title="Trackdéchets : statistiques et impact",
     external_scripts=external_scripts,
     use_pages=True,
+    suppress_callback_exceptions=True,
 )
 
 

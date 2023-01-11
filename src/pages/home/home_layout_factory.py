@@ -1,8 +1,31 @@
-from datetime import datetime
-
 import plotly.graph_objects as go
 from dash import dcc, html
 
+from src.data.data_processing import (
+    get_company_counts_by_naf_dfs,
+    get_recovered_and_eliminated_quantity_processed_by_week_series,
+    get_waste_quantity_processed_by_processing_code_df,
+    get_waste_quantity_processed_df,
+    get_weekly_aggregated_df,
+    get_weekly_preprocessed_dfs,
+    get_weekly_waste_quantity_processed_by_operation_code_df,
+)
+from src.data.datasets import (
+    BSDA_DATA,
+    BSDASRI_DATA,
+    BSDD_DATA,
+    BSFF_DATA,
+    COMPANY_DATA,
+    USER_DATA,
+)
+from src.data.utils import get_data_date_interval_for_year
+from src.pages.figures_factory import (
+    create_quantity_processed_sunburst_figure,
+    create_treemap_companies_figure,
+    create_weekly_created_figure,
+    create_weekly_quantity_processed_figure,
+    create_weekly_scatter_figure,
+)
 from src.pages.utils import add_callout, add_figure
 
 PLOTLY_PLOT_CONFIGS = {
@@ -17,7 +40,7 @@ PLOTLY_PLOT_CONFIGS = {
 }
 
 
-def create_public_stats_container(
+def get_graph_elements(
     quantity_processed_total: int,
     bs_created_total: int,
     quantity_processed_weekly: go.Figure,
@@ -35,9 +58,9 @@ def create_public_stats_container(
     company_created_weekly: go.Figure,
     user_created_weekly: go.Figure,
     company_counts_by_category: go.Figure,
-) -> html.Div:
+) -> list:
     """
-    Creates the main container that will be displayed using all the precomputed metrics and Plotly Figures objects.
+    Creates the div container that contains all the graphes and that will be displayed using all the precomputed metrics and Plotly Figures objects.
     Currently data is supposed to be for the year 2022.
 
     Parameters
@@ -80,81 +103,7 @@ def create_public_stats_container(
     list
         Layout as a list of Dash components, ready to be rendered.
     """
-    container = [
-        html.Div(
-            [
-                html.H1("Statistiques de Trackdéchets"),
-                html.P(
-                    [
-                        f"Dernière mise à jour des données le {datetime.now().strftime('%d/%m/%Y')}"
-                    ],
-                    className="fr-badge fr-badge--info",
-                    id="update-date",
-                ),
-                dcc.Markdown(
-                    """
-Cette page publique présente les données disponibles sur Trackdéchets.
-
-Depuis le 1er janvier 2022, l'utilisation de Trackdéchets est obligatoire pour les déchets dangereux et/ou contenant des POP et les déchets d'amiante. 
-Cependant, 2022 est une année de transition qui comprenait une période de tolérance jusqu'au 1er juillet (usage du format papier possible durant cette période). Nous utilisons donc les seules données qui ont fait l'objet d'une dématérialisation via Trackdéchets.
-                """
-                ),
-            ]
-        ),
-        html.Section(
-            [
-                html.H3(
-                    [
-                        html.Button(
-                            [
-                                "En savoir plus",
-                            ],
-                            className="fr-accordion__btn",
-                            **{
-                                "aria-expanded": "false",
-                                "aria-controls": "accordion-106",
-                            },
-                        )
-                    ],
-                    className="fr-accordion__title",
-                ),
-                html.Div(
-                    [
-                        dcc.Markdown(
-                            [
-                                """
-L'application Trackdéchets est utilisée en France pour tracer plusieurs types de déchets:
-- déchets dangereux et/ou contenant des Polluants Organiques Persistants ([POP](https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) ;
-- déchets contenant de l'amiante ;
-- déchets de fluides frigorigènes ;
-- déchets d'activités de soins à risques infectieux (DASRI) ;
-- véhicules hors d'usage.
-
-Les déchets doivent être tracés depuis le producteur/détenteur jusqu'au traitement final.
-Les déchets qui vont d'une installation en métropole, à destination de l'étranger (ou l'inverse) ne sont pas tracés par Trackdéchets.
-Un bordereau de suivi de déchet (BSD) est créé pour chaque déchet et chaque mouvement. Les nombreuses informations qu'il contient alimentent ces statistiques.                   
-"""
-                            ]
-                        )
-                    ],
-                    className="fr-collapse",
-                    id="accordion-106",
-                ),
-            ],
-            className="fr-accordion",
-        ),
-        html.Div(
-            children=[
-                html.H2("Déchets tracés"),
-                dcc.Markdown(
-                    [
-                        """
-Les données présentées ici comprennent tous les types de déchets nécessitant un suivi particulier : **déchets dangereux** (DD) et/ou **POP**, **déchets d'amiante** (DA), déchets de **fluide frigorigène** (FF) et **déchets d'activités de soins à risques infectieux** (DASRI).        
-"""
-                    ]
-                ),
-            ],
-        ),
+    elements = [
         html.Div(
             [
                 add_callout(
@@ -383,6 +332,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     ),
                 ],
             ),
+            id="bordereaux-counts-section",
         ),
         html.H2("Établissements et utilisateurs"),
         html.Div(
@@ -484,6 +434,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     className="fr-tabs",
                 )
             ],
+            id="companies-users-counts-section",
         ),
         html.Div(
             [
@@ -502,4 +453,241 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             )
         ),
     ]
-    return html.Div(container, className="main-container")
+    return elements
+
+
+def get_navbar_elements(
+    years: list[int] = [2022, 2023], year_selected: int = 2022
+) -> html.Ul:
+
+    elements = []
+
+    for year in years:
+
+        if year_selected == year:
+            link_element = html.Span(
+                f"Année {year}",
+                className="fr-nav__link",
+                id={"type": "year-selector", "index": year},
+                **{"aria-current": "page"},
+            )
+        else:
+            link_element = html.Span(
+                f"Année {year}",
+                className="fr-nav__link",
+                id={"type": "year-selector", "index": year},
+            )
+
+        elements.append(
+            html.Li(
+                link_element,
+                className="fr-nav__item",
+            )
+        )
+
+    return html.Ul(elements, className="fr-nav__list")
+
+
+def get_layout_for_a_year(year: int = 2022) -> list:
+
+    date_interval = get_data_date_interval_for_year(year)
+
+    # Load all needed data
+    bsdd_data_df = BSDD_DATA
+    bsda_data_df = BSDA_DATA
+    bsff_data_df = BSFF_DATA
+    bsdasri_data_df = BSDASRI_DATA
+
+    # BSx weekly figures
+    bsdd_weekly_processed_dfs = get_weekly_preprocessed_dfs(bsdd_data_df, date_interval)
+    bsda_weekly_processed_dfs = get_weekly_preprocessed_dfs(bsda_data_df, date_interval)
+    bsff_weekly_processed_dfs = get_weekly_preprocessed_dfs(bsff_data_df, date_interval)
+    bsdasri_weekly_processed_dfs = get_weekly_preprocessed_dfs(
+        bsdasri_data_df, date_interval
+    )
+
+    lines_configs = [
+        {
+            "name": "Bordereaux traçés",
+            "suffix": "BSDD traçés",
+            "text_position": "top center",
+        },
+        {
+            "name": "Bordereaux marqués comme envoyés",
+            "suffix": "BSDD marqués comme envoyés",
+            "text_position": "middle top",
+        },
+        {
+            "name": "Bordereaux marqués comme reçus",
+            "suffix": "BSDD marqués comme reçus",
+            "text_position": "middle bottom",
+        },
+        {
+            "name": "Bordereaux marqués comme traités sans code final",
+            "suffix": "BSDD marqués comme traités sans code final",
+            "text_position": "bottom center",
+        },
+        {
+            "name": "Bordereaux marqués comme traités avec code final",
+            "suffix": "BSDD marqués comme traités avec code final",
+            "text_position": "bottom center",
+        },
+    ]
+    bsdd_counts_weekly_fig = create_weekly_scatter_figure(
+        *bsdd_weekly_processed_dfs["counts"], lines_configs=lines_configs
+    )
+    bsda_counts_weekly_fig = create_weekly_scatter_figure(
+        *bsda_weekly_processed_dfs["counts"], lines_configs=lines_configs
+    )
+    bsff_counts_weekly_fig = create_weekly_scatter_figure(
+        *bsff_weekly_processed_dfs["counts"], lines_configs=lines_configs
+    )
+    bsdasri_counts_weekly_fig = create_weekly_scatter_figure(
+        *bsdasri_weekly_processed_dfs["counts"], lines_configs=lines_configs
+    )
+
+    lines_configs = [
+        {
+            "name": "Quantité tracée",
+            "suffix": "tonnes tracées",
+            "text_position": "top center",
+        },
+        {
+            "name": "Quantité envoyée",
+            "suffix": "tonnes envoyées",
+            "text_position": "middle top",
+        },
+        {
+            "name": "Quantité reçue",
+            "suffix": "tonnes reçues",
+            "text_position": "middle bottom",
+        },
+        {
+            "name": "Quantité traitée en code non final",
+            "suffix": "tonnes traitées avec un code non final",
+            "text_position": "bottom center",
+        },
+        {
+            "name": "Quantité traitée en code final",
+            "suffix": "tonnes traitées avec un code final",
+            "text_position": "bottom center",
+        },
+    ]
+    bsdd_quantities_weekly_fig = create_weekly_scatter_figure(
+        *bsdd_weekly_processed_dfs["quantity"], lines_configs=lines_configs
+    )
+    bsda_quantities_weekly_fig = create_weekly_scatter_figure(
+        *bsda_weekly_processed_dfs["quantity"], lines_configs=lines_configs
+    )
+    bsff_quantities_weekly_fig = create_weekly_scatter_figure(
+        *bsff_weekly_processed_dfs["quantity"], lines_configs=lines_configs
+    )
+    bsdasri_quantities_weekly_fig = create_weekly_scatter_figure(
+        *bsdasri_weekly_processed_dfs["quantity"], lines_configs=lines_configs
+    )
+
+    # Waste weight processed weekly
+    bsdd_quantity_processed_weekly_series = (
+        get_weekly_waste_quantity_processed_by_operation_code_df(
+            bsdd_data_df, date_interval
+        )
+    )
+    bsda_quantity_processed_weekly_series = (
+        get_weekly_waste_quantity_processed_by_operation_code_df(
+            bsda_data_df, date_interval
+        )
+    )
+    bsff_quantity_processed_weekly_series = (
+        get_weekly_waste_quantity_processed_by_operation_code_df(
+            bsff_data_df, date_interval
+        )
+    )
+    bsdasri_quantity_processed_weekly_series = (
+        get_weekly_waste_quantity_processed_by_operation_code_df(
+            bsdasri_data_df, date_interval
+        )
+    )
+
+    quantity_processed_weekly_df = get_waste_quantity_processed_df(
+        bsdd_quantity_processed_weekly_series,
+        bsda_quantity_processed_weekly_series,
+        bsff_quantity_processed_weekly_series,
+        bsdasri_quantity_processed_weekly_series,
+    )
+
+    # Total bordereaux created
+    bs_created_total = 0
+    for df in [bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df]:
+
+        bs_created_total += df[
+            df["created_at"].between(*date_interval, inclusive="left")
+        ].index.size
+
+    # Waste weight processed weekly
+    (
+        recovered_quantity_series,
+        eliminated_quantity_series,
+    ) = get_recovered_and_eliminated_quantity_processed_by_week_series(
+        quantity_processed_weekly_df
+    )
+    quantity_processed_weekly_fig = create_weekly_quantity_processed_figure(
+        recovered_quantity_series, eliminated_quantity_series
+    )
+
+    waste_quantity_processed_by_processing_code_df = (
+        get_waste_quantity_processed_by_processing_code_df(quantity_processed_weekly_df)
+    )
+
+    quantity_processed_sunburst_fig = create_quantity_processed_sunburst_figure(
+        waste_quantity_processed_by_processing_code_df
+    )
+
+    quantity_processed_total = quantity_processed_weekly_df["quantity"].sum()
+
+    # Company and user section
+    company_data_df = COMPANY_DATA[
+        COMPANY_DATA["created_at"].between(*date_interval, inclusive="left")
+    ]
+    user_data_df = USER_DATA[
+        USER_DATA["created_at"].between(*date_interval, inclusive="left")
+    ]
+
+    company_created_total_life = company_data_df.index.size
+    user_created_total_life = user_data_df.index.size
+
+    company_created_weekly_df = get_weekly_aggregated_df(company_data_df)
+    user_created_weekly_df = get_weekly_aggregated_df(user_data_df)
+
+    company_created_weekly = create_weekly_created_figure(company_created_weekly_df)
+    user_created_weekly = create_weekly_created_figure(user_created_weekly_df)
+
+    (
+        company_counts_by_section,
+        company_counts_by_division,
+    ) = get_company_counts_by_naf_dfs(company_data_df)
+    treemap_companies_figure = create_treemap_companies_figure(
+        company_counts_by_section, company_counts_by_division
+    )
+
+    # generate
+    elements = get_graph_elements(
+        quantity_processed_total=quantity_processed_total,
+        bs_created_total=bs_created_total,
+        quantity_processed_weekly=quantity_processed_weekly_fig,
+        quantity_processed_sunburst_figure=quantity_processed_sunburst_fig,
+        bsdd_counts_weekly=bsdd_counts_weekly_fig,
+        bsda_counts_weekly=bsda_counts_weekly_fig,
+        bsff_counts_weekly=bsff_counts_weekly_fig,
+        bsdasri_counts_weekly=bsdasri_counts_weekly_fig,
+        bsdd_quantities_weekly=bsdd_quantities_weekly_fig,
+        bsda_quantities_weekly=bsda_quantities_weekly_fig,
+        bsff_quantities_weekly=bsff_quantities_weekly_fig,
+        bsdasri_quantities_weekly=bsdasri_quantities_weekly_fig,
+        company_created_total_life=company_created_total_life,
+        user_created_total_life=user_created_total_life,
+        company_created_weekly=company_created_weekly,
+        user_created_weekly=user_created_weekly,
+        company_counts_by_category=treemap_companies_figure,
+    )
+
+    return elements

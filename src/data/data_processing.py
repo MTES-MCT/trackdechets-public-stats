@@ -2,7 +2,7 @@
 Data gathering and processing
 """
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Tuple
 from zoneinfo import ZoneInfo
 
@@ -24,6 +24,7 @@ def normalize_processing_operation(col: pd.Series) -> pd.Series:
 
 def get_weekly_aggregated_df(
     data: pd.DataFrame,
+    date_interval: Tuple[datetime, datetime] | None = None,
     aggregate_column: str = "created_at",
     agg_config: Dict[str, Tuple[str, str]] = {"count": ("id", "count")},
     only_non_final_processing_operation: bool = False,
@@ -46,11 +47,8 @@ def get_weekly_aggregated_df(
         then only non final processing operation will be keptin dataset.
     """
 
-    now = datetime.now(tz=ZoneInfo("Europe/Paris"))
-    max_date = (now - timedelta(days=now.weekday() + 1)).replace(
-        hour=23, minute=59, second=59, microsecond=99
-    )
-    df = data[data[aggregate_column].between("2022-01-03", max_date)]
+    if date_interval is not None:
+        data = data[data[aggregate_column].between(*date_interval, inclusive="left")]
 
     non_final_processing_operation_codes = [
         "D9",
@@ -68,15 +66,15 @@ def get_weekly_aggregated_df(
     ]
     match (aggregate_column, only_non_final_processing_operation):
         case ("processed_at", False):
-            df = df[
-                ~df["processing_operation"].isin(non_final_processing_operation_codes)
+            data = data[
+                ~data["processing_operation"].isin(non_final_processing_operation_codes)
             ]
         case ("processed_at", True):
-            df = df[
-                df["processing_operation"].isin(non_final_processing_operation_codes)
+            data = data[
+                data["processing_operation"].isin(non_final_processing_operation_codes)
             ]
     df = (
-        df.groupby(by=pd.Grouper(key=aggregate_column, freq="1W"))
+        data.groupby(by=pd.Grouper(key=aggregate_column, freq="1W"))
         .agg(**agg_config)
         .reset_index()
         .rename(columns={aggregate_column: "at"})
@@ -85,10 +83,12 @@ def get_weekly_aggregated_df(
     return df
 
 
-def get_weekly_preprocessed_dfs(bs_data: pd.DataFrame) -> Dict[str, List[pd.DataFrame]]:
+def get_weekly_preprocessed_dfs(
+    bs_data: pd.DataFrame, date_interval: tuple[datetime, datetime] | None
+) -> Dict[str, List[pd.DataFrame]]:
     """Preprocess raw 'bordereau' data in order to aggregate it at weekly frequency.
     Useful to make several aggregation to prepare data to weekly aggregated figures.
-    
+
     Parameters
     ----------
     bs_data: DataFrame
@@ -114,6 +114,7 @@ def get_weekly_preprocessed_dfs(bs_data: pd.DataFrame) -> Dict[str, List[pd.Data
         bs_datasets["counts"].append(
             get_weekly_aggregated_df(
                 bs_data,
+                date_interval,
                 aggregate_column,
                 only_non_final_processing_operation=only_non_final_operations,
             )
@@ -121,6 +122,7 @@ def get_weekly_preprocessed_dfs(bs_data: pd.DataFrame) -> Dict[str, List[pd.Data
         bs_datasets["quantity"].append(
             get_weekly_aggregated_df(
                 bs_data,
+                date_interval,
                 aggregate_column,
                 {"quantity": ("quantity", "sum")},
                 only_non_final_operations,
@@ -131,7 +133,7 @@ def get_weekly_preprocessed_dfs(bs_data: pd.DataFrame) -> Dict[str, List[pd.Data
 
 
 def get_weekly_waste_quantity_processed_by_operation_code_df(
-    bs_data: pd.DataFrame,
+    bs_data: pd.DataFrame, date_interval: tuple[datetime, datetime]
 ) -> pd.Series:
     """
     Creates a DataFrame with total weight of dangerous waste processed by week and by processing operation codes.
@@ -147,20 +149,9 @@ def get_weekly_waste_quantity_processed_by_operation_code_df(
         Pandas Series containing aggregated data by week. Index are "processed_at" and "processing_operation".
     """
 
-    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-
     df = bs_data[
-        (
-            (
-                bs_data["processed_at"]
-                < (now - timedelta(days=(now.toordinal() % 7) - 1))
-            )
-            | bs_data["processed_at"].isna()
-        )
+        (bs_data["processed_at"].between(*date_interval, inclusive="left"))
         & (bs_data["status"].isin(["PROCESSED", "FOLLOWED_WITH_PNTTD"]))
-        & (bs_data["processed_at"] >= "2022-01-03")
         & (
             ~bs_data["processing_operation"].isin(
                 [
