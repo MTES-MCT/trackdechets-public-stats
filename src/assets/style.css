@@ -51,6 +51,11 @@ body {
     margin-bottom: 3em;
 }
 
+.figure-subtitle {
+    margin-bottom: 1em;
+    font-size: smaller;
+}
+
 /*
  ==================================
  Related to the FR design system

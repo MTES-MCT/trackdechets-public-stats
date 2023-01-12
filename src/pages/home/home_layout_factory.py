@@ -144,6 +144,10 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     quantity_processed_sunburst_figure,
                     "bsdd_processed_by_operation",
                     "Quantité de déchets tracés et traités par opération de traitement",
+                    (
+                        "Le coeur du graphique représente la part de déchets valorisés et éliminés, "
+                        "les sections autour permettent d'avoir une idée de la part des types d'opérations de traitement les plus importants effectués dans chacun des deux cas."
+                    ),
                 ),
                 add_callout(
                     text="""Les codes R (recovery, valorisation) et D (disposal, élimination) définis par la convention de Bâle, et repris aux annexes I et II de la directive cadre déchets n° 2008/98/CE, sont régulièrement exploités dans le contexte de la traçabilité des déchets et de la déclaration annuelle des émissions et des transferts de polluants et des déchets (déclaration GEREP). Ces codes permettent de discerner les différentes opérations de valorisation et d’élimination des déchets. La liste des codes déchets peut être retrouvées en annexe de la [notice BSDD](https://faq.trackdechets.fr/dechets-dangereux-classiques/telecharger-la-notice-et-le-recepisse-du-bsdd).""",
@@ -448,6 +452,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     company_counts_by_category,
                     "company_counts_by_category",
                     "Nombre d'entreprises inscrites pour chaque catégorie de code NAF",
+                    (
+                        "La Nomenclature des Activités Françaises permet de catégoriser "
+                        "les différents établissements qui s'inscrivent sur Trackdéchets."
+                        " Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
+                    ),
                 )
             ]
         ),

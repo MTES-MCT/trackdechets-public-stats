@@ -88,9 +88,6 @@ def create_weekly_scatter_figure(
         Figure object ready to be plotted.
     """
 
-    # Those colors are colorblind safe and printable.
-    # Source : https://personal.sron.nl/~pault/#sec:qualitative
-
     plot_configs = [
         {"data": bs_created_data, **lines_configs[0]},
         {"data": bs_sent_data, **lines_configs[1]},
@@ -262,13 +259,11 @@ def create_quantity_processed_sunburst_figure(
     ].sort_values("quantity")
 
     agg_data_recycled_other = agg_data_recycled.loc[
-        (agg_data_recycled.quantity.cumsum() / agg_data_recycled.quantity.sum()) < 0.1
+        (agg_data_recycled.quantity / agg_data_recycled.quantity.sum()) <= 0.12
     ]
     agg_data_eliminated_other = agg_data_eliminated.loc[
-        (agg_data_eliminated.quantity.cumsum() / agg_data_eliminated.quantity.sum())
-        < 0.1
+        (agg_data_eliminated.quantity / agg_data_eliminated.quantity.sum()) <= 0.21
     ]
-
     agg_data_recycled_other_quantity = agg_data_recycled_other.quantity.sum()
     agg_data_eliminated_other_quantity = agg_data_eliminated_other.quantity.sum()
 
@@ -292,7 +287,7 @@ def create_quantity_processed_sunburst_figure(
     labels = (
         total_data.index.to_list()
         + agg_data_without_other.processing_operation.to_list()
-        + ["Autres opérations"] * 2
+        + ["Autre"] * 2
     )
     parents = (
         ["", ""]
@@ -310,7 +305,7 @@ def create_quantity_processed_sunburst_figure(
         + ["rgb(102, 103, 61, 0.7)", "rgb(94, 42, 43, 0.7)"]
     )
 
-    hover_text_template = "{code} : {description}<br><b>{quantity}t</b>"
+    hover_text_template = "{code} : {description}<br><b>{quantity}t</b> traitées"
     hover_texts = (
         [
             f"<b>{format_number(e)}t</b> {index.split(' ')[1]}es"
@@ -325,7 +320,7 @@ def create_quantity_processed_sunburst_figure(
             for e in agg_data_without_other.itertuples()
         ]
         + [
-            f"Autres opérations de traitement<br><b>{format_number(e)}t</b> traités"
+            f"Autres opérations de traitement<br><b>{format_number(e)}t</b> traitées"
             for e in [
                 agg_data_recycled_other_quantity,
                 agg_data_eliminated_other_quantity,
@@ -341,14 +336,17 @@ def create_quantity_processed_sunburst_figure(
             values=values,
             marker_colors=colors,
             branchvalues="total",
-            texttemplate="%{label} - %{value:.3s}t soit <b>%{percentParent}</b>",
+            texttemplate="%{label} - <b>%{percentParent}</b>",
             hovertext=hover_texts,
             hoverinfo="text",
             sort=False,
-            insidetextorientation="auto",
+            insidetextorientation="horizontal",
+            insidetextfont_size=15,
         )
     )
-    fig.update_layout(margin=dict(t=0, l=0, r=0, b=0))
+    fig.update_layout(
+        margin=dict(t=0, l=0, r=0, b=0),
+    )
 
     return fig
 
@@ -430,7 +428,7 @@ def create_treemap_companies_figure(
         ]
         + (
             company_counts_by_section["libelle_section"].apply(
-                break_long_line, max_line_length=36
+                break_long_line, max_line_length=14, max_length=55
             )
             + " - <b>"
             + company_counts_by_section["num_entreprises"].apply(
@@ -440,7 +438,7 @@ def create_treemap_companies_figure(
         ).tolist()
         + (
             company_counts_by_division["libelle_division"].apply(
-                break_long_line, max_line_length=36
+                break_long_line, max_line_length=14, max_length=55
             )
             + " - <b>"
             + company_counts_by_division["num_entreprises"].apply(
@@ -525,14 +523,18 @@ def create_treemap_companies_figure(
             branchvalues="total",
             hovertemplate=hover_texts,
             customdata=custom_data,
-            pathbar_thickness=25,
+            pathbar_thickness=35,
             marker_colors=colors,
             textposition="middle center",
-            insidetextfont_size=100,
             tiling_packing="squarify",
-            tiling_pad=5,
-            outsidetextfont_size=100,
+            insidetextfont_size=300,
+            tiling_pad=3,
+            maxdepth=2,
         )
     )
-    fig.update_layout(margin={"l": 5, "r": 5, "t": 35, "b": 5}, height=800)
+    fig.update_layout(
+        margin={"l": 5, "r": 5, "t": 35, "b": 5},
+        height=800,
+        # uniformtext=dict(minsize=8, mode="hide"),
+    )
     return fig
