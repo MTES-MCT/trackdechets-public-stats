@@ -1,3 +1,5 @@
+"""This module is where the home page is registered and its initial layout rendered.
+"""
 from datetime import datetime
 from dash import html, register_page, dcc
 
@@ -9,10 +11,19 @@ from src.pages.home.home_layout_factory import get_navbar_elements
 register_page(
     __name__,
     path="/",
+    description="Page d'accueil des statistiques publiques de la plateforme Trackdéchets."
 )
 
 
 def layout() -> html.Div:
+    """
+    Creates initial layout. Currently the initial layout displays 2022 data.
+
+    Returns
+    -------
+    A Dash Div with the id 'main-container'.
+    """
+
     elements = [
         html.Div(
             [
@@ -84,9 +95,14 @@ Un bordereau de suivi de déchet (BSD) est créé pour chaque déchet et chaque 
             role="navigation",
             **{"aria-label": "Menu de sélection de l'année des données à afficher"},
         ),
-        html.Div(
-            dcc.Loading(layout_2022, style={"position": "relative", "top": "25px"}),
-            id="graph-container",
+        dcc.Loading(
+            html.Div(
+                layout_2022,
+                id="graph-container",
+            ),
+            style={"position": "absolute", "top": "25px"},
+            color="rgb(0, 0, 145)",
+            type="circle",
         ),
     ]
 

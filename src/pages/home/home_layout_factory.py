@@ -1,3 +1,6 @@
+"""This module contains the functions that allows to create the dash layout elements.
+"""
+
 import plotly.graph_objects as go
 from dash import dcc, html
 
@@ -6,7 +9,7 @@ from src.data.data_processing import (
     get_recovered_and_eliminated_quantity_processed_by_week_series,
     get_waste_quantity_processed_by_processing_code_df,
     get_waste_quantity_processed_df,
-    get_weekly_aggregated_df,
+    get_weekly_aggregated_series,
     get_weekly_preprocessed_dfs,
     get_weekly_waste_quantity_processed_by_operation_code_df,
 )
@@ -58,10 +61,10 @@ def get_graph_elements(
     company_created_weekly: go.Figure,
     user_created_weekly: go.Figure,
     company_counts_by_category: go.Figure,
+    year: int,
 ) -> list:
     """
     Creates the div container that contains all the graphes and that will be displayed using all the precomputed metrics and Plotly Figures objects.
-    Currently data is supposed to be for the year 2022.
 
     Parameters
     ----------
@@ -97,22 +100,25 @@ def get_graph_elements(
         Scatter plot showing the number of company accounts created weekly.
     user_created_weekly: Plotly Figure object
         Scatter plot showing the number of user accounts created weekly.
+    year: int
+        The year for which the data is displayed.
 
     Returns
     -------
     list
         Layout as a list of Dash components, ready to be rendered.
     """
+
     elements = [
         html.Div(
             [
                 add_callout(
                     number=quantity_processed_total,
-                    text="tonnes de déchets dangereux tracés et traités depuis le 1er janvier 2022",
+                    text=f"tonnes de déchets dangereux tracés et traités sur l'année {year}",
                 ),
                 add_callout(
                     number=bs_created_total,
-                    text="bordereaux créés sur depuis le 1er janvier 2022",
+                    text=f"bordereaux créés sur l'année {year}",
                 ),
                 dcc.Markdown(
                     """Les modes de traitement des déchets dangereux s'inscrivent dans la [hiérarchie des traitements de déchets](https://www.ecologie.gouv.fr/gestion-des-dechets-principes-generaux#scroll-nav__4).
@@ -168,7 +174,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                         },
                                     )
                                 ],
-                                role="present_ation",
+                                role="presentation",
                             ),
                             html.Li(
                                 [
@@ -185,7 +191,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                         },
                                     )
                                 ],
-                                role="present_ation",
+                                role="presentation",
                             ),
                             html.Li(
                                 [
@@ -202,7 +208,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                         },
                                     )
                                 ],
-                                role="present_ation",
+                                role="presentation",
                             ),
                             html.Li(
                                 [
@@ -370,7 +376,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             },
                                         )
                                     ],
-                                    role="present_ation",
+                                    role="presentation",
                                 ),
                                 html.Li(
                                     [
@@ -387,7 +393,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                             },
                                         )
                                     ],
-                                    role="present_ation",
+                                    role="presentation",
                                 ),
                             ],
                             className="fr-tabs__list",
@@ -456,9 +462,22 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
     return elements
 
 
-def get_navbar_elements(
-    years: list[int] = [2022, 2023], year_selected: int = 2022
-) -> html.Ul:
+def get_navbar_elements(years: list[int], year_selected: int) -> html.Ul:
+    """
+    Creates the navbar elements needed for the home page menu that allows
+    to select the year for which the data is displayed.
+
+    Parameters
+    ----------
+    years: List of ints
+        The list of years to add as button in the navbar menu.
+    year_selected: int
+        The year that is in the 'selected' state.
+
+    Returns
+    -------
+    A Dash Ul element containing the navbar menu elements.
+    """
 
     elements = []
 
@@ -489,6 +508,14 @@ def get_navbar_elements(
 
 
 def get_layout_for_a_year(year: int = 2022) -> list:
+    """
+    Creates the layout that contains all the graph elements for a particular year of data.
+
+    Returns
+    -------
+    list
+        A list of dash elements to be inserted in the Div with id 'graph-container'.
+    """
 
     date_interval = get_data_date_interval_for_year(year)
 
@@ -655,8 +682,8 @@ def get_layout_for_a_year(year: int = 2022) -> list:
     company_created_total_life = company_data_df.index.size
     user_created_total_life = user_data_df.index.size
 
-    company_created_weekly_df = get_weekly_aggregated_df(company_data_df)
-    user_created_weekly_df = get_weekly_aggregated_df(user_data_df)
+    company_created_weekly_df = get_weekly_aggregated_series(company_data_df)
+    user_created_weekly_df = get_weekly_aggregated_series(user_data_df)
 
     company_created_weekly = create_weekly_created_figure(company_created_weekly_df)
     user_created_weekly = create_weekly_created_figure(user_created_weekly_df)
@@ -688,6 +715,7 @@ def get_layout_for_a_year(year: int = 2022) -> list:
         company_created_weekly=company_created_weekly,
         user_created_weekly=user_created_weekly,
         company_counts_by_category=treemap_companies_figure,
+        year=year,
     )
 
     return elements

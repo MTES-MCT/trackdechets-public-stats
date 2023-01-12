@@ -22,7 +22,7 @@ def normalize_processing_operation(col: pd.Series) -> pd.Series:
     return col.replace(regex=regex_dict)
 
 
-def get_weekly_aggregated_df(
+def get_weekly_aggregated_series(
     data: pd.DataFrame,
     date_interval: Tuple[datetime, datetime] | None = None,
     aggregate_column: str = "created_at",
@@ -36,6 +36,10 @@ def get_weekly_aggregated_df(
     ----------
     bs_data: DataFrame
         DataFrame containing BSx data.
+    date_interval: tuple of two datetime objects
+        Interval of date used to filter the data as datetime objects.
+        First element is the start interval, the second one is the end of the interval.
+        The interval is left inclusive.
     aggregate_column: str
         Date column used to group data.
     agg_config: dict
@@ -44,7 +48,12 @@ def get_weekly_aggregated_df(
         If true and `aggregate_column` is equal to "processed_at",
         then only non final processing operation code will be kept in dataset.
         If false and `aggregate_column` is equal to "processed_at",
-        then only non final processing operation will be keptin dataset.
+        then only non final processing operation will be kept in dataset.
+
+    Returns
+    -------
+    DataFrame
+        Pandas DataFrame containing data aggregated with the given aggregation config.
     """
 
     if date_interval is not None:
@@ -93,13 +102,17 @@ def get_weekly_preprocessed_dfs(
     ----------
     bs_data: DataFrame
         DataFrame containing raw 'bordereau' data.
+    date_interval: tuple of two datetime objects
+        Interval of date used to filter the data as datetime objects.
+        First element is the start interval, the second one is the end of the interval.
+        The interval is left inclusive.
 
     Returns
     -------
     dict
-    Dict containing two keys : "counts" and "quantity" representing the two metrics computed,
-    Each key is bounded to a list of DataFrames containing the aggregated data for the metric.
-    Each item is aggregated by a particular date column.
+        Dict containing two keys : "counts" and "quantity" representing the two metrics computed,
+        Each key is bounded to a list of DataFrames containing the aggregated data for the metric.
+        Each item is aggregated by a particular date column.
     """
 
     bs_datasets = defaultdict(list)
@@ -112,7 +125,7 @@ def get_weekly_preprocessed_dfs(
     ]:
 
         bs_datasets["counts"].append(
-            get_weekly_aggregated_df(
+            get_weekly_aggregated_series(
                 bs_data,
                 date_interval,
                 aggregate_column,
@@ -120,7 +133,7 @@ def get_weekly_preprocessed_dfs(
             )
         )
         bs_datasets["quantity"].append(
-            get_weekly_aggregated_df(
+            get_weekly_aggregated_series(
                 bs_data,
                 date_interval,
                 aggregate_column,
@@ -142,6 +155,10 @@ def get_weekly_waste_quantity_processed_by_operation_code_df(
     ----------
     bs_data: DataFrame
         DataFrame containing BSx data.
+    date_interval: tuple of two datetime objects
+        Interval of date used to filter the data as datetime objects.
+        First element is the start interval, the second one is the end of the interval.
+        The interval is left inclusive.
 
     Returns
     -------
@@ -244,7 +261,7 @@ def get_waste_quantity_processed_df(
 
 def get_recovered_and_eliminated_quantity_processed_by_week_series(
     quantity_processed_weekly_df: pd.DataFrame,
-) -> Tuple[pd.Series, pd.Series]:
+) -> list[pd.Series]:
     """Extract the weekly quantity of recovered waste and eliminated waste in two separate Series.
 
     Parameters
@@ -254,8 +271,8 @@ def get_recovered_and_eliminated_quantity_processed_by_week_series(
 
     Returns
     -------
-    Tuple of two series
-        First element of the tuple is the Series containing the weekly quantity of recovered waste
+    list of two series
+        First element is the Series containing the weekly quantity of recovered waste
         and the second one the weekly quantity of eliminated waste.
     """
 

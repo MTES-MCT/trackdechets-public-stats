@@ -25,8 +25,8 @@ def get_bs_data(
 
     Parameters
     ----------
-    sql_path: PathLike
-        Path of the sql query file. Query must select at least a "created_at" column.
+    query_filename: str
+        Name of the sql query file. Query must select at least a "created_at" column.
     include_drafts: bool
         Wether to include drafts BSx in the result.
     include_only_dangerous_waste: bool
@@ -35,7 +35,7 @@ def get_bs_data(
     Returns
     -------
     DataFrame
-        dataframe of BSx, with all data included in the sql query.
+        DataFrame of BSx, with all data included in the sql query.
     """
 
     started_time = time.time()
@@ -91,7 +91,7 @@ def get_company_data() -> pd.DataFrame:
     Returns
     -------
     DataFrame
-        dataframe of companies for a given period of time, with their creation date
+        DataFrame of companies for a given period of time, with their creation date
     """
     started_time = time.time()
 
@@ -160,7 +160,7 @@ def get_processing_operation_codes_data() -> pd.DataFrame:
     Returns
     --------
     DataFrame
-        dataframe with processing operations codes and description
+        DataFrame with processing operations codes and description
     """
     data = pd.read_sql_table(
         table_name="codes_operations_traitements", schema="trusted_zone", con=DB_ENGINE

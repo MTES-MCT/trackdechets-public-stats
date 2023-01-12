@@ -1,3 +1,6 @@
+"""This module contains the raw datasets. 
+The datasets are loaded in memory to be reusable by other functions.
+"""
 from src.data.data_extract import get_bs_data, get_company_data, get_user_data
 
 
