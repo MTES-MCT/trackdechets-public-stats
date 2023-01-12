@@ -3,7 +3,7 @@ body {
     padding: 0
 }
 
-.main-container {
+#main-container {
     max-width: 1200px;
     margin: auto;
     padding: 1em;
@@ -39,6 +39,18 @@ body {
     grid-column: span 3;
 }
 
+.fr-nav__item {
+    cursor: pointer;
+}
+
+#bordereaux-counts-section {
+    margin-bottom: 3em;
+}
+
+#companies-users-counts-section {
+    margin-bottom: 3em;
+}
+
 /*
  ==================================
  Related to the FR design system
@@ -70,7 +82,7 @@ Copied and renamed from DSFR core CSS */
 }
 
 .callout-number {
-    font-size: 3rem;
+    font-size: 2.8rem;
     font-family: "Marianne-Bold", sans-serif;
     text-align: right;
     margin-top: 3rem;
@@ -96,6 +108,13 @@ Copied and renamed from DSFR core CSS */
     margin-bottom: 20px;
 }
 
+#header-navigation {
+    margin-bottom: 1em;
+}
+
+#see-more-accordion {
+    margin-bottom: 1em;
+}
 
 /*
 Bootstrap berakpoints:

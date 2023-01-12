@@ -112,7 +112,12 @@ def create_weekly_scatter_figure(
         name = config["name"]
         suffix = config["suffix"]
         # Creates a list of text to only show value on last point of the line
-        texts = [""] * (len(data) - 1) + [format_number(data[metric_name].iloc[-1])]
+        texts = []
+        if len(data) > 1:
+            texts = [""] * (len(data) - 1) + [format_number(data[metric_name].iloc[-1])]
+
+        if len(data) == 1:
+            texts = [format_number(data[metric_name].iloc[-1])]
 
         hover_texts = [
             f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> {suffix}"
@@ -366,7 +371,7 @@ def create_treemap_companies_figure(
         Figure object ready to be plotted.
     """
 
-    company_counts_by_section["colors"] = [
+    colors = [
         "rgba(64, 64, 122,0.4)",
         "rgba(112, 111, 211,0.4)",
         "rgba(247, 241, 227,0.4)",
@@ -388,6 +393,10 @@ def create_treemap_companies_figure(
         "rgba(204, 174, 98,0.4)",
         "rgba(205, 97, 51,0.4)",
         "rgba(77, 52, 42,0.4)",
+    ]
+
+    company_counts_by_section["colors"] = colors[
+        : company_counts_by_section.code_section.nunique()
     ]
 
     company_counts_by_division["colors"] = company_counts_by_division[
