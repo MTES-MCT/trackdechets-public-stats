@@ -248,6 +248,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsdd_counts_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={"type": "counts-figure", "index": "bsdd"},
                             ),
                             html.H4(
                                 ["Quantités de Déchets Dangereux tracés par semaine"]
@@ -255,6 +256,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsdd_quantities_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={"type": "quantities-figure", "index": "bsdd"},
                             ),
                         ],
                         id="tabpanel-404-panel",
@@ -273,6 +275,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsda_counts_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={"type": "counts-figure", "index": "bsda"},
                             ),
                             html.H4(
                                 ["Quantités de Déchets D'amiante tracés par semaine"]
@@ -280,6 +283,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsda_quantities_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={"type": "quantities-figure", "index": "bsda"},
                             ),
                         ],
                         id="tabpanel-405-panel",
@@ -298,6 +302,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsff_counts_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={"type": "counts-figure", "index": "bsff"},
                             ),
                             html.H4(
                                 ["Quantités de Fluides Frigorigènes tracés par semaine"]
@@ -305,6 +310,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsff_quantities_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={"type": "quantities-figure", "index": "bsff"},
                             ),
                         ],
                         id="tabpanel-406-panel",
@@ -323,6 +329,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsdasri_counts_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={"type": "counts-figure", "index": "bsdasri"},
                             ),
                             html.H4(
                                 [
@@ -332,6 +339,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsdasri_quantities_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={"type": "quantities-figure", "index": "bsdasri"},
                             ),
                         ],
                         id="tabpanel-407-panel",

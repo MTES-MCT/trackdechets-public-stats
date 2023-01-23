@@ -3,6 +3,7 @@ from typing import Dict, List
 
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.io as pio
 
 from src.pages.utils import break_long_line, format_number
 
@@ -87,16 +88,17 @@ def create_weekly_scatter_figure(
     Plotly Figure Object
         Figure object ready to be plotted.
     """
-
+    colors = pio.templates["gouv"]["layout"]["colorway"]
     plot_configs = [
-        {"data": bs_created_data, **lines_configs[0]},
-        {"data": bs_sent_data, **lines_configs[1]},
-        {"data": bs_received_data, **lines_configs[2]},
+        {"data": bs_created_data, **lines_configs[0], "color": colors[0]},
+        {"data": bs_sent_data, **lines_configs[1], "color": colors[1]},
+        {"data": bs_received_data, **lines_configs[2], "color": colors[2]},
         {
             "data": bs_processed_non_final_data,
             **lines_configs[3],
+            "color": colors[3],
         },
-        {"data": bs_processed_data, **lines_configs[4]},
+        {"data": bs_processed_data, **lines_configs[4], "color": colors[4]},
     ]
 
     scatter_list = []
@@ -106,15 +108,22 @@ def create_weekly_scatter_figure(
     for config in plot_configs:
 
         data = config["data"]
+
+        if len(data) == 0:
+            continue
         name = config["name"]
         suffix = config["suffix"]
         # Creates a list of text to only show value on last point of the line
         texts = []
-        if len(data) > 1:
-            texts = [""] * (len(data) - 1) + [format_number(data[metric_name].iloc[-1])]
 
-        if len(data) == 1:
-            texts = [format_number(data[metric_name].iloc[-1])]
+        last_value = data[metric_name].iloc[-1]
+
+        texts = [""] * (len(data) - 1) if len(data) > 1 else []
+        custom_data = texts.copy()
+
+        texts += [format_number(last_value)]
+
+        custom_data += [format_number(last_value)]
 
         hover_texts = [
             f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> {suffix}"
@@ -129,12 +138,14 @@ def create_weekly_scatter_figure(
                 name=name,
                 text=texts,
                 textfont_size=15,
+                textfont_color=config["color"],
                 textposition="middle right",
                 hovertext=hover_texts,
                 hoverinfo="text",
                 line_shape="spline",
                 line_smoothing=0.3,
                 line_width=3,
+                customdata=custom_data,
             )
         )
 
@@ -146,6 +157,7 @@ def create_weekly_scatter_figure(
         legend=dict(
             orientation="h", y=1.1, font_size=13, itemwidth=40, bgcolor="rgba(0,0,0,0)"
         ),
+        uirevision=True,
     )
     fig.update_xaxes(tick0="2022-01-03")
     fig.update_yaxes(side="right")
