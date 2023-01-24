@@ -64,6 +64,7 @@ def create_weekly_scatter_figure(
     bs_received_data: pd.DataFrame,
     bs_processed_non_final_data: pd.DataFrame,
     bs_processed_data: pd.DataFrame,
+    bs_type: str,
     lines_configs: List[Dict[str, str]],
 ) -> go.Figure:
     """Creates a scatter figure showing the weekly number of 'bordereaux' by status (created, sent..)
@@ -82,6 +83,10 @@ def create_weekly_scatter_figure(
     bs_processed_data: DataFrame
         DataFrame containing the count of 'bordereaux' processed with final processing operation code.
         Must have 'at' and metric corresponding columns.
+    bs_type: str
+        Type of 'bordereau'. Eg : BSDD, BSDA...
+    lines_configs: list of dicts
+        Configuration for the different traces. Must match the number of DataFrames (one config per DataFrame).
 
     Returns
     -------
@@ -124,6 +129,9 @@ def create_weekly_scatter_figure(
         texts += [format_number(last_value)]
 
         custom_data += [format_number(last_value)]
+
+        if metric_name == "count":
+            suffix = f"{bs_type} {suffix}"
 
         hover_texts = [
             f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> {suffix}"
@@ -216,7 +224,7 @@ def create_weekly_quantity_processed_figure(
                     for processed_at, quantity in data.items()
                 ],
                 hoverinfo="text",
-                text=data.apply(format_number),
+                texttemplate="%{y:.2s} tonnes",
                 marker_color=conf["color"],
             )
         )

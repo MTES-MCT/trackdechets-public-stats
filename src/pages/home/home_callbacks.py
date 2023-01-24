@@ -47,13 +47,13 @@ def change_layout_for_year(n_clicks) -> tuple[list, html.Ul]:
 
 
 @callback(
-    output=Output({"type": "counts-figure", "index": MATCH}, "figure"),
+    output=Output({"type": "counts-figure", "index": MATCH, "year": MATCH}, "figure"),
     inputs=[
-        Input({"type": "counts-figure", "index": MATCH}, "relayoutData"),
-        Input({"type": "counts-figure", "index": MATCH}, "restyleData"),
+        Input({"type": "counts-figure", "index": MATCH, "year": MATCH}, "relayoutData"),
+        Input({"type": "counts-figure", "index": MATCH, "year": MATCH}, "restyleData"),
     ],
     state=[
-        State({"type": "counts-figure", "index": MATCH}, "figure"),
+        State({"type": "counts-figure", "index": MATCH, "year": MATCH}, "figure"),
     ],
     prevent_initial_call=True,
 )
@@ -83,9 +83,10 @@ def relayout_figures_to_toggle_texts(relayout_data, restyle_data, figure):
             max_ = max(trace["y"])
             if max_ > div_value:
                 div_value = max_
-
     else:
         div_value = relayout_data["yaxis.range[1]"] - relayout_data["yaxis.range[0]"]
+
+    div_value = max(0.01, div_value)
 
     texts_positionned = []
     new_traces = []
