@@ -3,6 +3,7 @@ from typing import Dict, List
 
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.io as pio
 
 from src.pages.utils import break_long_line, format_number
 
@@ -63,6 +64,7 @@ def create_weekly_scatter_figure(
     bs_received_data: pd.DataFrame,
     bs_processed_non_final_data: pd.DataFrame,
     bs_processed_data: pd.DataFrame,
+    bs_type: str,
     lines_configs: List[Dict[str, str]],
 ) -> go.Figure:
     """Creates a scatter figure showing the weekly number of 'bordereaux' by status (created, sent..)
@@ -81,25 +83,27 @@ def create_weekly_scatter_figure(
     bs_processed_data: DataFrame
         DataFrame containing the count of 'bordereaux' processed with final processing operation code.
         Must have 'at' and metric corresponding columns.
+    bs_type: str
+        Type of 'bordereau'. Eg : BSDD, BSDA...
+    lines_configs: list of dicts
+        Configuration for the different traces. Must match the number of DataFrames (one config per DataFrame).
 
     Returns
     -------
     Plotly Figure Object
         Figure object ready to be plotted.
     """
-
-    # Those colors are colorblind safe and printable.
-    # Source : https://personal.sron.nl/~pault/#sec:qualitative
-
+    colors = pio.templates["gouv"]["layout"]["colorway"]
     plot_configs = [
-        {"data": bs_created_data, **lines_configs[0]},
-        {"data": bs_sent_data, **lines_configs[1]},
-        {"data": bs_received_data, **lines_configs[2]},
+        {"data": bs_created_data, **lines_configs[0], "color": colors[0]},
+        {"data": bs_sent_data, **lines_configs[1], "color": colors[1]},
+        {"data": bs_received_data, **lines_configs[2], "color": colors[2]},
         {
             "data": bs_processed_non_final_data,
             **lines_configs[3],
+            "color": colors[3],
         },
-        {"data": bs_processed_data, **lines_configs[4]},
+        {"data": bs_processed_data, **lines_configs[4], "color": colors[4]},
     ]
 
     scatter_list = []
@@ -109,15 +113,25 @@ def create_weekly_scatter_figure(
     for config in plot_configs:
 
         data = config["data"]
+
+        if len(data) == 0:
+            continue
         name = config["name"]
         suffix = config["suffix"]
         # Creates a list of text to only show value on last point of the line
         texts = []
-        if len(data) > 1:
-            texts = [""] * (len(data) - 1) + [format_number(data[metric_name].iloc[-1])]
 
-        if len(data) == 1:
-            texts = [format_number(data[metric_name].iloc[-1])]
+        last_value = data[metric_name].iloc[-1]
+
+        texts = [""] * (len(data) - 1) if len(data) > 1 else []
+        custom_data = texts.copy()
+
+        texts += [format_number(last_value)]
+
+        custom_data += [format_number(last_value)]
+
+        if metric_name == "count":
+            suffix = f"{bs_type} {suffix}"
 
         hover_texts = [
             f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> {suffix}"
@@ -132,12 +146,14 @@ def create_weekly_scatter_figure(
                 name=name,
                 text=texts,
                 textfont_size=15,
+                textfont_color=config["color"],
                 textposition="middle right",
                 hovertext=hover_texts,
                 hoverinfo="text",
                 line_shape="spline",
                 line_smoothing=0.3,
                 line_width=3,
+                customdata=custom_data,
             )
         )
 
@@ -149,6 +165,7 @@ def create_weekly_scatter_figure(
         legend=dict(
             orientation="h", y=1.1, font_size=13, itemwidth=40, bgcolor="rgba(0,0,0,0)"
         ),
+        uirevision=True,
     )
     fig.update_xaxes(tick0="2022-01-03")
     fig.update_yaxes(side="right")
@@ -207,7 +224,7 @@ def create_weekly_quantity_processed_figure(
                     for processed_at, quantity in data.items()
                 ],
                 hoverinfo="text",
-                text=data.apply(format_number),
+                texttemplate="%{y:.2s} tonnes",
                 marker_color=conf["color"],
             )
         )
@@ -262,13 +279,11 @@ def create_quantity_processed_sunburst_figure(
     ].sort_values("quantity")
 
     agg_data_recycled_other = agg_data_recycled.loc[
-        (agg_data_recycled.quantity.cumsum() / agg_data_recycled.quantity.sum()) < 0.1
+        (agg_data_recycled.quantity / agg_data_recycled.quantity.sum()) <= 0.12
     ]
     agg_data_eliminated_other = agg_data_eliminated.loc[
-        (agg_data_eliminated.quantity.cumsum() / agg_data_eliminated.quantity.sum())
-        < 0.1
+        (agg_data_eliminated.quantity / agg_data_eliminated.quantity.sum()) <= 0.21
     ]
-
     agg_data_recycled_other_quantity = agg_data_recycled_other.quantity.sum()
     agg_data_eliminated_other_quantity = agg_data_eliminated_other.quantity.sum()
 
@@ -292,7 +307,7 @@ def create_quantity_processed_sunburst_figure(
     labels = (
         total_data.index.to_list()
         + agg_data_without_other.processing_operation.to_list()
-        + ["Autres opérations"] * 2
+        + ["Autre"] * 2
     )
     parents = (
         ["", ""]
@@ -310,7 +325,7 @@ def create_quantity_processed_sunburst_figure(
         + ["rgb(102, 103, 61, 0.7)", "rgb(94, 42, 43, 0.7)"]
     )
 
-    hover_text_template = "{code} : {description}<br><b>{quantity}t</b>"
+    hover_text_template = "{code} : {description}<br><b>{quantity}t</b> traitées"
     hover_texts = (
         [
             f"<b>{format_number(e)}t</b> {index.split(' ')[1]}es"
@@ -325,7 +340,7 @@ def create_quantity_processed_sunburst_figure(
             for e in agg_data_without_other.itertuples()
         ]
         + [
-            f"Autres opérations de traitement<br><b>{format_number(e)}t</b> traités"
+            f"Autres opérations de traitement<br><b>{format_number(e)}t</b> traitées"
             for e in [
                 agg_data_recycled_other_quantity,
                 agg_data_eliminated_other_quantity,
@@ -341,14 +356,17 @@ def create_quantity_processed_sunburst_figure(
             values=values,
             marker_colors=colors,
             branchvalues="total",
-            texttemplate="%{label} - %{value:.3s}t soit <b>%{percentParent}</b>",
+            texttemplate="%{label} - <b>%{percentParent}</b>",
             hovertext=hover_texts,
             hoverinfo="text",
             sort=False,
-            insidetextorientation="auto",
+            insidetextorientation="horizontal",
+            insidetextfont_size=15,
         )
     )
-    fig.update_layout(margin=dict(t=0, l=0, r=0, b=0))
+    fig.update_layout(
+        margin=dict(t=0, l=0, r=0, b=0),
+    )
 
     return fig
 
@@ -430,7 +448,7 @@ def create_treemap_companies_figure(
         ]
         + (
             company_counts_by_section["libelle_section"].apply(
-                break_long_line, max_line_length=36
+                break_long_line, max_line_length=14, max_length=55
             )
             + " - <b>"
             + company_counts_by_section["num_entreprises"].apply(
@@ -440,7 +458,7 @@ def create_treemap_companies_figure(
         ).tolist()
         + (
             company_counts_by_division["libelle_division"].apply(
-                break_long_line, max_line_length=36
+                break_long_line, max_line_length=14, max_length=55
             )
             + " - <b>"
             + company_counts_by_division["num_entreprises"].apply(
@@ -525,14 +543,18 @@ def create_treemap_companies_figure(
             branchvalues="total",
             hovertemplate=hover_texts,
             customdata=custom_data,
-            pathbar_thickness=25,
+            pathbar_thickness=35,
             marker_colors=colors,
             textposition="middle center",
-            insidetextfont_size=100,
             tiling_packing="squarify",
-            tiling_pad=5,
-            outsidetextfont_size=100,
+            insidetextfont_size=300,
+            tiling_pad=3,
+            maxdepth=2,
         )
     )
-    fig.update_layout(margin={"l": 5, "r": 5, "t": 35, "b": 5}, height=800)
+    fig.update_layout(
+        margin={"l": 5, "r": 5, "t": 35, "b": 5},
+        height=800,
+        # uniformtext=dict(minsize=8, mode="hide"),
+    )
     return fig

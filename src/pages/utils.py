@@ -4,7 +4,9 @@ import plotly.graph_objects as go
 from dash import dcc, html
 
 
-def add_figure(fig: go.Figure, fig_id: str, figure_title: str) -> html.Div:
+def add_figure(
+    fig: go.Figure, fig_id: str, figure_title: str, figure_subtitle: str = None
+) -> html.Div:
     """
     Boilerplate for figure rows.
 
@@ -19,26 +21,31 @@ def add_figure(fig: go.Figure, fig_id: str, figure_title: str) -> html.Div:
     -------
     HTML Row to be added in a Dash layout
     """
+    elements = [html.H4(children=[figure_title])]
+
+    if figure_subtitle is not None:
+        elements.append(html.Div(figure_subtitle, className="figure-subtitle fr-text"))
+
+    elements.append(
+        dcc.Graph(
+            id=fig_id,
+            figure=fig,
+            config={
+                "locale": "fr",
+                "toImageButtonOptions": {
+                    "format": "png",  # one of png, svg, jpeg, webp
+                    "filename": "trackdechets",
+                    "height": 1080,
+                    "width": 1920,
+                    "scale": 1,  # Multiply title/legend/axis/canvas sizes by this factor
+                },
+                "displaylogo": False,
+            },
+        )
+    )
 
     row = html.Div(
-        [
-            html.H4(children=[figure_title]),
-            dcc.Graph(
-                id=fig_id,
-                figure=fig,
-                config={
-                    "locale": "fr",
-                    "toImageButtonOptions": {
-                        "format": "png",  # one of png, svg, jpeg, webp
-                        "filename": "trackdechets",
-                        "height": 1080,
-                        "width": 1920,
-                        "scale": 1,  # Multiply title/legend/axis/canvas sizes by this factor
-                    },
-                    "displaylogo": False,
-                },
-            ),
-        ],
+        elements,
         className="fr-callout",
     )
 
@@ -93,10 +100,11 @@ def add_callout(text: str, number: int = None) -> html.Div:
     return col
 
 
-def break_long_line(line: str, max_line_length: str = 26) -> str:
+def break_long_line(line: str, max_line_length: int = 26, max_length: int = 60) -> str:
     """Format a string to add HTML line breaks (<br>) if it exceeds max_line_length."""
     length = 0
 
+    # line = line[:max_length] + "..."
     new_pieces = []
     for piece in line.split(" "):
         length += len(piece)

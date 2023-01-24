@@ -144,6 +144,10 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     quantity_processed_sunburst_figure,
                     "bsdd_processed_by_operation",
                     "Quantité de déchets tracés et traités par opération de traitement",
+                    (
+                        "Le coeur du graphique représente la part de déchets valorisés et éliminés, "
+                        "les sections autour permettent d'avoir une idée de la part des types d'opérations de traitement les plus importants effectués dans chacun des deux cas."
+                    ),
                 ),
                 add_callout(
                     text="""Les codes R (recovery, valorisation) et D (disposal, élimination) définis par la convention de Bâle, et repris aux annexes I et II de la directive cadre déchets n° 2008/98/CE, sont régulièrement exploités dans le contexte de la traçabilité des déchets et de la déclaration annuelle des émissions et des transferts de polluants et des déchets (déclaration GEREP). Ces codes permettent de discerner les différentes opérations de valorisation et d’élimination des déchets. La liste des codes déchets peut être retrouvées en annexe de la [notice BSDD](https://faq.trackdechets.fr/dechets-dangereux-classiques/telecharger-la-notice-et-le-recepisse-du-bsdd).""",
@@ -244,6 +248,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsdd_counts_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={
+                                    "type": "counts-figure",
+                                    "index": "bsdd",
+                                    "year": year,
+                                },
                             ),
                             html.H4(
                                 ["Quantités de Déchets Dangereux tracés par semaine"]
@@ -251,6 +260,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsdd_quantities_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={
+                                    "type": "counts-figure",
+                                    "index": "bsdd-quantities",
+                                    "year": year,
+                                },
                             ),
                         ],
                         id="tabpanel-404-panel",
@@ -269,6 +283,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsda_counts_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={
+                                    "type": "counts-figure",
+                                    "index": "bsda",
+                                    "year": year,
+                                },
                             ),
                             html.H4(
                                 ["Quantités de Déchets D'amiante tracés par semaine"]
@@ -276,6 +295,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsda_quantities_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={
+                                    "type": "counts-figure",
+                                    "index": "bsda-quantities",
+                                    "year": year,
+                                },
                             ),
                         ],
                         id="tabpanel-405-panel",
@@ -294,6 +318,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsff_counts_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={
+                                    "type": "counts-figure",
+                                    "index": "bsff",
+                                    "year": year,
+                                },
                             ),
                             html.H4(
                                 ["Quantités de Fluides Frigorigènes tracés par semaine"]
@@ -301,6 +330,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsff_quantities_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={
+                                    "type": "counts-figure",
+                                    "index": "bsff-quantities",
+                                    "year": year,
+                                },
                             ),
                         ],
                         id="tabpanel-406-panel",
@@ -319,6 +353,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsdasri_counts_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={
+                                    "type": "counts-figure",
+                                    "index": "bsdasri",
+                                    "year": year,
+                                },
                             ),
                             html.H4(
                                 [
@@ -328,6 +367,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             dcc.Graph(
                                 figure=bsdasri_quantities_weekly,
                                 config=PLOTLY_PLOT_CONFIGS,
+                                id={
+                                    "type": "counts-figure",
+                                    "index": "bsdasri-quantities",
+                                    "year": year,
+                                },
                             ),
                         ],
                         id="tabpanel-407-panel",
@@ -448,6 +492,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     company_counts_by_category,
                     "company_counts_by_category",
                     "Nombre d'entreprises inscrites pour chaque catégorie de code NAF",
+                    (
+                        "La Nomenclature des Activités Françaises permet de catégoriser "
+                        "les différents établissements qui s'inscrivent sur Trackdéchets."
+                        " Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
+                    ),
                 )
             ]
         ),
@@ -536,41 +585,49 @@ def get_layout_for_a_year(year: int = 2022) -> list:
     lines_configs = [
         {
             "name": "Bordereaux traçés",
-            "suffix": "BSDD traçés",
+            "suffix": "traçés",
             "text_position": "top center",
         },
         {
             "name": "Bordereaux marqués comme envoyés",
-            "suffix": "BSDD marqués comme envoyés",
+            "suffix": "marqués comme envoyés",
             "text_position": "middle top",
         },
         {
             "name": "Bordereaux marqués comme reçus",
-            "suffix": "BSDD marqués comme reçus",
+            "suffix": "marqués comme reçus",
             "text_position": "middle bottom",
         },
         {
             "name": "Bordereaux marqués comme traités sans code final",
-            "suffix": "BSDD marqués comme traités sans code final",
+            "suffix": "marqués comme traités sans code final",
             "text_position": "bottom center",
         },
         {
             "name": "Bordereaux marqués comme traités avec code final",
-            "suffix": "BSDD marqués comme traités avec code final",
+            "suffix": "marqués comme traités avec code final",
             "text_position": "bottom center",
         },
     ]
     bsdd_counts_weekly_fig = create_weekly_scatter_figure(
-        *bsdd_weekly_processed_dfs["counts"], lines_configs=lines_configs
+        *bsdd_weekly_processed_dfs["counts"],
+        bs_type="BSDD",
+        lines_configs=lines_configs,
     )
     bsda_counts_weekly_fig = create_weekly_scatter_figure(
-        *bsda_weekly_processed_dfs["counts"], lines_configs=lines_configs
+        *bsda_weekly_processed_dfs["counts"],
+        bs_type="BSDA",
+        lines_configs=lines_configs,
     )
     bsff_counts_weekly_fig = create_weekly_scatter_figure(
-        *bsff_weekly_processed_dfs["counts"], lines_configs=lines_configs
+        *bsff_weekly_processed_dfs["counts"],
+        bs_type="BSFF",
+        lines_configs=lines_configs,
     )
     bsdasri_counts_weekly_fig = create_weekly_scatter_figure(
-        *bsdasri_weekly_processed_dfs["counts"], lines_configs=lines_configs
+        *bsdasri_weekly_processed_dfs["counts"],
+        bs_type="BSDASRI",
+        lines_configs=lines_configs,
     )
 
     lines_configs = [
@@ -601,16 +658,24 @@ def get_layout_for_a_year(year: int = 2022) -> list:
         },
     ]
     bsdd_quantities_weekly_fig = create_weekly_scatter_figure(
-        *bsdd_weekly_processed_dfs["quantity"], lines_configs=lines_configs
+        *bsdd_weekly_processed_dfs["quantity"],
+        bs_type="BSDD",
+        lines_configs=lines_configs,
     )
     bsda_quantities_weekly_fig = create_weekly_scatter_figure(
-        *bsda_weekly_processed_dfs["quantity"], lines_configs=lines_configs
+        *bsda_weekly_processed_dfs["quantity"],
+        bs_type="BSDA",
+        lines_configs=lines_configs,
     )
     bsff_quantities_weekly_fig = create_weekly_scatter_figure(
-        *bsff_weekly_processed_dfs["quantity"], lines_configs=lines_configs
+        *bsff_weekly_processed_dfs["quantity"],
+        bs_type="BSFF",
+        lines_configs=lines_configs,
     )
     bsdasri_quantities_weekly_fig = create_weekly_scatter_figure(
-        *bsdasri_weekly_processed_dfs["quantity"], lines_configs=lines_configs
+        *bsdasri_weekly_processed_dfs["quantity"],
+        bs_type="BSDASRI",
+        lines_configs=lines_configs,
     )
 
     # Waste weight processed weekly

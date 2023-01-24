@@ -47,5 +47,5 @@ WHERE
         )
         OR "received_at" IS NULL
     )
-    AND ((quantity_received < 700000)
+    AND ((quantity_received < 100000)
     OR (quantity_received IS NULL))
