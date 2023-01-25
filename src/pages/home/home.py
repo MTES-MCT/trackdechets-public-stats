@@ -3,15 +3,15 @@
 from datetime import datetime
 from dash import html, register_page, dcc
 
-# This is needed so that dash properly registers callbacks
-from src.pages.home.home_callbacks import *
+
 from src.pages.home.home_layouts import layout_2022
 from src.pages.home.home_layout_factory import get_navbar_elements
 
 register_page(
     __name__,
     path="/",
-    description="Page d'accueil des statistiques publiques de la plateforme Trackdéchets."
+    description="Page d'accueil des statistiques publiques de la plateforme Trackdéchets.",
+    name="Accueil - Statistiques Publiques de Trackdéchets",
 )
 
 

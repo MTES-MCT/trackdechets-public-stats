@@ -155,14 +155,44 @@ def get_user_data() -> pd.DataFrame:
 
 def get_processing_operation_codes_data() -> pd.DataFrame:
     """
-    Returns description for each processing operation codes
+    Returns description for each processing operation codes.
 
     Returns
     --------
     DataFrame
-        DataFrame with processing operations codes and description
+        DataFrame with processing operations codes and description.
     """
     data = pd.read_sql_table(
         table_name="codes_operations_traitements", schema="trusted_zone", con=DB_ENGINE
+    )
+    return data
+
+
+def get_departement_geographical_data() -> pd.DataFrame:
+    """
+    Returns INSEE department geographical data.
+
+    Returns
+    --------
+    DataFrame
+        DataFrame with INSEE department geographical data.
+    """
+    data = pd.read_sql_table(
+        table_name="code_geo_departements", schema="trusted_zone_insee", con=DB_ENGINE
+    )
+    return data
+
+
+def get_waste_nomenclature_data() -> pd.DataFrame:
+    """
+    Returns waste nomenclature data.
+
+    Returns
+    --------
+    DataFrame
+        DataFrame with waste nomenclature data.
+    """
+    data = pd.read_sql_table(
+        table_name="code_dechets", schema="trusted_zone", con=DB_ENGINE
     )
     return data

@@ -13,6 +13,7 @@ select id,
 from "trusted_zone_trackdechets"."bsdasri"
 where "is_deleted" = false
     and "created_at" >= '2022-01-03'
+    and type='SIMPLE'
     /* First day of the first week of the year */
     and "created_at"::date <= CURRENT_DATE - cast(
         extract(
