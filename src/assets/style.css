@@ -68,6 +68,15 @@ body {
 
 #waste-select {
     grid-column: span 2;
+
+}
+
+#callout-title {
+    color: #000091;
+}
+
+#stats-year-title {
+    text-align: center;
 }
 
 /*

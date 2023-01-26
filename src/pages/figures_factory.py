@@ -11,7 +11,7 @@ from src.pages.utils import break_long_line, format_number
 def create_weekly_created_figure(
     data: pd.DataFrame,
 ) -> go.Figure:
-    """Creates the figure showing number of weekly created Bsx, companies, users...
+    """Creates the figure showing number of weekly created companies, users...
 
     Parameters
     ----------
@@ -24,11 +24,10 @@ def create_weekly_created_figure(
         Figure object ready to be plotted.
     """
 
-    text_positions = [
-        "top center" if i % 2 else "bottom center" for i in range(data.shape[0])
-    ]
+    texts = []
+    texts += [""] * (len(data) - 1) + [format_number(data["count"].iloc[-1])]
 
-    texts = [
+    hovertexts = [
         f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> créations"
         for e in data.itertuples(index=False)
     ]
@@ -38,11 +37,15 @@ def create_weekly_created_figure(
             go.Scatter(
                 x=data["at"],
                 y=data["count"],
-                text=data["count"],
+                text=texts,
                 mode="lines+markers+text",
-                hovertext=texts,
+                hovertext=hovertexts,
                 hoverinfo="text",
-                textposition=text_positions,
+                textposition="middle right",
+                textfont_size=15,
+                line_shape="spline",
+                line_smoothing=0.3,
+                line_width=3,
             )
         ]
     )
@@ -51,9 +54,9 @@ def create_weekly_created_figure(
         xaxis_title="Semaine de création",
         showlegend=False,
         paper_bgcolor="#fff",
-        margin=dict(t=20, r=0, l=50),
+        margin=dict(t=20, r=50, l=5),
     )
-    fig.update_xaxes(tick0="2022-01-03")
+    fig.update_yaxes(side="right")
 
     return fig
 
@@ -96,7 +99,12 @@ def create_weekly_scatter_figure(
     colors = pio.templates["gouv"]["layout"]["colorway"]
     plot_configs = [
         {"data": bs_created_data, **lines_configs[0], "color": colors[0]},
-        {"data": bs_sent_data, **lines_configs[1], "color": colors[1]},
+        {
+            "data": bs_sent_data,
+            **lines_configs[1],
+            "color": colors[1],
+            "visible": "legendonly",
+        },
         {"data": bs_received_data, **lines_configs[2], "color": colors[2]},
         {
             "data": bs_processed_non_final_data,
@@ -109,6 +117,7 @@ def create_weekly_scatter_figure(
     scatter_list = []
 
     metric_name = "count" if "count" in bs_created_data.columns else "quantity"
+    y_title = "Quantité (en tonnes)" if metric_name == "quantity" else None
 
     for config in plot_configs:
 
@@ -154,6 +163,7 @@ def create_weekly_scatter_figure(
                 line_smoothing=0.3,
                 line_width=3,
                 customdata=custom_data,
+                visible=config.get("visible", True),
             )
         )
 
@@ -161,14 +171,14 @@ def create_weekly_scatter_figure(
 
     fig.update_layout(
         paper_bgcolor="#fff",
-        margin=dict(t=5, r=70, l=5),
+        margin=dict(t=25, r=70, l=5),
         legend=dict(
-            orientation="h", y=1.1, font_size=13, itemwidth=40, bgcolor="rgba(0,0,0,0)"
+            orientation="h", y=1.2, font_size=13, itemwidth=40, bgcolor="rgba(0,0,0,0)"
         ),
         uirevision=True,
     )
     fig.update_xaxes(tick0="2022-01-03")
-    fig.update_yaxes(side="right")
+    fig.update_yaxes(side="right", title=y_title)
 
     return fig
 
@@ -356,7 +366,7 @@ def create_quantity_processed_sunburst_figure(
             values=values,
             marker_colors=colors,
             branchvalues="total",
-            texttemplate="%{label} - <b>%{percentParent}</b>",
+            texttemplate="%{label} - <b>%{percentRoot}</b>",
             hovertext=hover_texts,
             hoverinfo="text",
             sort=False,
