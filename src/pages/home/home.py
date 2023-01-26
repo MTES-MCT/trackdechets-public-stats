@@ -12,6 +12,7 @@ register_page(
     __name__,
     path="/",
     description="Page d'accueil des statistiques publiques de la plateforme Trackdéchets.",
+    name="Accueil - Statistiques publiques de Trackdéchets",
 )
 
 

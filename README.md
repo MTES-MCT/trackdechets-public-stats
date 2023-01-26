@@ -1,6 +1,6 @@
 # Statistiques publiques Trackdéchets
 
-**version 1.7**
+**version 1.8**
 
 > Application basée sur Plotly Dash consacrée à la publication d'un tableau de bord illustrant l'activité de [l'application
 > Trackdéchets](https://app.trackdechets.beta.gouv.fr/). Ce tableau de bord vise à donner au grand public aux
