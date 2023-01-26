@@ -56,6 +56,14 @@ body {
     font-size: smaller;
 }
 
+#callout-title {
+    color: #000091;
+}
+
+#stats-year-title {
+    text-align: center;
+}
+
 /*
  ==================================
  Related to the FR design system

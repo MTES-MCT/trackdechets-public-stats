@@ -13,6 +13,8 @@ app = Dash(
     external_scripts=external_scripts,
     use_pages=True,
     suppress_callback_exceptions=True,
+    meta_tags=[{"name": "theme-color", "content": "#000091"}],
+    update_title=None,
 )
 
 

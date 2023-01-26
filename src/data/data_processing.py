@@ -369,3 +369,121 @@ def get_company_counts_by_naf_dfs(
     )
 
     return agg_data_1, agg_data_2
+
+
+def get_total_bs_created(
+    bsdd_data_df: pd.DataFrame,
+    bsda_data_df: pd.DataFrame,
+    bsff_data_df: pd.DataFrame,
+    bsdasri_data_df: pd.DataFrame,
+    date_interval: Tuple[datetime, datetime] | None,
+) -> int:
+    """Returns the total number of 'bordereaux' created.
+
+    Parameters
+    ----------
+    bsdd_data_df: DataFrame
+        BSDD data.
+    bsda_data_df: DataFrame
+        BSDA data.
+    bsff_data_df: DataFrame
+        BSFF data.
+    bsdasri_data_df: DataFrame
+        BSDASRI data.
+    date_interval: Tuple[datetime, datetime] | None
+        Optional, datetime interval as tuple (left inclusive) to filter 'bordereaux' data.
+
+    Returns
+    -------
+    int
+        Total number of 'bordereaux' created.
+
+    """
+    bs_created_total = 0
+
+    for df in [bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df]:
+        if date_interval is not None:
+            bs_created_total += df[
+                df["created_at"].between(*date_interval, inclusive="left")
+            ].index.size
+        else:
+            bs_created_total += df.index.size
+
+    return bs_created_total
+
+
+def get_total_quantity_processed(
+    bsdd_data_df: pd.DataFrame,
+    bsda_data_df: pd.DataFrame,
+    bsff_data_df: pd.DataFrame,
+    bsdasri_data_df: pd.DataFrame,
+    date_interval: Tuple[datetime, datetime] | None,
+) -> int:
+    """Returns the total quantity processed (only final processing operation codes).
+
+    Parameters
+    ----------
+    bsdd_data_df: DataFrame
+        BSDD data.
+    bsda_data_df: DataFrame
+        BSDA data.
+    bsff_data_df: DataFrame
+        BSFF data.
+    bsdasri_data_df: DataFrame
+        BSDASRI data.
+    date_interval: Tuple[datetime, datetime] | None
+        Optional, datetime interval as tuple (left inclusive) to filter 'bordereaux' data.
+
+    Returns
+    -------
+    float
+        Total quantity processed.
+
+    """
+    quantity_processed_total = 0
+    for df in [bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df]:
+        if date_interval is not None:
+            quantity_processed_total += df[
+                (df["processed_at"].between(*date_interval, inclusive="left"))
+                & (
+                    ~df["processing_operation"].isin(
+                        [
+                            "D9",
+                            "D13",
+                            "D14",
+                            "D15",
+                            "R12",
+                            "R13",
+                            "D 9",
+                            "D 13",
+                            "D 14",
+                            "D 15",
+                            "R 12",
+                            "R 13",
+                        ]
+                    )
+                )
+            ]["quantity"].sum()
+        else:
+            quantity_processed_total += df[
+                (
+                    ~df["processing_operation"].isin(
+                        [
+                            "D9",
+                            "D13",
+                            "D14",
+                            "D15",
+                            "R12",
+                            "R13",
+                            "D 9",
+                            "D 13",
+                            "D 14",
+                            "D 15",
+                            "R 12",
+                            "R 13",
+                        ]
+                    )
+                )
+            ]["quantity"].sum()
+
+    return quantity_processed_total

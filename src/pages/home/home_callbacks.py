@@ -80,6 +80,8 @@ def relayout_figures_to_toggle_texts(relayout_data, restyle_data, figure):
     if "yaxis.range[1]" not in relayout_data.keys():
         div_value = 0
         for trace in traces:
+            if ("visible" in trace.keys()) and (trace["visible"] is not True):
+                continue
             max_ = max(trace["y"])
             if max_ > div_value:
                 div_value = max_
@@ -97,7 +99,7 @@ def relayout_figures_to_toggle_texts(relayout_data, restyle_data, figure):
             overlaps = any(
                 abs(last_value - e) / div_value < 0.04 for e in texts_positionned
             )
-            if not overlaps:
+            if not overlaps or len(texts_positionned) == 0:
                 trace["text"] = trace["text"][:-1] + [format_number(last_value)]
                 texts_positionned.append(last_value)
             else:

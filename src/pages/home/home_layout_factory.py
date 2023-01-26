@@ -1,12 +1,15 @@
 """This module contains the functions that allows to create the dash layout elements.
 """
 
+from datetime import datetime
 import plotly.graph_objects as go
 from dash import dcc, html
 
 from src.data.data_processing import (
     get_company_counts_by_naf_dfs,
     get_recovered_and_eliminated_quantity_processed_by_week_series,
+    get_total_bs_created,
+    get_total_quantity_processed,
     get_waste_quantity_processed_by_processing_code_df,
     get_waste_quantity_processed_df,
     get_weekly_aggregated_series,
@@ -43,7 +46,121 @@ PLOTLY_PLOT_CONFIGS = {
 }
 
 
-def get_graph_elements(
+def get_header_elements() -> html.Div:
+
+    # Load all needed data
+    bsdd_data_df = BSDD_DATA
+    bsda_data_df = BSDA_DATA
+    bsff_data_df = BSFF_DATA
+    bsdasri_data_df = BSDASRI_DATA
+    company_data_df = COMPANY_DATA
+
+    total_bs_created = get_total_bs_created(
+        bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df, None
+    )
+
+    total_quantity_processed = get_total_quantity_processed(
+        bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df, None
+    )
+
+    total_companies_created = company_data_df.index.size
+
+    elements = [
+        html.Div(
+            [
+                html.H1("Statistiques de Trackdéchets"),
+                html.P(
+                    [
+                        f"Dernière mise à jour des données le {datetime.now().strftime('%d/%m/%Y')}"
+                    ],
+                    className="fr-badge fr-badge--info",
+                    id="update-date",
+                ),
+                dcc.Markdown(
+                    """
+Cette page publique présente les données disponibles sur Trackdéchets.
+
+Depuis le 1er janvier 2022, l'utilisation de Trackdéchets est obligatoire pour les déchets dangereux et/ou contenant des POP et les déchets d'amiante. 
+Cependant, 2022 est une année de transition qui comprenait une période de tolérance jusqu'au 1er juillet (usage du format papier possible durant cette période). Nous utilisons donc les seules données qui ont fait l'objet d'une dématérialisation via Trackdéchets.
+                """
+                ),
+            ]
+        ),
+        html.Section(
+            [
+                html.H3(
+                    [
+                        html.Button(
+                            [
+                                "En savoir plus",
+                            ],
+                            className="fr-accordion__btn",
+                            **{
+                                "aria-expanded": "false",
+                                "aria-controls": "accordion-106",
+                            },
+                        )
+                    ],
+                    className="fr-accordion__title",
+                ),
+                html.Div(
+                    [
+                        dcc.Markdown(
+                            [
+                                """
+L'application Trackdéchets est utilisée en France pour tracer plusieurs types de déchets:
+- déchets dangereux et/ou contenant des Polluants Organiques Persistants ([POP](https://www.ecologie.gouv.fr/polluants-organiques-persistants-pop)) ;
+- déchets contenant de l'amiante ;
+- déchets de fluides frigorigènes ;
+- déchets d'activités de soins à risques infectieux (DASRI) ;
+- véhicules hors d'usage.
+
+Les déchets doivent être tracés depuis le producteur/détenteur jusqu'au traitement final.
+Les déchets qui vont d'une installation en métropole, à destination de l'étranger (ou l'inverse) ne sont pas tracés par Trackdéchets.
+Un bordereau de suivi de déchet (BSD) est créé pour chaque déchet et chaque mouvement. Les nombreuses informations qu'il contient alimentent ces statistiques.                   
+"""
+                            ]
+                        )
+                    ],
+                    className="fr-collapse",
+                    id="accordion-106",
+                ),
+            ],
+            className="fr-accordion",
+            id="see-more-accordion",
+        ),
+        html.H2("Depuis 2020, Trackdéchets c'est...", id="callout-title"),
+        html.Div(
+            [
+                add_callout(
+                    number=total_quantity_processed,
+                    text="tonnes de déchets dangereux tracés et traités au total",
+                ),
+                add_callout(
+                    number=total_bs_created,
+                    text="bordereaux créés au total",
+                ),
+                add_callout(
+                    number=total_companies_created,
+                    text="établissements inscrits au total",
+                ),
+            ],
+            className="row",
+        ),
+        html.H3("Statistiques par année", id="stats-year-title"),
+        html.Nav(
+            get_navbar_elements([2022, 2023], 2022),
+            className="fr-nav",
+            id="header-navigation",
+            role="navigation",
+            **{"aria-label": "Menu de sélection de l'année des données à afficher"},
+        ),
+    ]
+
+    return html.Div(elements, id="header-container")
+
+
+def get_graph_elements_for_a_year(
     quantity_processed_total: int,
     bs_created_total: int,
     quantity_processed_weekly: go.Figure,
@@ -146,7 +263,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     "Quantité de déchets tracés et traités par opération de traitement",
                     (
                         "Le coeur du graphique représente la part de déchets valorisés et éliminés, "
-                        "les sections autour permettent d'avoir une idée de la part des types d'opérations de traitement les plus importants effectués dans chacun des deux cas."
+                        "les sections autour permettent d'avoir une idée de la part de déchets par type d'opération de traitement."
                     ),
                 ),
                 add_callout(
@@ -156,7 +273,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             className="row",
             id="operation-type-section",
         ),
-        html.H3(["Détail par types de déchets"]),
+        html.H4(["Détail par types de déchets"]),
         html.Div(
             html.Div(
                 className="fr-tabs",
@@ -384,16 +501,16 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             ),
             id="bordereaux-counts-section",
         ),
-        html.H2("Établissements et utilisateurs"),
+        html.H4("Établissements et utilisateurs"),
         html.Div(
             [
                 add_callout(
                     number=company_created_total_life,
-                    text="établissements inscrits au total",
+                    text=f"établissements inscrits sur l'année {year}",
                 ),
                 add_callout(
                     number=user_created_total_life,
-                    text="utilisateurs inscrits au total",
+                    text=f"utilisateurs inscrits sur l'année {year}",
                 ),
             ],
             className="row",
@@ -408,12 +525,12 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                 html.Li(
                                     [
                                         html.Button(
-                                            ["Utilisateurs"],
-                                            id="tabpanel-201",
+                                            ["Établissements"],
+                                            id="tabpanel-202",
                                             tabIndex="0",
                                             role="tab",
                                             className="fr-tabs__tab",
-                                            title="Nombre d'utilisateurs inscrits par semaine",
+                                            title="Nombre d'établissements inscrits par semaine",
                                             **{
                                                 "aria-selected": "true",
                                                 "aria-controls": "tabpanel-201-panel",
@@ -425,12 +542,12 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                 html.Li(
                                     [
                                         html.Button(
-                                            ["Établissements"],
-                                            id="tabpanel-202",
+                                            ["Utilisateurs"],
+                                            id="tabpanel-201",
                                             tabIndex="-1",
                                             role="tab",
                                             className="fr-tabs__tab",
-                                            title="Nombre d'établissements inscrits par semaine",
+                                            title="Nombre d'utilisateurs inscrits par semaine",
                                             **{
                                                 "aria-selected": "false",
                                                 "aria-controls": "tabpanel-202-panel",
@@ -449,10 +566,12 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                         html.Div(
                             [
                                 html.H4(
-                                    ["Nombre de comptes utilisateurs créés par semaine"]
+                                    [
+                                        "Nombre de compte d'établissements créés par semaine"
+                                    ]
                                 ),
                                 dcc.Graph(
-                                    figure=user_created_weekly,
+                                    figure=company_created_weekly,
                                     config=PLOTLY_PLOT_CONFIGS,
                                 ),
                             ],
@@ -465,12 +584,10 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                         html.Div(
                             [
                                 html.H4(
-                                    [
-                                        "Nombre de compte d'établissements créés par semaine"
-                                    ]
+                                    ["Nombre de comptes utilisateurs créés par semaine"]
                                 ),
                                 dcc.Graph(
-                                    figure=company_created_weekly,
+                                    figure=user_created_weekly,
                                     config=PLOTLY_PLOT_CONFIGS,
                                 ),
                             ],
@@ -502,7 +619,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
         ),
         html.Div(
             dcc.Markdown(
-                "Statistiques développées avec [Plotly Dash](https://dash.plotly.com/introduction) ("
+                "Application de visualisation de données statistiques développée avec [Plotly Dash](https://dash.plotly.com/introduction) ("
                 "[code source](https://github.com/MTES-MCT/trackdechets-public-stats/))",
                 className="source-code",
             )
@@ -708,12 +825,9 @@ def get_layout_for_a_year(year: int = 2022) -> list:
     )
 
     # Total bordereaux created
-    bs_created_total = 0
-    for df in [bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df]:
-
-        bs_created_total += df[
-            df["created_at"].between(*date_interval, inclusive="left")
-        ].index.size
+    bs_created_total = get_total_bs_created(
+        bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df, date_interval
+    )
 
     # Waste weight processed weekly
     (
@@ -734,7 +848,9 @@ def get_layout_for_a_year(year: int = 2022) -> list:
         waste_quantity_processed_by_processing_code_df
     )
 
-    quantity_processed_total = quantity_processed_weekly_df["quantity"].sum()
+    quantity_processed_total = get_total_quantity_processed(
+        bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df, date_interval
+    )
 
     # Company and user section
     company_data_df = COMPANY_DATA[
@@ -762,7 +878,7 @@ def get_layout_for_a_year(year: int = 2022) -> list:
     )
 
     # generate
-    elements = get_graph_elements(
+    elements = get_graph_elements_for_a_year(
         quantity_processed_total=quantity_processed_total,
         bs_created_total=bs_created_total,
         quantity_processed_weekly=quantity_processed_weekly_fig,
