@@ -36,6 +36,13 @@ pipenv run run.py
 
 ### Notes de versions
 
+**1.8 14/11/2022**
+- Ajout d'onglets pour visualiser les données par années
+- Ajout de trois métriques globales
+- Amélioration de la lisibilité des graphiques
+- Meilleure intégration du DSFR (v1.8.5)
+- Architecture de l'application revue pour permettre un passage en application "multi-pages"
+
 **1.7 14/11/2022**
 - Ajout du nombre de bordereaux envoyés et traités
 - Ajout de la quantité totale de déchet traités ventilée par type de traitement
