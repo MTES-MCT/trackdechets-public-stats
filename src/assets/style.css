@@ -58,7 +58,7 @@ body {
 
 .selects-container {
     display: grid;
-    grid-template-columns: repeat(1fr, 4);
+    grid-template-columns: repeat(4, 1fr);
     column-gap: 1em;
 }
 
@@ -66,9 +66,9 @@ body {
     grid-column: span 1;
 }
 
-#waste-select {
-    grid-column: span 2;
-
+#waste-select-group {
+    grid-column: span 3;
+    align-self: center;
 }
 
 #callout-title {

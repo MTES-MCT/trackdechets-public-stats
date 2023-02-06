@@ -1,6 +1,7 @@
 """
 Data gathering and processing
 """
+import json
 import time
 from datetime import datetime, timedelta
 from os import getenv
@@ -10,8 +11,11 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import sqlalchemy
 
+from src.data.utils import format_waste_codes
+
 DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
 SQL_PATH = Path(__file__).parent.absolute() / "sql"
+STATIC_DATA_PATH = Path(__file__).parent.absolute() / "static"
 
 
 def get_bs_data(
@@ -196,3 +200,11 @@ def get_waste_nomenclature_data() -> pd.DataFrame:
         table_name="code_dechets", schema="trusted_zone", con=DB_ENGINE
     )
     return data
+
+
+def get_waste_code_hierarchical_nomenclature() -> list[dict]:
+
+    with (STATIC_DATA_PATH / "waste_codes.json").open() as f:
+        waste_code_hierarchy = json.load(f)
+
+    return format_waste_codes(waste_code_hierarchy, add_top_level=True)

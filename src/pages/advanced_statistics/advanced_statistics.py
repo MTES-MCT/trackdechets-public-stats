@@ -24,6 +24,21 @@ def layout() -> html.Div:
     A Dash Div with the id 'main-container'.
     """
 
-    elements = [create_selects()]
+    elements = [
+        create_selects(),
+        html.Div(
+            dcc.Loading(
+                html.Div(id="waste-processed-fig", className="fr-col"),
+                style={"position": "absolute", "top": "25px"},
+                color="rgb(0, 0, 145)",
+                type="circle",
+                className="fr-grid-row",
+            )
+        ),
+    ]
 
-    return html.Div(elements, id="main-container")
+    return html.Div(
+        html.Div(html.Div(elements, className="fr-col"), className="fr-grid-row"),
+        id="main-container",
+        className="fr-container",
+    )
