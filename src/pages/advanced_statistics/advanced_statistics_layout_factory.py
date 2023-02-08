@@ -1,4 +1,7 @@
-from dash import dcc, html
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from dash import dcc, html, no_update
 from feffery_antd_components.AntdTree import AntdTree
 
 from src.data.data_extract import (
@@ -7,15 +10,16 @@ from src.data.data_extract import (
 )
 from src.data.data_processing import (
     get_recovered_and_eliminated_quantity_processed_by_week_series,
-    get_waste_quantity_processed_df,
     get_weekly_waste_quantity_processed_by_operation_code_df,
 )
-from src.data.datasets import BSDA_DATA, BSDASRI_DATA, BSDD_DATA, BSFF_DATA
+from src.data.datasets import ALL_BORDEREAUX_DATA
 from src.data.utils import get_data_date_interval_for_year
+from src.pages.advanced_statistics.utils import format_filter
 from src.pages.figures_factory import create_weekly_quantity_processed_figure
+from src.pages.utils import add_callout
 
 
-def create_selects():
+def create_filter_selects() -> html.Div:
 
     geographical_data = get_departement_geographical_data()
     waste_nomenclature = get_waste_code_hierarchical_nomenclature()
@@ -25,6 +29,8 @@ def create_selects():
         .rename(columns={"code_departement": "value", "libelle": "label"})
         .to_dict(orient="records")
     )
+
+    options.insert(0, {"value": "all", "label": "France entière"})
 
     departements_dropdown = html.Div(
         [
@@ -37,6 +43,8 @@ def create_selects():
                 options=options,
                 placeholder="Rechercher un département...",
                 id="departement-select",
+                value="all",
+                clearable=False,
             ),
         ],
         className="fr-select-group",
@@ -49,7 +57,7 @@ def create_selects():
                 ["Filtrer par code déchet"],
                 id="waste-select-modal-button",
                 className="fr-btn",
-                **{"data-fr-opened": False, "aria-controls": "fr-modal-1"}
+                **{"data-fr-opened": False, "aria-controls": "fr-modal-1"},
             ),
             html.Dialog(
                 html.Div(
@@ -64,7 +72,7 @@ def create_selects():
                                             title="Fermer la fenêtre de sélection des filtres sur les codes déchets",
                                             **{
                                                 "aria-controls": "fr-modal-1",
-                                            }
+                                            },
                                         ),
                                         className="fr-modal__header",
                                     ),
@@ -105,7 +113,7 @@ def create_selects():
                 id="fr-modal-1",
                 className="fr-modal",
                 role="dialog",
-                **{"aria-labelledby": "fr-modal-title-modal-1"}
+                **{"aria-labelledby": "fr-modal-title-modal-1"},
             ),
         ],
         id="waste-select-group",
@@ -121,81 +129,127 @@ def create_selects():
 def create_filtered_waste_processed_figure(
     departement_filter: str, waste_codes_filter: list[str]
 ):
+    geographical_data = get_departement_geographical_data()
+    bs_data = ALL_BORDEREAUX_DATA
 
-    bs_data = [BSDD_DATA, BSDA_DATA, BSFF_DATA, BSDASRI_DATA]
+    departement_filter_str = ""
 
-    filtered_dfs = []
-    for df in bs_data:
-        filtered_df = df
-        if departement_filter is not None:
-            filtered_df = filtered_df[
-                filtered_df["destination_departement"] == departement_filter
-            ]
-
-        waste_filter_formatted = format_filter(
-            filtered_df["waste_code"], waste_codes_filter
+    bs_data_filtered = bs_data
+    if (departement_filter is not None) and (departement_filter != "all"):
+        departement_filter_str = (
+            "- "
+            + geographical_data.loc[
+                geographical_data["code_departement"] == departement_filter,
+                "libelle",
+            ].item()
         )
-        if waste_filter_formatted is not None:
+        bs_data_filtered = bs_data[
+            bs_data["destination_departement"] == departement_filter
+        ]
 
-            filtered_df = filtered_df[waste_filter_formatted]
-        filtered_dfs.append(filtered_df)
+    waste_filter_formatted = format_filter(
+        bs_data_filtered["waste_code"], waste_codes_filter
+    )
+    if waste_filter_formatted is not None:
 
-    processed_dfs = []
-    for df in filtered_dfs:
-        processed_dfs.append(
-            get_weekly_waste_quantity_processed_by_operation_code_df(
-                df, date_interval=get_data_date_interval_for_year(2022)
-            )
-        )
+        bs_data_filtered = bs_data_filtered[waste_filter_formatted]
 
-    df_processed_waste = get_waste_quantity_processed_df(*processed_dfs)
+    date_interval = (
+        datetime(2022, 1, 3, tzinfo=ZoneInfo("Europe/Paris")),
+        datetime.now(tz=ZoneInfo("Europe/Paris")),
+    )
+    bs_data_filtered_grouped = get_weekly_waste_quantity_processed_by_operation_code_df(
+        bs_data_filtered,
+        date_interval,
+    )
 
     (
         df_recovered,
         df_eliminated,
     ) = get_recovered_and_eliminated_quantity_processed_by_week_series(
-        df_processed_waste
+        bs_data_filtered_grouped.to_frame()
     )
 
-    fig = create_weekly_quantity_processed_figure(df_recovered, df_eliminated)
+    fig = create_weekly_quantity_processed_figure(
+        df_recovered, df_eliminated, date_interval
+    )
 
-    return dcc.Graph(figure=fig)
+    elements = [
+        html.H4(
+            f"Quantité de déchets dangereux tracés et traités par semaine {departement_filter_str}"
+        ),
+        dcc.Graph(figure=fig),
+    ]
+    return elements
 
 
-def format_filter(column_to_filter, waste_codes_filter):
+def create_input_output_elements(
+    departement_filter: str, waste_codes_filter: list[str]
+):
+    geographical_data = get_departement_geographical_data()
+    bs_data = ALL_BORDEREAUX_DATA
 
-    series_filter = None
+    departement_filter_str = ""
 
-    checked = waste_codes_filter["checked"]
-    if (checked != ["all"]) and (len(checked) > 0):
+    bs_data_filtered = bs_data
+    if (departement_filter is not None) and (departement_filter != "all"):
+        departement_filter_str = geographical_data.loc[
+            geographical_data["code_departement"] == departement_filter,
+            "libelle",
+        ].item()
+        bs_data_processed_incoming_filtered = bs_data[
+            (bs_data["destination_departement"] == departement_filter)
+            & (bs_data["emitter_departement"] != departement_filter)
+        ]
+        bs_data_processed_outgoing_filtered = bs_data[
+            (bs_data["emitter_departement"] == departement_filter)
+            & (bs_data["destination_departement"] != departement_filter)
+        ]
+        bs_data_processed_locally_filtered = bs_data[
+            (bs_data["destination_departement"] == departement_filter)
+            & (bs_data["emitter_departement"] == departement_filter)
+        ]
+    else:
+        return no_update
 
-        first_level_filters = [e for e in checked if len(e) == 2]
-        series_filter = column_to_filter.str[:2].isin(first_level_filters)
+    waste_filter_formatted = format_filter(
+        bs_data_filtered["waste_code"], waste_codes_filter
+    )
+    if waste_filter_formatted is not None:
 
-        half_checked = waste_codes_filter["half_checked"]
-        half_checked = [e for e in half_checked if e != "all"]
-        if len(half_checked) != 0:
+        bs_data_processed_incoming_filtered = bs_data_processed_incoming_filtered[
+            waste_filter_formatted
+        ]
+        bs_data_processed_outgoing_filtered = bs_data_processed_outgoing_filtered[
+            waste_filter_formatted
+        ]
+        bs_data_processed_locally_filtered = bs_data_processed_locally_filtered[
+            waste_filter_formatted
+        ]
 
-            half_checked_first_level = [e for e in half_checked if len(e) == 2]
-            second_level_filters = [
-                e
-                for e in checked
-                if ((len(e) == 5) and (e[:2] in half_checked_first_level))
-            ]
-            if len(second_level_filters) > 0:
-                series_filter = series_filter | column_to_filter.str[:5].isin(
-                    second_level_filters
-                )
+    bs_data_processed_incoming_quantity = bs_data_processed_incoming_filtered[
+        "quantity"
+    ].sum()
+    bs_data_processed_outgoing_quantity = bs_data_processed_outgoing_filtered[
+        "quantity"
+    ].sum()
+    bs_data_processed_locally_quantity = bs_data_processed_locally_filtered[
+        "quantity"
+    ].sum()
 
-            half_checked_second_level = [e for e in half_checked if len(e) == 5]
-            third_level_filters = [
-                e
-                for e in checked
-                if ((len(e) > 5) and (e[:5] in half_checked_second_level))
-            ]
-            if len(third_level_filters) > 0:
-                series_filter = series_filter | column_to_filter.isin(
-                    third_level_filters
-                )
+    elements = [
+        add_callout(
+            number=bs_data_processed_locally_quantity,
+            text=f"tonnes de déchets dangereux tracés et traités - {departement_filter_str}",
+        ),
+        add_callout(
+            number=bs_data_processed_incoming_quantity,
+            text=f"tonnes de déchets entrantes - {departement_filter_str}",
+        ),
+        add_callout(
+            number=bs_data_processed_outgoing_quantity,
+            text=f"tonnes de déchets sortantes - {departement_filter_str}",
+        ),
+    ]
 
-    return series_filter
+    return elements

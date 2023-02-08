@@ -145,18 +145,18 @@ def get_weekly_preprocessed_dfs(
     return bs_datasets
 
 
-def get_weekly_waste_quantity_processed_by_operation_code_df(
-    bs_data: pd.DataFrame, date_interval: tuple[datetime, datetime]
+def get_weekly_waste_processed_df(
+    bs_data: pd.DataFrame, date_interval: tuple[datetime, datetime] | None
 ) -> pd.Series:
     """
-    Creates a DataFrame with total weight of dangerous waste processed by week and by processing operation codes.
+    Creates a Pandas Series with total weight of dangerous waste processed by week.
     Processing operation codes that does not designate final operations are discarded.
     Parameters
     ----------
     bs_data: DataFrame
         DataFrame containing BSx data.
     date_interval: tuple of two datetime objects
-        Interval of date used to filter the data as datetime objects.
+        Optional. Interval of date used to filter the data as datetime objects.
         First element is the start interval, the second one is the end of the interval.
         The interval is left inclusive.
 
@@ -166,8 +166,68 @@ def get_weekly_waste_quantity_processed_by_operation_code_df(
         Pandas Series containing aggregated data by week. Index are "processed_at" and "processing_operation".
     """
 
+    date_filter = bs_data["processed_at"].notna()
+    if date_interval is not None:
+        date_filter = bs_data["processed_at"].between(*date_interval, inclusive="left")
+
     df = bs_data[
-        (bs_data["processed_at"].between(*date_interval, inclusive="left"))
+        date_filter
+        & (bs_data["status"].isin(["PROCESSED", "FOLLOWED_WITH_PNTTD"]))
+        & (
+            ~bs_data["processing_operation"].isin(
+                [
+                    "D9",
+                    "D13",
+                    "D14",
+                    "D15",
+                    "R12",
+                    "R13",
+                    "D 9",
+                    "D 13",
+                    "D 14",
+                    "D 15",
+                    "R 12",
+                    "R 13",
+                ]
+            )
+        )
+    ]
+
+    series = df.groupby(
+        by=[
+            pd.Grouper(key="processed_at", freq="1W"),
+        ]
+    )["quantity"].sum()
+
+    return series
+
+
+def get_weekly_waste_quantity_processed_by_operation_code_df(
+    bs_data: pd.DataFrame, date_interval: tuple[datetime, datetime] | None = None
+) -> pd.Series:
+    """
+    Creates a Pandas multi-index Series with total weight of dangerous waste processed by week and by processing operation codes.
+    Processing operation codes that does not designate final operations are discarded.
+    Parameters
+    ----------
+    bs_data: DataFrame
+        DataFrame containing BSx data.
+    date_interval: tuple of two datetime objects
+        Optional. Interval of date used to filter the data as datetime objects.
+        First element is the start interval, the second one is the end of the interval.
+        The interval is left inclusive.
+
+    Returns
+    -------
+    Series
+        Pandas Series containing aggregated data by week. Index are "processed_at" and "processing_operation".
+    """
+    date_filter = bs_data["processed_at"].notna()
+    if date_interval is not None:
+        date_filter = bs_data["processed_at"].between(*date_interval, inclusive="left")
+
+    df = bs_data[
+        (date_filter)
         & (bs_data["status"].isin(["PROCESSED", "FOLLOWED_WITH_PNTTD"]))
         & (
             ~bs_data["processing_operation"].isin(

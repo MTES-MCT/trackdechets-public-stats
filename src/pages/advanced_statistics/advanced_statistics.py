@@ -4,7 +4,7 @@
 from dash import dcc, html, register_page
 
 from src.pages.advanced_statistics.advanced_statistics_layout_factory import (
-    create_selects,
+    create_filter_selects,
 )
 
 register_page(
@@ -25,15 +25,17 @@ def layout() -> html.Div:
     """
 
     elements = [
-        create_selects(),
+        create_filter_selects(),
         html.Div(
             dcc.Loading(
-                html.Div(id="waste-processed-fig", className="fr-col"),
+                [
+                    html.Div(id="total-processed-figures", className="fr-grid-row"),
+                    html.Div(id="waste-processed-fig", className="fr-callout"),
+                ],
                 style={"position": "absolute", "top": "25px"},
                 color="rgb(0, 0, 145)",
                 type="circle",
-                className="fr-grid-row",
-            )
+            ),
         ),
     ]
 
