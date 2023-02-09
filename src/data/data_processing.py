@@ -27,7 +27,7 @@ def get_weekly_aggregated_series(
     date_interval: Tuple[datetime, datetime] | None = None,
     aggregate_column: str = "created_at",
     agg_config: Dict[str, Tuple[str, str]] = {"count": ("id", "count")},
-    only_non_final_processing_operation: bool = False,
+    only_non_final_processing_operation: bool | None = None,
 ) -> pd.DataFrame:
     """
     Creates a DataFrame with number of BSx, users, company... created by week.
@@ -49,6 +49,7 @@ def get_weekly_aggregated_series(
         then only non final processing operation code will be kept in dataset.
         If false and `aggregate_column` is equal to "processed_at",
         then only non final processing operation will be kept in dataset.
+        If None, no filtering is applied.
 
     Returns
     -------
@@ -120,6 +121,7 @@ def get_weekly_preprocessed_dfs(
         ("created_at", False),
         ("sent_at", False),
         ("received_at", False),
+        ("processed_at", None),
         ("processed_at", True),
         ("processed_at", False),
     ]:

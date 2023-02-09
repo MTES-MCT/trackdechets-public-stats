@@ -65,8 +65,9 @@ def create_weekly_scatter_figure(
     bs_created_data: pd.DataFrame,
     bs_sent_data: pd.DataFrame,
     bs_received_data: pd.DataFrame,
-    bs_processed_non_final_data: pd.DataFrame,
     bs_processed_data: pd.DataFrame,
+    bs_processed_non_final_data: pd.DataFrame,
+    bs_processed_final_data: pd.DataFrame,
     bs_type: str,
     lines_configs: List[Dict[str, str]],
 ) -> go.Figure:
@@ -80,10 +81,13 @@ def create_weekly_scatter_figure(
         DataFrame containing the count of 'bordereaux' sent. Must have 'at' and metric corresponding columns.
     bs_received_data: DataFrame
         DataFrame containing the count of 'bordereaux' received. Must have 'at' and metric corresponding columns.
+    bs_processed_data: DataFrame
+        DataFrame containing the count of 'bordereaux' processed.
+        Must have 'at' and metric corresponding columns.
     bs_processed_non_final_data: DataFrame
         DataFrame containing the count of 'bordereaux' processed with non final processing operation code.
         Must have 'at' and metric corresponding columns.
-    bs_processed_data: DataFrame
+    bs_processed_final_data: DataFrame
         DataFrame containing the count of 'bordereaux' processed with final processing operation code.
         Must have 'at' and metric corresponding columns.
     bs_type: str
@@ -96,7 +100,8 @@ def create_weekly_scatter_figure(
     Plotly Figure Object
         Figure object ready to be plotted.
     """
-    colors = pio.templates["gouv"]["layout"]["colorway"]
+    colors = list(pio.templates["gouv"]["layout"]["colorway"])
+    colors.append("#009099")
     plot_configs = [
         {"data": bs_created_data, **lines_configs[0], "color": colors[0]},
         {
@@ -107,17 +112,29 @@ def create_weekly_scatter_figure(
         },
         {"data": bs_received_data, **lines_configs[2], "color": colors[2]},
         {
-            "data": bs_processed_non_final_data,
+            "data": bs_processed_data,
             **lines_configs[3],
             "color": colors[3],
         },
-        {"data": bs_processed_data, **lines_configs[4], "color": colors[4]},
+        {
+            "data": bs_processed_non_final_data,
+            **lines_configs[4],
+            "color": colors[4],
+            "visible": "legendonly",
+        },
+        {
+            "data": bs_processed_final_data,
+            **lines_configs[5],
+            "color": colors[5],
+            "visible": "legendonly",
+        },
     ]
 
     scatter_list = []
 
     metric_name = "count" if "count" in bs_created_data.columns else "quantity"
     y_title = "Quantité (en tonnes)" if metric_name == "quantity" else None
+    legend_title = "Statut :" if metric_name == "quantity" else "Statut du bordereau :"
 
     for config in plot_configs:
 
@@ -171,9 +188,15 @@ def create_weekly_scatter_figure(
 
     fig.update_layout(
         paper_bgcolor="#fff",
-        margin=dict(t=25, r=70, l=5),
+        margin=dict(t=25, r=70, l=15),
         legend=dict(
-            orientation="h", y=1.2, font_size=13, itemwidth=40, bgcolor="rgba(0,0,0,0)"
+            orientation="v",
+            y=1.2,
+            x=-0.06,
+            font_size=13,
+            itemwidth=40,
+            bgcolor="rgba(0,0,0,0)",
+            title=legend_title,
         ),
         uirevision=True,
     )

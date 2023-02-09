@@ -134,7 +134,7 @@ Un bordereau de suivi de déchet (BSD) est créé pour chaque déchet et chaque 
             [
                 add_callout(
                     number=total_quantity_processed,
-                    text="tonnes de déchets dangereux tracés et traités au total",
+                    text="tonnes de déchets dangereux* tracés et traités au total",
                 ),
                 add_callout(
                     number=total_bs_created,
@@ -147,7 +147,6 @@ Un bordereau de suivi de déchet (BSD) est créé pour chaque déchet et chaque 
             ],
             className="row",
         ),
-        html.H3("Statistiques par année", id="stats-year-title"),
         html.Nav(
             get_navbar_elements([2022, 2023], 2022),
             className="fr-nav",
@@ -227,11 +226,12 @@ def get_graph_elements_for_a_year(
     """
 
     elements = [
+        html.H3(f"Statistiques pour l'année {year}", id="stats-year-title"),
         html.Div(
             [
                 add_callout(
                     number=quantity_processed_total,
-                    text=f"tonnes de déchets dangereux tracés et traités sur l'année {year}",
+                    text=f"tonnes de déchets dangereux* tracés et traités sur l'année {year}",
                 ),
                 add_callout(
                     number=bs_created_total,
@@ -239,7 +239,7 @@ def get_graph_elements_for_a_year(
                 ),
                 dcc.Markdown(
                     """Les modes de traitement des déchets dangereux s'inscrivent dans la [hiérarchie des traitements de déchets](https://www.ecologie.gouv.fr/gestion-des-dechets-principes-generaux#scroll-nav__4).
-Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme "valorisés" dans Trackdéchets, et sont comparés à l'élimination (pas de réutilisation, recyclage ou valorisation possible dans les conditions techniques et économiques du moment)""",
+Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme "valorisés" dans Trackdéchets, et sont comparés à l'élimination (pas de réutilisation, recyclage ou valorisation possible dans les conditions techniques et économiques du moment).""",
                     id="processing-explanation-block",
                     className="fr-callout",
                 ),
@@ -251,7 +251,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                 add_figure(
                     quantity_processed_weekly,
                     "bsdd_processed_weekly",
-                    "Quantité de déchets dangereux tracés et traités par semaine",
+                    "Quantité de déchets dangereux* tracés et traités par semaine",
                 )
             ]
         ),
@@ -260,7 +260,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                 add_figure(
                     quantity_processed_sunburst_figure,
                     "bsdd_processed_by_operation",
-                    "Quantité de déchets tracés et traités par opération de traitement",
+                    "Quantité de déchets dangereux* tracés et traités par opération de traitement",
                     (
                         "Le coeur du graphique représente la part de déchets valorisés et éliminés, "
                         "les sections autour permettent d'avoir une idée de la part de déchets par type d'opération de traitement."
@@ -273,7 +273,11 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             className="row",
             id="operation-type-section",
         ),
-        html.H4(["Détail par types de déchets"]),
+        html.H4(["Détail par types de déchets dangereux"]),
+        html.Div(
+            "Astuce : vous pouvez cliquer sur les textes de la légende pour faire disparaître ou apparaître les différentes courbes.",
+            className="fr-text--sm tips-container",
+        ),
         html.Div(
             html.Div(
                 className="fr-tabs",
@@ -283,7 +287,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             html.Li(
                                 [
                                     html.Button(
-                                        ["Déchets dangereux"],
+                                        ['Déchets dangereux "classiques"'],
                                         id="tabpanel-404",
                                         tabIndex="0",
                                         role="tab",
@@ -317,7 +321,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                             html.Li(
                                 [
                                     html.Button(
-                                        ["Fluides Frigo"],
+                                        ["Fluides Frigorigènes"],
                                         id="tabpanel-406",
                                         tabIndex="-1",
                                         role="tab",
@@ -427,6 +431,10 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     ),
                     html.Div(
                         [
+                            html.Div(
+                                "Éléments à titre indicatif, la traçabilité est obligatoire à compter du 1 avril 2023.",
+                                className="fr-text--sm",
+                            ),
                             html.H4(
                                 [
                                     "Nombre de Bordereaux de Suivi de Fluides Frigorigènes par semaine"
@@ -462,6 +470,10 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     ),
                     html.Div(
                         [
+                            html.Div(
+                                "Éléments à titre indicatif, la dématérialisation n'étant pas encore réglementée, les exutoires ne sont pas tous prêts.",
+                                className="fr-text--sm",
+                            ),
                             html.H4(
                                 [
                                     "Nombre de Bordereaux de Suivi de Déchets d'Activités de Soins à Risques Infectieux par semaine"
@@ -501,16 +513,24 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             ),
             id="bordereaux-counts-section",
         ),
+        html.Div(
+            "*tous déchets dangereux et/ou POP (Polluants Organiques Persistants)",
+            className="fr-text--xs",
+        ),
         html.H4("Établissements et utilisateurs"),
         html.Div(
             [
                 add_callout(
                     number=company_created_total_life,
-                    text=f"établissements inscrits sur l'année {year}",
+                    text=f"établissements inscrits sur l'année {year}"
+                    if year == 2022
+                    else f"nouveaux établissements inscrits sur l'année {year}",
                 ),
                 add_callout(
                     number=user_created_total_life,
-                    text=f"utilisateurs inscrits sur l'année {year}",
+                    text=f"utilisateurs inscrits sur l'année {year}"
+                    if year == 2022
+                    else f"nouveaux utilisateurs inscrits sur l'année {year}",
                 ),
             ],
             className="row",
@@ -701,28 +721,33 @@ def get_layout_for_a_year(year: int = 2022) -> list:
 
     lines_configs = [
         {
-            "name": "Bordereaux traçés",
+            "name": "État initial",
             "suffix": "traçés",
             "text_position": "top center",
         },
         {
-            "name": "Bordereaux marqués comme envoyés",
-            "suffix": "marqués comme envoyés",
+            "name": "Pris en charge par le transporteur",
+            "suffix": "pris en charge par le transporteur",
             "text_position": "middle top",
         },
         {
-            "name": "Bordereaux marqués comme reçus",
-            "suffix": "marqués comme reçus",
+            "name": "Reçu par le destinataire",
+            "suffix": "reçus par le destinataire",
             "text_position": "middle bottom",
         },
         {
-            "name": "Bordereaux marqués comme traités sans code final",
-            "suffix": "marqués comme traités sans code final",
+            "name": "Traité",
+            "suffix": "marqués comme traités",
             "text_position": "bottom center",
         },
         {
-            "name": "Bordereaux marqués comme traités avec code final",
-            "suffix": "marqués comme traités avec code final",
+            "name": "Traité (traitement intermédiaire)",
+            "suffix": "en traitement intermédiaire",
+            "text_position": "bottom center",
+        },
+        {
+            "name": "Traité (traitement final)",
+            "suffix": "en traitement final",
             "text_position": "bottom center",
         },
     ]
@@ -749,28 +774,33 @@ def get_layout_for_a_year(year: int = 2022) -> list:
 
     lines_configs = [
         {
-            "name": "Quantité tracée",
+            "name": "Quantité initiale",
             "suffix": "tonnes tracées",
             "text_position": "top center",
         },
         {
-            "name": "Quantité envoyée",
-            "suffix": "tonnes envoyées",
+            "name": "Prise en charge par le transporteur",
+            "suffix": "tonnes prises en charge par le transporteur",
             "text_position": "middle top",
         },
         {
-            "name": "Quantité reçue",
-            "suffix": "tonnes reçues",
+            "name": "Reçue par le destinataire",
+            "suffix": "tonnes reçues par le destinataire",
             "text_position": "middle bottom",
         },
         {
-            "name": "Quantité traitée en code non final",
-            "suffix": "tonnes traitées avec un code non final",
+            "name": "Traitée",
+            "suffix": "marqués comme traités",
             "text_position": "bottom center",
         },
         {
-            "name": "Quantité traitée en code final",
-            "suffix": "tonnes traitées avec un code final",
+            "name": "Traitée (traitement intermédiaire)",
+            "suffix": "en traitement intermédiaire",
+            "text_position": "bottom center",
+        },
+        {
+            "name": "Traitée (traitement final)",
+            "suffix": "en traitement final",
             "text_position": "bottom center",
         },
     ]
