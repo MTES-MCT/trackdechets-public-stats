@@ -1,7 +1,9 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from dash import dcc, html, no_update
+from dash import dcc, html
+from dash.development.base_component import Component
+
 from feffery_antd_components.AntdTree import AntdTree
 
 from src.data.data_extract import (
@@ -13,13 +15,21 @@ from src.data.data_processing import (
     get_weekly_waste_quantity_processed_by_operation_code_df,
 )
 from src.data.datasets import ALL_BORDEREAUX_DATA
-from src.data.utils import get_data_date_interval_for_year
 from src.pages.advanced_statistics.utils import format_filter
 from src.pages.figures_factory import create_weekly_quantity_processed_figure
 from src.pages.utils import add_callout
 
 
-def create_filter_selects() -> html.Div:
+def create_filters_selects_elements() -> html.Div:
+    """
+    Returns a `html.Div` object containing the filters for selecting departments and waste codes.
+
+    Returns
+    -------
+    html.Div
+        A `html.Div` object containing the filters.
+
+    """
 
     geographical_data = get_departement_geographical_data()
     waste_nomenclature = get_waste_code_hierarchical_nomenclature()
@@ -127,8 +137,32 @@ def create_filter_selects() -> html.Div:
 
 
 def create_filtered_waste_processed_figure(
-    departement_filter: str, waste_codes_filter: list[str]
-):
+    departement_filter: str, waste_codes_filter: dict[str, list[str]]
+) -> list[Component]:
+    """
+    Create a plot of the quantity of hazardous waste processed and tracked by week. The data is, if needed, filtered by departement
+    and waste codes.
+
+    Parameters:
+    -----------
+    departement_filter : str
+        The code of the departement to filter the data by. If "all" is passed, all departements will be included in the
+        plot.
+    waste_codes_filter : dict with "checked" and "half checked" keys
+        The dictionary that contains the waste codes checked or half-checked on UI that will be used for filtering.
+
+    Returns:
+    --------
+    list
+        A list of dash elements that are ready to be rendered.
+
+    Example:
+    --------
+    >>> create_filtered_waste_processed_figure("75", {"checked": ["01 01","01 01 01*",,"19", "19 01", "19 01 01"], "half_checked": ["01"]})
+    [html.H4("Quantité de déchets dangereux tracés et traités par semaine - Paris"),
+     dcc.Graph(figure=...)]
+
+    """
     geographical_data = get_departement_geographical_data()
     bs_data = ALL_BORDEREAUX_DATA
 
@@ -185,7 +219,25 @@ def create_filtered_waste_processed_figure(
 
 def create_input_output_elements(
     departement_filter: str, waste_codes_filter: list[str]
-):
+) -> list[Component]:
+    """
+    Create input/output elements for a Dash application.
+
+    Parameters
+    ----------
+    departement_filter : str
+        The filter to apply on the departement data. If set to 'all', no filter is applied.
+    waste_codes_filter : list[str]
+        The list of waste codes to filter the bordereaux data by.
+
+    Returns
+    -------
+    list
+        A list of Dash elements, each containing the quantity of incoming, outgoing, or locally processed
+        dangerous waste in a specific departement.
+        If no departemenent filter is provided (departement_filter is None or "all"), then nothing is returned.
+
+    """
     geographical_data = get_departement_geographical_data()
     bs_data = ALL_BORDEREAUX_DATA
 
@@ -210,7 +262,13 @@ def create_input_output_elements(
             & (bs_data["emitter_departement"] == departement_filter)
         ]
     else:
-        return no_update
+        return [
+            html.H4(f"Flux de déchet du département"),
+            html.Div(
+                "Veuillez sélectionner un département pour afficher les données",
+                id="departement-figure-no-data",
+            ),
+        ]
 
     waste_filter_formatted = format_filter(
         bs_data_filtered["waste_code"], waste_codes_filter
@@ -238,17 +296,24 @@ def create_input_output_elements(
     ].sum()
 
     elements = [
-        add_callout(
-            number=bs_data_processed_locally_quantity,
-            text=f"tonnes de déchets dangereux tracés et traités - {departement_filter_str}",
-        ),
-        add_callout(
-            number=bs_data_processed_incoming_quantity,
-            text=f"tonnes de déchets entrantes - {departement_filter_str}",
-        ),
-        add_callout(
-            number=bs_data_processed_outgoing_quantity,
-            text=f"tonnes de déchets sortantes - {departement_filter_str}",
+        html.H4(f"Flux de déchet du département - {departement_filter_str}"),
+        html.Div(
+            [
+                add_callout(
+                    number=bs_data_processed_locally_quantity,
+                    text=f"tonnes de déchets dangereux tracés et traités à l’intérieur du département",
+                ),
+                add_callout(
+                    number=bs_data_processed_incoming_quantity,
+                    text=f"tonnes de déchets entrantes traités à l’intérieur du département",
+                ),
+                add_callout(
+                    number=bs_data_processed_outgoing_quantity,
+                    text=f"tonnes de déchets sortantes traités à l’extérieur du département",
+                ),
+            ],
+            id="total-processed-figures",
+            className="row",
         ),
     ]
 
