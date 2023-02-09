@@ -1,7 +1,7 @@
 """This module contains the callbacks for the home page.
 """
 
-from dash import ALL, Input, Output, callback, ctx, html, MATCH, State
+from dash import ALL, Input, Output, callback, ctx, html, MATCH, State, no_update
 
 from src.pages.home.home_layouts import layouts
 from src.pages.home.home_layout_factory import get_navbar_elements
@@ -14,7 +14,6 @@ from src.pages.utils import format_number
         Output("header-navigation", "children"),
     ],
     inputs=[Input({"type": "year-selector", "index": ALL}, "n_clicks")],
-    prevent_initial_call=True,
 )
 def change_layout_for_year(n_clicks) -> tuple[list, html.Ul]:
     """This callback is triggered when the user clicks on the year selection menu.
@@ -34,6 +33,9 @@ def change_layout_for_year(n_clicks) -> tuple[list, html.Ul]:
         ready to be inserted in the Div with id 'graph-container'.
         The second element is the updated navbar elements.
     """
+
+    if n_clicks is None or n_clicks == 0:
+        return no_update
 
     if all(e is None for e in n_clicks):
         year = 2022

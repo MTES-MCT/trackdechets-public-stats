@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Dict, List
 
 import pandas as pd
@@ -184,7 +184,9 @@ def create_weekly_scatter_figure(
 
 
 def create_weekly_quantity_processed_figure(
-    quantity_recovered: pd.Series, quantity_destroyed: pd.Series
+    quantity_recovered: pd.Series,
+    quantity_destroyed: pd.Series,
+    date_axis_interval: tuple[datetime, datetime] | None = None,
 ) -> go.Figure:
     """Creates the figure showing the weekly waste quantity processed by type of process (destroyed or recovered).
 
@@ -236,6 +238,7 @@ def create_weekly_quantity_processed_figure(
                 hoverinfo="text",
                 texttemplate="%{y:.2s} tonnes",
                 marker_color=conf["color"],
+                width=1000 * 3600 * 24 * 6,
             )
         )
 
@@ -259,6 +262,9 @@ def create_weekly_quantity_processed_figure(
         yaxis_range=[0, max_value * 1.1],
     )
     fig.update_yaxes(side="right")
+
+    if date_axis_interval is not None:
+        fig.update_xaxes(range=date_axis_interval)
 
     return fig
 

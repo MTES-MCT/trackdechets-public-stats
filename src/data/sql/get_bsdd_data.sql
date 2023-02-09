@@ -11,9 +11,13 @@ SELECT
     END AS "quantity",
     "processing_operation_done" AS "processing_operation",
     "waste_details_code" AS "waste_code",
-    "waste_details_pop" AS "waste_pop"
+    "waste_details_pop" AS "waste_pop",
+    emitter_departement,
+    emitter_region,
+    recipient_departement as "destination_departement",
+    recipient_region as "destination_region"
 FROM
-    "trusted_zone_trackdechets"."bsdd"
+    "refined_zone_enriched"."bsdd_enriched"
 WHERE
     "is_deleted" = FALSE
     AND "created_at" >= '2022-01-03'
