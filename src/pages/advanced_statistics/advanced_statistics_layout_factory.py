@@ -218,7 +218,7 @@ def create_filtered_waste_processed_figure(
 
 
 def create_input_output_elements(
-    departement_filter: str, waste_codes_filter: list[str]
+    departement_filter: str, waste_codes_filter: dict[str, list[str]]
 ) -> list[Component]:
     """
     Create input/output elements for a Dash application.
@@ -261,6 +261,9 @@ def create_input_output_elements(
             (bs_data["destination_departement"] == departement_filter)
             & (bs_data["emitter_departement"] == departement_filter)
         ]
+        elements = [
+            html.H4(f"Flux de déchet du département - {departement_filter_str}"),
+        ]
     else:
         return [
             html.H4(f"Flux de déchet du département"),
@@ -270,19 +273,25 @@ def create_input_output_elements(
             ),
         ]
 
-    waste_filter_formatted = format_filter(
-        bs_data_filtered["waste_code"], waste_codes_filter
+    waste_filter_formatted_incoming = format_filter(
+        bs_data_processed_incoming_filtered["waste_code"], waste_codes_filter
     )
-    if waste_filter_formatted is not None:
+    waste_filter_formatted_outgoing = format_filter(
+        bs_data_processed_outgoing_filtered["waste_code"], waste_codes_filter
+    )
+    waste_filter_formatted_locally = format_filter(
+        bs_data_processed_locally_filtered["waste_code"], waste_codes_filter
+    )
+    if waste_filter_formatted_incoming is not None:
 
         bs_data_processed_incoming_filtered = bs_data_processed_incoming_filtered[
-            waste_filter_formatted
+            waste_filter_formatted_incoming
         ]
         bs_data_processed_outgoing_filtered = bs_data_processed_outgoing_filtered[
-            waste_filter_formatted
+            waste_filter_formatted_outgoing
         ]
         bs_data_processed_locally_filtered = bs_data_processed_locally_filtered[
-            waste_filter_formatted
+            waste_filter_formatted_locally
         ]
 
     bs_data_processed_incoming_quantity = bs_data_processed_incoming_filtered[
@@ -295,26 +304,27 @@ def create_input_output_elements(
         "quantity"
     ].sum()
 
-    elements = [
-        html.H4(f"Flux de déchet du département - {departement_filter_str}"),
-        html.Div(
-            [
-                add_callout(
-                    number=bs_data_processed_locally_quantity,
-                    text=f"tonnes de déchets dangereux tracés et traités à l’intérieur du département",
-                ),
-                add_callout(
-                    number=bs_data_processed_incoming_quantity,
-                    text=f"tonnes de déchets entrantes traités à l’intérieur du département",
-                ),
-                add_callout(
-                    number=bs_data_processed_outgoing_quantity,
-                    text=f"tonnes de déchets sortantes traités à l’extérieur du département",
-                ),
-            ],
-            id="total-processed-figures",
-            className="row",
-        ),
-    ]
+    elements.extend(
+        [
+            html.Div(
+                [
+                    add_callout(
+                        number=bs_data_processed_locally_quantity,
+                        text=f"tonnes de déchets dangereux tracés et traités à l’intérieur du département",
+                    ),
+                    add_callout(
+                        number=bs_data_processed_incoming_quantity,
+                        text=f"tonnes de déchets entrantes traités à l’intérieur du département",
+                    ),
+                    add_callout(
+                        number=bs_data_processed_outgoing_quantity,
+                        text=f"tonnes de déchets sortantes traités à l’extérieur du département",
+                    ),
+                ],
+                id="total-processed-figures",
+                className="row",
+            ),
+        ]
+    )
 
     return elements
