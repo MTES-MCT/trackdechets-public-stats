@@ -9,11 +9,13 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+import polars as pl
 import sqlalchemy
 
 from src.data.utils import format_waste_codes
 
-DB_ENGINE = sqlalchemy.create_engine(getenv("DATABASE_URL"))
+DATABASE_URL = getenv("DATABASE_URL")
+DB_ENGINE = sqlalchemy.create_engine(DATABASE_URL)
 SQL_PATH = Path(__file__).parent.absolute() / "sql"
 STATIC_DATA_PATH = Path(__file__).parent.absolute() / "static"
 
@@ -45,44 +47,39 @@ def get_bs_data(
     started_time = time.time()
 
     sql_query = (SQL_PATH / query_filename).read_text()
-    bs_data_df = pd.read_sql_query(
-        sql_query,
-        con=DB_ENGINE,
-    )
+    # bs_data_df = pd.read_sql_query(
+    #     sql_query,
+    #     con=DB_ENGINE,
+    # )
+    bs_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
 
-    for col_name in ["created_at", "sent_at", "received_at", "processed_at"]:
-        bs_data_df[col_name] = pd.to_datetime(
-            bs_data_df[col_name], utc=True, errors="coerce"
-        ).dt.tz_convert("Europe/Paris")
-
-    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
-        hour=0, minute=0, second=0, microsecond=0
+    date_columns = ["created_at", "sent_at", "received_at", "processed_at"]
+    bs_data_df = bs_data_df.with_columns(
+        [
+            pl.col(col_name).dt.with_time_zone(tz="Europe/Paris").dt.offset_by("-1h")
+            for col_name in date_columns
+        ]
     )
-    # This is to handle specific case when sqlalchemy does not handle well the timezone
-    # and there is data at midnight Paris time the last day of the time window we want to keep
-    # that is return by the query but shouldn't
-    bs_data_df = bs_data_df.loc[
-        (bs_data_df["created_at"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
-        | bs_data_df["created_at"].isna()
-    ]
 
     if not include_drafts:
-        bs_data_df = bs_data_df[bs_data_df["status"] != "DRAFT"]
+        bs_data_df = bs_data_df.filter(pl.col("status") != "DRAFT")
     if include_only_dangerous_waste:
-        if "wastePop" in bs_data_df.columns:
-            bs_data_df = bs_data_df[
-                bs_data_df["waste_code"].str.match(r".*\*$", na=False)
-                | bs_data_df["wastePop"]
-            ]
+        if "waste_pop" in bs_data_df.columns:
+            bs_data_df = bs_data_df.filter(
+                (pl.col("waste_code").str.contains(pattern=r".*\*$"))
+                | pl.col("waste_pop")
+            )
+
         else:
-            bs_data_df = bs_data_df[
-                bs_data_df["waste_code"].str.match(r".*\*$", na=False)
-            ]
+            bs_data_df = bs_data_df.filter(
+                pl.col("waste_code").str.contains(pattern=r".*\*$")
+            )
 
     # Depending on the type of 'bordereau', the processing operations codes can contain space or not, so we normalize it :
-    bs_data_df["processing_operation"] = bs_data_df["processing_operation"].replace(
-        to_replace=r"([RD])([0-9]{1,2})", value=r"\g<1> \g<2>", regex=True
+    bs_data_df = bs_data_df.with_column(
+        pl.col("processing_operation").str.replace(r"([RD])([0-9]{1,2})", value="$1 $2")
     )
+
     print(f"get_bs_data duration: {time.time()-started_time} ")
 
     return bs_data_df
@@ -100,24 +97,11 @@ def get_company_data() -> pd.DataFrame:
     started_time = time.time()
 
     sql_query = (SQL_PATH / "get_company_data.sql").read_text()
-    company_data_df = pd.read_sql_query(sql_query, con=DB_ENGINE)
-    company_data_df["created_at"] = pd.to_datetime(
-        company_data_df["created_at"], utc=True
-    ).dt.tz_convert("Europe/Paris")
+    company_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
 
-    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
-        hour=0, minute=0, second=0, microsecond=0
+    company_data_df = company_data_df.with_column(
+        pl.col("created_at").dt.with_time_zone(tz="Europe/Paris").dt.offset_by("-1h")
     )
-    # This is to handle specific case when sqlalchemy does not handle well the timezone
-    # and there is data at midnight Paris time the last day of the time window we want to keep
-    # that is return by the query but shouldn't
-    company_data_df = company_data_df.loc[
-        (
-            company_data_df["created_at"]
-            < (now - timedelta(days=(now.toordinal() % 7) - 1))
-        )
-        | company_data_df["created_at"].isna()
-    ]
 
     print(f"get_company_data duration: {time.time()-started_time} ")
 
@@ -136,21 +120,11 @@ def get_user_data() -> pd.DataFrame:
     started_time = time.time()
 
     sql_query = (SQL_PATH / "get_user_data.sql").read_text()
-    user_data_df = pd.read_sql_query(sql_query, con=DB_ENGINE)
-    user_data_df["created_at"] = pd.to_datetime(
-        user_data_df["created_at"], utc=True
-    ).dt.tz_convert("Europe/Paris")
+    user_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
 
-    now = datetime.now(tz=ZoneInfo("Europe/Paris")).replace(
-        hour=0, minute=0, second=0, microsecond=0
+    user_data_df = user_data_df.with_column(
+        pl.col("created_at").dt.with_time_zone(tz="Europe/Paris").dt.offset_by("-1h")
     )
-    # This is to handle specific case when sqlalchemy does not handle well the timezone
-    # and there is data at midnight Paris time the last day of the time window we want to keep
-    # that is return by the query but shouldn't
-    user_data_df = user_data_df.loc[
-        (user_data_df["created_at"] < (now - timedelta(days=(now.toordinal() % 7) - 1)))
-        | user_data_df["created_at"].isna()
-    ]
 
     print(f"get_user_data duration: {time.time()-started_time} ")
 
@@ -166,9 +140,11 @@ def get_processing_operation_codes_data() -> pd.DataFrame:
     DataFrame
         DataFrame with processing operations codes and description.
     """
-    data = pd.read_sql_table(
-        table_name="codes_operations_traitements", schema="trusted_zone", con=DB_ENGINE
+    data = pl.read_sql(
+        "SELECT * FROM trusted_zone.codes_operations_traitements",
+        connection_uri=DATABASE_URL,
     )
+
     return data
 
 
@@ -181,9 +157,11 @@ def get_departement_geographical_data() -> pd.DataFrame:
     DataFrame
         DataFrame with INSEE department geographical data.
     """
-    data = pd.read_sql_table(
-        table_name="code_geo_departements", schema="trusted_zone_insee", con=DB_ENGINE
+    data = pl.read_sql(
+        "SELECT * FROM trusted_zone_insee.code_geo_departements",
+        connection_uri=DATABASE_URL,
     )
+
     return data
 
 

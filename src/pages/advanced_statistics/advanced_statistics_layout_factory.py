@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 from dash import dcc, html
 from dash.development.base_component import Component
-
+import polars as pl
 from feffery_antd_components.AntdTree import AntdTree
 
 from src.data.data_extract import (
@@ -14,7 +14,7 @@ from src.data.data_processing import (
     get_recovered_and_eliminated_quantity_processed_by_week_series,
     get_weekly_waste_quantity_processed_by_operation_code_df,
 )
-from src.data.datasets import ALL_BORDEREAUX_DATA
+from src.data.datasets import ALL_BORDEREAUX_DATA, DEPARTEMENTS_GEOGRAPHICAL_DATA
 from src.pages.advanced_statistics.utils import format_filter
 from src.pages.figures_factory import create_weekly_quantity_processed_figure
 from src.pages.utils import add_callout
@@ -31,14 +31,16 @@ def create_filters_selects_elements() -> html.Div:
 
     """
 
-    geographical_data = get_departement_geographical_data()
+    geographical_data = DEPARTEMENTS_GEOGRAPHICAL_DATA
     waste_nomenclature = get_waste_code_hierarchical_nomenclature()
 
-    options = (
-        geographical_data[["code_departement", "libelle"]]
-        .rename(columns={"code_departement": "value", "libelle": "label"})
-        .to_dict(orient="records")
-    )
+    geographical_data = geographical_data.to_dict(as_series=False)
+    options = [
+        {"value": a, "label": b}
+        for a, b in zip(
+            geographical_data["code_departement"], geographical_data["libelle"]
+        )
+    ]
 
     options.insert(0, {"value": "all", "label": "France entière"})
 
@@ -163,7 +165,7 @@ def create_filtered_waste_processed_figure(
      dcc.Graph(figure=...)]
 
     """
-    geographical_data = get_departement_geographical_data()
+    geographical_data = DEPARTEMENTS_GEOGRAPHICAL_DATA
     bs_data = ALL_BORDEREAUX_DATA
 
     departement_filter_str = ""
@@ -172,21 +174,18 @@ def create_filtered_waste_processed_figure(
     if (departement_filter is not None) and (departement_filter != "all"):
         departement_filter_str = (
             "- "
-            + geographical_data.loc[
-                geographical_data["code_departement"] == departement_filter,
-                "libelle",
-            ].item()
+            + geographical_data.filter(
+                pl.col("code_departement") == departement_filter
+            )["libelle"].item()
         )
-        bs_data_filtered = bs_data[
-            bs_data["destination_departement"] == departement_filter
-        ]
+        bs_data_filtered = bs_data.filter(
+            pl.col("destination_departement") == departement_filter
+        )
 
-    waste_filter_formatted = format_filter(
-        bs_data_filtered["waste_code"], waste_codes_filter
-    )
+    waste_filter_formatted = format_filter(pl.col("waste_code"), waste_codes_filter)
     if waste_filter_formatted is not None:
 
-        bs_data_filtered = bs_data_filtered[waste_filter_formatted]
+        bs_data_filtered = bs_data_filtered.filter(waste_filter_formatted)
 
     date_interval = (
         datetime(2022, 1, 3, tzinfo=ZoneInfo("Europe/Paris")),
@@ -201,7 +200,7 @@ def create_filtered_waste_processed_figure(
         df_recovered,
         df_eliminated,
     ) = get_recovered_and_eliminated_quantity_processed_by_week_series(
-        bs_data_filtered_grouped.to_frame()
+        bs_data_filtered_grouped
     )
 
     fig = create_weekly_quantity_processed_figure(
@@ -245,22 +244,22 @@ def create_input_output_elements(
 
     bs_data_filtered = bs_data
     if (departement_filter is not None) and (departement_filter != "all"):
-        departement_filter_str = geographical_data.loc[
-            geographical_data["code_departement"] == departement_filter,
-            "libelle",
-        ].item()
-        bs_data_processed_incoming_filtered = bs_data[
-            (bs_data["destination_departement"] == departement_filter)
-            & (bs_data["emitter_departement"] != departement_filter)
-        ]
-        bs_data_processed_outgoing_filtered = bs_data[
-            (bs_data["emitter_departement"] == departement_filter)
-            & (bs_data["destination_departement"] != departement_filter)
-        ]
-        bs_data_processed_locally_filtered = bs_data[
-            (bs_data["destination_departement"] == departement_filter)
-            & (bs_data["emitter_departement"] == departement_filter)
-        ]
+        departement_filter_str = geographical_data.filter(
+            pl.col("code_departement") == departement_filter
+        )["libelle"].item()
+
+        bs_data_processed_incoming_filtered = bs_data.filter(
+            (pl.col("destination_departement") == departement_filter)
+            & (pl.col("emitter_departement") != departement_filter)
+        )
+        bs_data_processed_outgoing_filtered = bs_data.filter(
+            (pl.col("emitter_departement") == departement_filter)
+            & (pl.col("destination_departement") != departement_filter)
+        )
+        bs_data_processed_locally_filtered = bs_data.filter(
+            (pl.col("destination_departement") == departement_filter)
+            & (pl.col("emitter_departement") == departement_filter)
+        )
         elements = [
             html.H4(f"Flux de déchet du département - {departement_filter_str}"),
         ]
@@ -273,36 +272,28 @@ def create_input_output_elements(
             ),
         ]
 
-    waste_filter_formatted_incoming = format_filter(
-        bs_data_processed_incoming_filtered["waste_code"], waste_codes_filter
-    )
-    waste_filter_formatted_outgoing = format_filter(
-        bs_data_processed_outgoing_filtered["waste_code"], waste_codes_filter
-    )
-    waste_filter_formatted_locally = format_filter(
-        bs_data_processed_locally_filtered["waste_code"], waste_codes_filter
-    )
-    if waste_filter_formatted_incoming is not None:
+    waste_filter_formatted = format_filter(pl.col("waste_code"), waste_codes_filter)
+    if waste_filter_formatted is not None:
 
-        bs_data_processed_incoming_filtered = bs_data_processed_incoming_filtered[
-            waste_filter_formatted_incoming
-        ]
-        bs_data_processed_outgoing_filtered = bs_data_processed_outgoing_filtered[
-            waste_filter_formatted_outgoing
-        ]
-        bs_data_processed_locally_filtered = bs_data_processed_locally_filtered[
-            waste_filter_formatted_locally
-        ]
+        bs_data_processed_incoming_filtered = (
+            bs_data_processed_incoming_filtered.filter(waste_filter_formatted)
+        )
+        bs_data_processed_outgoing_filtered = (
+            bs_data_processed_outgoing_filtered.filter(waste_filter_formatted)
+        )
+        bs_data_processed_locally_filtered = bs_data_processed_locally_filtered.filter(
+            waste_filter_formatted
+        )
 
-    bs_data_processed_incoming_quantity = bs_data_processed_incoming_filtered[
-        "quantity"
-    ].sum()
-    bs_data_processed_outgoing_quantity = bs_data_processed_outgoing_filtered[
-        "quantity"
-    ].sum()
-    bs_data_processed_locally_quantity = bs_data_processed_locally_filtered[
-        "quantity"
-    ].sum()
+    bs_data_processed_incoming_quantity = (
+        bs_data_processed_incoming_filtered.select("quantity").sum().item()
+    )
+    bs_data_processed_outgoing_quantity = (
+        bs_data_processed_outgoing_filtered.select("quantity").sum().item()
+    )
+    bs_data_processed_locally_quantity = (
+        bs_data_processed_locally_filtered.select("quantity").sum().item()
+    )
 
     elements.extend(
         [

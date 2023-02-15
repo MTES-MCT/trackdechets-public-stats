@@ -1,8 +1,9 @@
 import pandas as pd
+import polars as pl
 
 
 def format_filter(
-    column_to_filter: pd.Series, waste_codes_filter: dict[str, list[str]]
+    column_to_filter: pl.Expr, waste_codes_filter: dict[str, list[str]]
 ) -> pd.Series:
     """
     Filter a given column column_to_filter based on the input waste_codes_filter.
@@ -44,7 +45,7 @@ def format_filter(
     if (checked != ["all"]) and (len(checked) > 0):
 
         first_level_filters = [e for e in checked if len(e) == 2]
-        series_filter = column_to_filter.str[:2].isin(first_level_filters)
+        series_filter = column_to_filter.str.slice(0, 2).is_in(first_level_filters)
 
         half_checked = waste_codes_filter["half_checked"]
         half_checked = [e for e in half_checked if e != "all"]
@@ -57,7 +58,7 @@ def format_filter(
                 if ((len(e) == 5) and (e[:2] in half_checked_first_level))
             ]
             if len(second_level_filters) > 0:
-                series_filter = series_filter | column_to_filter.str[:5].isin(
+                series_filter = series_filter | column_to_filter.str.slice(0, 5).is_in(
                     second_level_filters
                 )
 
@@ -68,7 +69,7 @@ def format_filter(
                 if ((len(e) > 5) and (e[:5] in half_checked_second_level))
             ]
             if len(third_level_filters) > 0:
-                series_filter = series_filter | column_to_filter.isin(
+                series_filter = series_filter | column_to_filter.is_in(
                     third_level_filters
                 )
 

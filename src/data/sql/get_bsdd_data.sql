@@ -1,9 +1,9 @@
 SELECT
     id,
-    "created_at",
-    "processed_at",
-    "sent_at",
-    "received_at",
+    "created_at" at time zone 'UTC' as created_at,
+    "sent_at" at time zone 'UTC' as sent_at,
+    "received_at" at time zone 'UTC' as received_at,
+    "processed_at" at time zone 'UTC' as processed_at,
     status,
     CASE
         WHEN "quantity_received" > 60 THEN "quantity_received" / 1000
