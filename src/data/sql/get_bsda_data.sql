@@ -10,8 +10,12 @@ select id,
     END as "quantity",
     "destination_operation_code" as "processing_operation",
     "waste_code",
-    "waste_pop"
-from "trusted_zone_trackdechets"."bsda"
+    "waste_pop",
+    emitter_departement,
+    emitter_region,
+    destination_departement,
+    destination_region
+from "refined_zone_enriched"."bsda_enriched"
 where "is_deleted" = false
     and "created_at" >= '2022-01-03'
     /* First day of the first week of the year */

@@ -1,10 +1,11 @@
 """This module contains the callbacks for the home page.
 """
 
-from dash import ALL, Input, Output, callback, ctx, html, MATCH, State
+from dash import ALL, MATCH, Input, Output, State, callback, ctx, html, no_update
+from dash._callback import NoUpdate
 
-from src.pages.home.home_layouts import layouts
 from src.pages.home.home_layout_factory import get_navbar_elements
+from src.pages.home.home_layouts import layouts
 from src.pages.utils import format_number
 
 
@@ -14,9 +15,8 @@ from src.pages.utils import format_number
         Output("header-navigation", "children"),
     ],
     inputs=[Input({"type": "year-selector", "index": ALL}, "n_clicks")],
-    prevent_initial_call=True,
 )
-def change_layout_for_year(n_clicks) -> tuple[list, html.Ul]:
+def change_layout_for_year(n_clicks) -> tuple[list, html.Ul] | NoUpdate:
     """This callback is triggered when the user clicks on the year selection menu.
     It updates the part of the layout containing all the graphs to display the data
     of the selected year.
@@ -35,8 +35,11 @@ def change_layout_for_year(n_clicks) -> tuple[list, html.Ul]:
         The second element is the updated navbar elements.
     """
 
+    if n_clicks is None or n_clicks == 0:
+        return no_update
+
     if all(e is None for e in n_clicks):
-        year = 2022
+        year = 2023
     else:
         button_clicked = ctx.triggered_id
         year = button_clicked["index"]

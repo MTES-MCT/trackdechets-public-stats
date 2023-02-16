@@ -1,15 +1,17 @@
-from datetime import timedelta
+"""This modules contains all the functions to create the Plotly figure needed or the App.
+"""
+from datetime import datetime, timedelta
 from typing import Dict, List
 
-import pandas as pd
 import plotly.graph_objects as go
 import plotly.io as pio
+import polars as pl
 
 from src.pages.utils import break_long_line, format_number
 
 
 def create_weekly_created_figure(
-    data: pd.DataFrame,
+    data: pl.DataFrame,
 ) -> go.Figure:
     """Creates the figure showing number of weekly created companies, users...
 
@@ -24,12 +26,14 @@ def create_weekly_created_figure(
         Figure object ready to be plotted.
     """
 
+    data = data.to_dict(as_series=False)
+
     texts = []
-    texts += [""] * (len(data) - 1) + [format_number(data["count"].iloc[-1])]
+    texts += [""] * (len(data) - 1) + [format_number(data["count"][-1])]
 
     hovertexts = [
-        f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> créations"
-        for e in data.itertuples(index=False)
+        f"Semaine du {at-timedelta(days=6):%d/%m} au {at:%d/%m}<br><b>{format_number(count)}</b> créations"
+        for at, count in zip(data["at"], data["count"])
     ]
 
     fig = go.Figure(
@@ -62,11 +66,12 @@ def create_weekly_created_figure(
 
 
 def create_weekly_scatter_figure(
-    bs_created_data: pd.DataFrame,
-    bs_sent_data: pd.DataFrame,
-    bs_received_data: pd.DataFrame,
-    bs_processed_non_final_data: pd.DataFrame,
-    bs_processed_data: pd.DataFrame,
+    bs_created_data: pl.DataFrame,
+    bs_sent_data: pl.DataFrame,
+    bs_received_data: pl.DataFrame,
+    bs_processed_data: pl.DataFrame,
+    bs_processed_non_final_data: pl.DataFrame,
+    bs_processed_final_data: pl.DataFrame,
     bs_type: str,
     lines_configs: List[Dict[str, str]],
 ) -> go.Figure:
@@ -80,10 +85,13 @@ def create_weekly_scatter_figure(
         DataFrame containing the count of 'bordereaux' sent. Must have 'at' and metric corresponding columns.
     bs_received_data: DataFrame
         DataFrame containing the count of 'bordereaux' received. Must have 'at' and metric corresponding columns.
+    bs_processed_data: DataFrame
+        DataFrame containing the count of 'bordereaux' processed.
+        Must have 'at' and metric corresponding columns.
     bs_processed_non_final_data: DataFrame
         DataFrame containing the count of 'bordereaux' processed with non final processing operation code.
         Must have 'at' and metric corresponding columns.
-    bs_processed_data: DataFrame
+    bs_processed_final_data: DataFrame
         DataFrame containing the count of 'bordereaux' processed with final processing operation code.
         Must have 'at' and metric corresponding columns.
     bs_type: str
@@ -96,7 +104,8 @@ def create_weekly_scatter_figure(
     Plotly Figure Object
         Figure object ready to be plotted.
     """
-    colors = pio.templates["gouv"]["layout"]["colorway"]
+    colors = list(pio.templates["gouv"]["layout"]["colorway"])  # type: ignore
+    colors.append("#009099")
     plot_configs = [
         {"data": bs_created_data, **lines_configs[0], "color": colors[0]},
         {
@@ -107,17 +116,29 @@ def create_weekly_scatter_figure(
         },
         {"data": bs_received_data, **lines_configs[2], "color": colors[2]},
         {
-            "data": bs_processed_non_final_data,
+            "data": bs_processed_data,
             **lines_configs[3],
             "color": colors[3],
         },
-        {"data": bs_processed_data, **lines_configs[4], "color": colors[4]},
+        {
+            "data": bs_processed_non_final_data,
+            **lines_configs[4],
+            "color": colors[4],
+            "visible": "legendonly",
+        },
+        {
+            "data": bs_processed_final_data,
+            **lines_configs[5],
+            "color": colors[5],
+            "visible": "legendonly",
+        },
     ]
 
     scatter_list = []
 
     metric_name = "count" if "count" in bs_created_data.columns else "quantity"
     y_title = "Quantité (en tonnes)" if metric_name == "quantity" else None
+    legend_title = "Statut :" if metric_name == "quantity" else "Statut du bordereau :"
 
     for config in plot_configs:
 
@@ -130,7 +151,7 @@ def create_weekly_scatter_figure(
         # Creates a list of text to only show value on last point of the line
         texts = []
 
-        last_value = data[metric_name].iloc[-1]
+        last_value = data[-1, 1]
 
         texts = [""] * (len(data) - 1) if len(data) > 1 else []
         custom_data = texts.copy()
@@ -143,8 +164,8 @@ def create_weekly_scatter_figure(
             suffix = f"{bs_type} {suffix}"
 
         hover_texts = [
-            f"Semaine du {e[0]-timedelta(days=6):%d/%m} au {e[0]:%d/%m}<br><b>{format_number(e[1])}</b> {suffix}"
-            for e in data.itertuples(index=False)
+            f"Semaine du {e[0]:%d/%m} au {e[0]+timedelta(days=6):%d/%m}<br><b>{format_number(e[1],1)}</b> {suffix}"
+            for e in data.iter_rows()
         ]
 
         scatter_list.append(
@@ -171,9 +192,15 @@ def create_weekly_scatter_figure(
 
     fig.update_layout(
         paper_bgcolor="#fff",
-        margin=dict(t=25, r=70, l=5),
+        margin=dict(t=25, r=70, l=15),
         legend=dict(
-            orientation="h", y=1.2, font_size=13, itemwidth=40, bgcolor="rgba(0,0,0,0)"
+            orientation="v",
+            y=1.2,
+            x=-0.06,
+            font_size=13,
+            itemwidth=40,
+            bgcolor="rgba(0,0,0,0)",
+            title=legend_title,
         ),
         uirevision=True,
     )
@@ -184,7 +211,9 @@ def create_weekly_scatter_figure(
 
 
 def create_weekly_quantity_processed_figure(
-    quantity_recovered: pd.Series, quantity_destroyed: pd.Series
+    quantity_recovered: pl.Series,
+    quantity_destroyed: pl.Series,
+    date_axis_interval: tuple[datetime, datetime] | None = None,
 ) -> go.Figure:
     """Creates the figure showing the weekly waste quantity processed by type of process (destroyed or recovered).
 
@@ -219,11 +248,11 @@ def create_weekly_quantity_processed_figure(
     traces = []
     for conf in data_conf:
 
-        data = conf["data"]
+        data = conf["data"].to_dict(as_series=False)
         traces.append(
             go.Bar(
-                x=data.index,
-                y=data,
+                x=data["processed_at"],
+                y=data["quantity"],
                 name=conf["name"],
                 hovertext=[
                     conf["text"].format(
@@ -231,17 +260,21 @@ def create_weekly_quantity_processed_figure(
                         processed_at,
                         format_number(quantity),
                     )
-                    for processed_at, quantity in data.items()
+                    for processed_at, quantity in zip(
+                        data["processed_at"], data["quantity"]
+                    )
                 ],
                 hoverinfo="text",
                 texttemplate="%{y:.2s} tonnes",
                 marker_color=conf["color"],
+                width=1000 * 3600 * 24 * 6,
             )
         )
 
     fig = go.Figure(data=traces)
 
-    max_value = sum([conf["data"].max() for conf in data_conf])
+    max_value = sum([conf["data"]["quantity"].max() or 0 for conf in data_conf])
+
     fig.update_layout(
         xaxis_title="Semaine de traitement",
         legend=dict(
@@ -260,11 +293,14 @@ def create_weekly_quantity_processed_figure(
     )
     fig.update_yaxes(side="right")
 
+    if date_axis_interval is not None:
+        fig.update_xaxes(range=date_axis_interval)
+
     return fig
 
 
 def create_quantity_processed_sunburst_figure(
-    waste_quantity_processed_by_processing_code_df: pd.DataFrame,
+    waste_quantity_processed_by_processing_code_df: pl.DataFrame,
 ) -> go.Figure:
     """Creates the figure showing the weekly waste quantity processed by type of processing operation (destroyed or recovered).
 
@@ -280,58 +316,79 @@ def create_quantity_processed_sunburst_figure(
     """
 
     agg_data = waste_quantity_processed_by_processing_code_df
-    total_data = agg_data.groupby("type_operation").quantity.sum()
-    agg_data_recycled = agg_data.loc[
-        agg_data.type_operation == "Déchet valorisé"
-    ].sort_values("quantity")
-    agg_data_eliminated = agg_data.loc[
-        agg_data.type_operation == "Déchet éliminé"
-    ].sort_values("quantity")
-
-    agg_data_recycled_other = agg_data_recycled.loc[
-        (agg_data_recycled.quantity / agg_data_recycled.quantity.sum()) <= 0.12
-    ]
-    agg_data_eliminated_other = agg_data_eliminated.loc[
-        (agg_data_eliminated.quantity / agg_data_eliminated.quantity.sum()) <= 0.21
-    ]
-    agg_data_recycled_other_quantity = agg_data_recycled_other.quantity.sum()
-    agg_data_eliminated_other_quantity = agg_data_eliminated_other.quantity.sum()
-
-    agg_data_without_other = agg_data[
-        ~agg_data.index.isin(
-            agg_data_recycled_other.index.append(agg_data_eliminated_other.index)
-        )
-    ].sort_values("quantity", ascending=False)
-    agg_data_without_other["colors"] = agg_data_without_other.type_operation.apply(
-        lambda x: "rgb(102, 103, 61, 0.7)"
-        if x == "Déchet valorisé"
-        else "rgb(94, 42, 43, 0.7)"
+    total_data = (
+        agg_data.groupby("type_operation")
+        .agg(pl.col("quantity").sum())
+        .sort("type_operation")
     )
 
+    agg_data_recycled = agg_data.filter(
+        pl.col("type_operation") == "Déchet valorisé"
+    ).sort("quantity")
+    agg_data_eliminated = agg_data.filter(
+        pl.col("type_operation") == "Déchet éliminé"
+    ).sort("quantity")
+
+    agg_data_recycled_other = agg_data_recycled.filter(
+        (pl.col("quantity") / pl.col("quantity").sum()) <= 0.12
+    )
+    agg_data_eliminated_other = agg_data_eliminated.filter(
+        (pl.col("quantity") / pl.col("quantity").sum()) <= 0.21
+    )
+
+    agg_data_recycled_other_quantity = agg_data_recycled_other["quantity"].sum()
+    agg_data_eliminated_other_quantity = agg_data_eliminated_other["quantity"].sum()
+
+    other_processing_operations_codes = (
+        pl.concat(
+            [
+                agg_data_recycled_other.select("processing_operation"),
+                agg_data_eliminated_other.select("processing_operation"),
+            ]
+        )
+        .unique()
+        .to_series()
+    )
+    agg_data_without_other = agg_data.filter(
+        pl.col("processing_operation").is_in(other_processing_operations_codes).is_not()
+    ).sort("quantity", reverse=True)
+
+    agg_data_without_other = agg_data_without_other.with_column(
+        pl.col("type_operation")
+        .apply(
+            lambda x: "rgb(102, 103, 61, 0.7)"
+            if x == "Déchet valorisé"
+            else "rgb(94, 42, 43, 0.7)"
+        )
+        .alias("colors")
+    )
+
+    total_data = total_data.to_dict(as_series=False)
+    agg_data_without_other = agg_data_without_other.to_dict(as_series=False)
     ids = (
-        total_data.index.to_list()
-        + agg_data_without_other.processing_operation.to_list()
+        total_data["type_operation"]
+        + agg_data_without_other["processing_operation"]
         + ["Autres opérations de valorisation", "Autres opérations d'élimination'"]
     )
 
     labels = (
-        total_data.index.to_list()
-        + agg_data_without_other.processing_operation.to_list()
+        total_data["type_operation"]
+        + agg_data_without_other["processing_operation"]
         + ["Autre"] * 2
     )
     parents = (
         ["", ""]
-        + agg_data_without_other.type_operation.to_list()
+        + agg_data_without_other["type_operation"]
         + ["Déchet valorisé", "Déchet éliminé"]
     )
     values = (
-        total_data.to_list()
-        + agg_data_without_other.quantity.to_list()
+        total_data["quantity"]
+        + agg_data_without_other["quantity"]
         + [agg_data_recycled_other_quantity, agg_data_eliminated_other_quantity]
     )
     colors = (
         ["rgb(102, 103, 61, 1)", "rgb(94, 42, 43, 1)"]
-        + agg_data_without_other.colors.to_list()
+        + agg_data_without_other["colors"]
         + ["rgb(102, 103, 61, 0.7)", "rgb(94, 42, 43, 0.7)"]
     )
 
@@ -339,15 +396,19 @@ def create_quantity_processed_sunburst_figure(
     hover_texts = (
         [
             f"<b>{format_number(e)}t</b> {index.split(' ')[1]}es"
-            for index, e in total_data.items()
+            for index, e in zip(total_data["type_operation"], total_data["quantity"])
         ]
         + [
             hover_text_template.format(
-                code=e.processing_operation,
-                description=e.processing_operation_description,
-                quantity=format_number(e.quantity),
+                code=processing_operation,
+                description=processing_operation_description,
+                quantity=format_number(quantity),
             )
-            for e in agg_data_without_other.itertuples()
+            for processing_operation, processing_operation_description, quantity in zip(
+                agg_data_without_other["processing_operation"],
+                agg_data_without_other["processing_operation_description"],
+                agg_data_without_other["quantity"],
+            )
         ]
         + [
             f"Autres opérations de traitement<br><b>{format_number(e)}t</b> traitées"
@@ -382,7 +443,7 @@ def create_quantity_processed_sunburst_figure(
 
 
 def create_treemap_companies_figure(
-    company_counts_by_section: pd.DataFrame, company_counts_by_division: pd.DataFrame
+    company_counts_by_section: pl.DataFrame, company_counts_by_division: pl.DataFrame
 ) -> go.Figure:
     """Creates the figure showing the number of companies by NAF category.
 
@@ -423,6 +484,9 @@ def create_treemap_companies_figure(
         "rgba(77, 52, 42,0.4)",
     ]
 
+    company_counts_by_section = company_counts_by_section.to_pandas()
+    company_counts_by_division = company_counts_by_division.to_pandas()
+
     company_counts_by_section["colors"] = colors[
         : company_counts_by_section.code_section.nunique()
     ]
@@ -458,7 +522,7 @@ def create_treemap_companies_figure(
         ]
         + (
             company_counts_by_section["libelle_section"].apply(
-                break_long_line, max_line_length=14, max_length=55
+                break_long_line, max_line_length=14
             )
             + " - <b>"
             + company_counts_by_section["num_entreprises"].apply(
@@ -468,7 +532,7 @@ def create_treemap_companies_figure(
         ).tolist()
         + (
             company_counts_by_division["libelle_division"].apply(
-                break_long_line, max_line_length=14, max_length=55
+                break_long_line, max_line_length=14
             )
             + " - <b>"
             + company_counts_by_division["num_entreprises"].apply(

@@ -9,8 +9,12 @@ select id,
         else "destination_reception_weight"
     END as "quantity",
     "destination_operation_code" as "processing_operation",
-    "waste_code"
-from "trusted_zone_trackdechets"."bsff"
+    "waste_code",
+    emitter_departement,
+    emitter_region,
+    destination_departement,
+    destination_region
+from "refined_zone_enriched"."bsff_enriched"
 where "is_deleted" = false
     and "created_at" >= '2022-01-03'
     /* First day of the first week of the year */
