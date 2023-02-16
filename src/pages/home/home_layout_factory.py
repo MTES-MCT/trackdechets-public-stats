@@ -2,38 +2,25 @@
 """
 
 from datetime import datetime
+
 import plotly.graph_objects as go
-from dash import dcc, html
 import polars as pl
+from dash import dcc, html
 
 from src.data.data_processing import (
     get_company_counts_by_naf_dfs,
     get_recovered_and_eliminated_quantity_processed_by_week_series,
-    get_total_bs_created,
-    get_total_quantity_processed,
+    get_total_bs_created, get_total_quantity_processed,
     get_waste_quantity_processed_by_processing_code_df,
-    get_waste_quantity_processed_df,
-    get_weekly_aggregated_series,
-    get_weekly_preprocessed_dfs,
-    get_weekly_waste_quantity_processed_by_operation_code_df,
-)
-from src.data.datasets import (
-    BSDA_DATA,
-    BSDASRI_DATA,
-    BSDD_DATA,
-    BSFF_DATA,
-    ALL_BORDEREAUX_DATA,
-    COMPANY_DATA,
-    USER_DATA,
-)
+    get_weekly_aggregated_series, get_weekly_preprocessed_dfs,
+    get_weekly_waste_quantity_processed_by_operation_code_df)
+from src.data.datasets import (ALL_BORDEREAUX_DATA, BSDA_DATA, BSDASRI_DATA,
+                               BSDD_DATA, BSFF_DATA, COMPANY_DATA, USER_DATA)
 from src.data.utils import get_data_date_interval_for_year
 from src.pages.figures_factory import (
-    create_quantity_processed_sunburst_figure,
-    create_treemap_companies_figure,
-    create_weekly_created_figure,
-    create_weekly_quantity_processed_figure,
-    create_weekly_scatter_figure,
-)
+    create_quantity_processed_sunburst_figure, create_treemap_companies_figure,
+    create_weekly_created_figure, create_weekly_quantity_processed_figure,
+    create_weekly_scatter_figure)
 from src.pages.utils import add_callout, add_figure
 
 PLOTLY_PLOT_CONFIGS = {
@@ -820,27 +807,6 @@ def get_layout_for_a_year(year: int = 2022) -> list:
     )
 
     # Waste weight processed weekly
-    bsdd_quantity_processed_weekly_series = (
-        get_weekly_waste_quantity_processed_by_operation_code_df(
-            bsdd_data_df, date_interval
-        )
-    )
-    bsda_quantity_processed_weekly_series = (
-        get_weekly_waste_quantity_processed_by_operation_code_df(
-            bsda_data_df, date_interval
-        )
-    )
-    bsff_quantity_processed_weekly_series = (
-        get_weekly_waste_quantity_processed_by_operation_code_df(
-            bsff_data_df, date_interval
-        )
-    )
-    bsdasri_quantity_processed_weekly_series = (
-        get_weekly_waste_quantity_processed_by_operation_code_df(
-            bsdasri_data_df, date_interval
-        )
-    )
-
     quantity_processed_weekly_df = (
         get_weekly_waste_quantity_processed_by_operation_code_df(
             ALL_BORDEREAUX_DATA, date_interval

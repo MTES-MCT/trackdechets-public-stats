@@ -4,7 +4,6 @@ Data gathering and processing
 from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List, Tuple
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 import polars as pl
@@ -12,19 +11,8 @@ import polars as pl
 from .data_extract import get_processing_operation_codes_data
 
 
-def normalize_processing_operation(value: str) -> pl.Series:
-    """Replace, in a Series, waste processing codes with readable labels"""
-
-    if value.startswith("R"):
-        return "Déchet valorisé"
-    if value.startswith("D"):
-        return "Déchet éliminé"
-
-    return "Autre"
-
-
 def get_weekly_aggregated_series(
-    data: pd.DataFrame,
+    data: pl.DataFrame,
     date_interval: Tuple[datetime, datetime] | None = None,
     aggregate_column: str = "created_at",
     agg_config: Dict[str, str] = {
@@ -33,7 +21,7 @@ def get_weekly_aggregated_series(
         "aggfunc": "count",
     },
     only_non_final_processing_operation: bool | None = None,
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     """
     Creates a DataFrame with number of BSx, users, company... created by week.
 
@@ -48,7 +36,7 @@ def get_weekly_aggregated_series(
     aggregate_column: str
         Date column used to group data.
     agg_config: dict
-        Dictionary that will be passed to pandas `agg` method in order to perform group operation.
+        Dictionary that will be passed to polars `agg` method in order to perform group operation.
     only_non_final_processing_operation: bool
         If true and `aggregate_column` is equal to "processed_at",
         then only non final processing operation code will be kept in dataset.
@@ -59,7 +47,7 @@ def get_weekly_aggregated_series(
     Returns
     -------
     DataFrame
-        Pandas DataFrame containing data aggregated with the given aggregation config.
+        Polars DataFrame containing data aggregated with the given aggregation config.
     """
 
     if date_interval is not None:
@@ -114,8 +102,8 @@ def get_weekly_aggregated_series(
 
 
 def get_weekly_preprocessed_dfs(
-    bs_data: pd.DataFrame, date_interval: tuple[datetime, datetime] | None
-) -> Dict[str, List[pd.DataFrame]]:
+    bs_data: pl.DataFrame, date_interval: tuple[datetime, datetime] | None
+) -> Dict[str, List[pl.DataFrame]]:
     """Preprocess raw 'bordereau' data in order to aggregate it at weekly frequency.
     Useful to make several aggregation to prepare data to weekly aggregated figures.
 
@@ -171,68 +159,11 @@ def get_weekly_preprocessed_dfs(
     return bs_datasets
 
 
-def get_weekly_waste_processed_df(
-    bs_data: pd.DataFrame, date_interval: tuple[datetime, datetime] | None
-) -> pd.Series:
-    """
-    Creates a Pandas Series with total weight of dangerous waste processed by week.
-    Processing operation codes that does not designate final operations are discarded.
-    Parameters
-    ----------
-    bs_data: DataFrame
-        DataFrame containing BSx data.
-    date_interval: tuple of two datetime objects
-        Optional. Interval of date used to filter the data as datetime objects.
-        First element is the start interval, the second one is the end of the interval.
-        The interval is left inclusive.
-
-    Returns
-    -------
-    Series
-        Pandas Series containing aggregated data by week. Index are "processed_at" and "processing_operation".
-    """
-
-    date_filter = bs_data["processed_at"].notna()
-    if date_interval is not None:
-        date_filter = bs_data["processed_at"].between(*date_interval, inclusive="left")
-
-    df = bs_data[
-        date_filter
-        & (bs_data["status"].isin(["PROCESSED", "FOLLOWED_WITH_PNTTD"]))
-        & (
-            ~bs_data["processing_operation"].isin(
-                [
-                    "D9",
-                    "D13",
-                    "D14",
-                    "D15",
-                    "R12",
-                    "R13",
-                    "D 9",
-                    "D 13",
-                    "D 14",
-                    "D 15",
-                    "R 12",
-                    "R 13",
-                ]
-            )
-        )
-    ]
-
-    series = df.groupby(
-        by=[
-            pd.Grouper(key="processed_at", freq="1W"),
-        ]
-    )["quantity"].sum()
-
-    return series
-
-
 def get_weekly_waste_quantity_processed_by_operation_code_df(
-    bs_data: pd.DataFrame, date_interval: tuple[datetime, datetime] | None = None
-) -> pd.Series:
+    bs_data: pl.DataFrame, date_interval: tuple[datetime, datetime] | None = None
+) -> pl.DataFrame:
     """
-    Creates a Pandas multi-index Series with total weight of dangerous waste processed by week and by processing operation codes.
+    Creates a Polars multi-index Series with total weight of dangerous waste processed by week and by processing operation codes.
     Processing operation codes that does not designate final operations are discarded.
     Parameters
     ----------
@@ -245,8 +176,8 @@ def get_weekly_waste_quantity_processed_by_operation_code_df(
 
     Returns
     -------
-    Series
-        Pandas Series containing aggregated data by week. Index are "processed_at" and "processing_operation".
+    Dataframe
+        Polars DataFrame containing aggregated data by week. Data is grouped on columns "processed_at" and "processing_operation".
     """
     date_filter = pl.col("processed_at").is_not_null()
     if date_interval is not None:
@@ -280,69 +211,9 @@ def get_weekly_waste_quantity_processed_by_operation_code_df(
     return df
 
 
-def get_waste_quantity_processed_df(
-    bsdd_waste_processed_series: pd.Series,
-    bsda_waste_processed_series: pd.Series,
-    bsff_waste_processed_series: pd.Series,
-    bsdasri_waste_processed_series: pd.Series,
-) -> pd.DataFrame:
-    """Merges the Series of the different types of 'bordereaux' to get an aggregated DataFrame
-    with data of all 'bordereaux' summed by week and processing operation code. Also adds the description
-    for each processing operation.
-
-    Parameters
-    ----------
-    bsdd_waste_processed_series: pd.Series
-        Pandas Series containing weekly BSDD processed waste data.
-    bsda_waste_processed_series: pd.Series
-        Pandas Series containing weekly BSDA processed waste data.
-    bsff_waste_processed_series: pd.Series
-        Pandas Series containing weekly BSFF processed waste data.
-    bsdasri_waste_processed_series: pd.Series
-        Pandas Series containing weekly BSDASRI processed waste data.
-
-    Returns
-    -------
-    DataFrame
-        Pandas DataFrame containing the aggregated data. Index are 'processed_at' and 'processing_operation'.
-    """
-
-    quantity_processed_weekly_df = bsdd_waste_processed_series
-    for series in [
-        bsda_waste_processed_series,
-        bsff_waste_processed_series,
-        bsdasri_waste_processed_series,
-    ]:
-        quantity_processed_weekly_df = quantity_processed_weekly_df.add(
-            series, fill_value=0
-        )
-
-    quantity_processed_weekly_df = quantity_processed_weekly_df.reset_index()
-
-    processing_operations_codes_df = get_processing_operation_codes_data()
-
-    quantity_processed_weekly_df = pd.merge(
-        quantity_processed_weekly_df,
-        processing_operations_codes_df,
-        left_on="processing_operation",
-        right_on="code",
-        how="left",
-        validate="many_to_one",
-    )
-
-    quantity_processed_weekly_df = quantity_processed_weekly_df.groupby(
-        ["processed_at", "processing_operation"]
-    ).agg(
-        quantity=pd.NamedAgg("quantity", "max"),
-        processing_operation_description=pd.NamedAgg("description", "max"),
-    )
-
-    return quantity_processed_weekly_df
-
-
 def get_recovered_and_eliminated_quantity_processed_by_week_series(
     quantity_processed_weekly_df: pl.DataFrame,
-) -> list[pd.Series]:
+) -> list[pl.Series]:
     """Extract the weekly quantity of recovered waste and eliminated waste in two separate Series.
 
     Parameters
@@ -374,8 +245,8 @@ def get_recovered_and_eliminated_quantity_processed_by_week_series(
 
 
 def get_waste_quantity_processed_by_processing_code_df(
-    quantity_processed_weekly_df,
-) -> pd.DataFrame:
+    quantity_processed_weekly_df: pl.DataFrame,
+) -> pl.DataFrame:
     """Adds the type of valorisation to the input DataFrame and sum waste quantities to have global quantity by processing operation code.
 
     Parameters
@@ -411,8 +282,8 @@ def get_waste_quantity_processed_by_processing_code_df(
 
 
 def get_company_counts_by_naf_dfs(
-    company_data_df: pd.DataFrame,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    company_data_df: pl.DataFrame,
+) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
     Builds two DataFrames used for the Treemap showing the company counts by company activities (code NAF):
     - The first one is aggregated by "libelle_section", the outermost hierarchical level;

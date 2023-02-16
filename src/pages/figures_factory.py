@@ -10,7 +10,7 @@ from src.pages.utils import break_long_line, format_number
 
 
 def create_weekly_created_figure(
-    data: pd.DataFrame,
+    data: pl.DataFrame,
 ) -> go.Figure:
     """Creates the figure showing number of weekly created companies, users...
 
@@ -65,12 +65,12 @@ def create_weekly_created_figure(
 
 
 def create_weekly_scatter_figure(
-    bs_created_data: pd.DataFrame,
-    bs_sent_data: pd.DataFrame,
-    bs_received_data: pd.DataFrame,
-    bs_processed_data: pd.DataFrame,
-    bs_processed_non_final_data: pd.DataFrame,
-    bs_processed_final_data: pd.DataFrame,
+    bs_created_data: pl.DataFrame,
+    bs_sent_data: pl.DataFrame,
+    bs_received_data: pl.DataFrame,
+    bs_processed_data: pl.DataFrame,
+    bs_processed_non_final_data: pl.DataFrame,
+    bs_processed_final_data: pl.DataFrame,
     bs_type: str,
     lines_configs: List[Dict[str, str]],
 ) -> go.Figure:
@@ -103,7 +103,7 @@ def create_weekly_scatter_figure(
     Plotly Figure Object
         Figure object ready to be plotted.
     """
-    colors = list(pio.templates["gouv"]["layout"]["colorway"])
+    colors = list(pio.templates["gouv"]["layout"]["colorway"])  # type: ignore
     colors.append("#009099")
     plot_configs = [
         {"data": bs_created_data, **lines_configs[0], "color": colors[0]},
@@ -210,8 +210,8 @@ def create_weekly_scatter_figure(
 
 
 def create_weekly_quantity_processed_figure(
-    quantity_recovered: pd.Series,
-    quantity_destroyed: pd.Series,
+    quantity_recovered: pl.Series,
+    quantity_destroyed: pl.Series,
     date_axis_interval: tuple[datetime, datetime] | None = None,
 ) -> go.Figure:
     """Creates the figure showing the weekly waste quantity processed by type of process (destroyed or recovered).
@@ -272,7 +272,7 @@ def create_weekly_quantity_processed_figure(
 
     fig = go.Figure(data=traces)
 
-    max_value = sum([conf["data"]["quantity"].max() for conf in data_conf])
+    max_value = sum([conf["data"]["quantity"].max() or 0 for conf in data_conf])
 
     fig.update_layout(
         xaxis_title="Semaine de traitement",
@@ -299,7 +299,7 @@ def create_weekly_quantity_processed_figure(
 
 
 def create_quantity_processed_sunburst_figure(
-    waste_quantity_processed_by_processing_code_df: pd.DataFrame,
+    waste_quantity_processed_by_processing_code_df: pl.DataFrame,
 ) -> go.Figure:
     """Creates the figure showing the weekly waste quantity processed by type of processing operation (destroyed or recovered).
 

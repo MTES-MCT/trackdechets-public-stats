@@ -3,10 +3,8 @@ Data gathering and processing
 """
 import json
 import time
-from datetime import datetime, timedelta
-from os import getenv
+from os import environ
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 import polars as pl
@@ -14,7 +12,7 @@ import sqlalchemy
 
 from src.data.utils import format_waste_codes
 
-DATABASE_URL = getenv("DATABASE_URL")
+DATABASE_URL = environ["DATABASE_URL"]
 DB_ENGINE = sqlalchemy.create_engine(DATABASE_URL)
 SQL_PATH = Path(__file__).parent.absolute() / "sql"
 STATIC_DATA_PATH = Path(__file__).parent.absolute() / "static"
@@ -24,7 +22,7 @@ def get_bs_data(
     query_filename: str,
     include_drafts: bool = False,
     include_only_dangerous_waste: bool = True,
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     """
     Queries the configured database for BSx data. The query should select the columns needed to
     create the figures of the application.
@@ -47,10 +45,7 @@ def get_bs_data(
     started_time = time.time()
 
     sql_query = (SQL_PATH / query_filename).read_text()
-    # bs_data_df = pd.read_sql_query(
-    #     sql_query,
-    #     con=DB_ENGINE,
-    # )
+  
     bs_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
 
     date_columns = ["created_at", "sent_at", "received_at", "processed_at"]
@@ -85,7 +80,7 @@ def get_bs_data(
     return bs_data_df
 
 
-def get_company_data() -> pd.DataFrame:
+def get_company_data() -> pl.DataFrame:
     """
     Queries the configured database for company data.
 
@@ -108,7 +103,7 @@ def get_company_data() -> pd.DataFrame:
     return company_data_df
 
 
-def get_user_data() -> pd.DataFrame:
+def get_user_data() -> pl.DataFrame:
     """
     Queries the configured database for user data, focused on creation date.
 
@@ -131,7 +126,7 @@ def get_user_data() -> pd.DataFrame:
     return user_data_df
 
 
-def get_processing_operation_codes_data() -> pd.DataFrame:
+def get_processing_operation_codes_data() -> pl.DataFrame:
     """
     Returns description for each processing operation codes.
 
@@ -148,7 +143,7 @@ def get_processing_operation_codes_data() -> pd.DataFrame:
     return data
 
 
-def get_departement_geographical_data() -> pd.DataFrame:
+def get_departement_geographical_data() -> pl.DataFrame:
     """
     Returns INSEE department geographical data.
 

@@ -1,10 +1,9 @@
-import pandas as pd
 import polars as pl
 
 
 def format_filter(
     column_to_filter: pl.Expr, waste_codes_filter: dict[str, list[str]]
-) -> pd.Series:
+) -> pl.Expr | None:
     """
     Filter a given column column_to_filter based on the input waste_codes_filter.
 
@@ -15,29 +14,17 @@ def format_filter(
 
     Parameters
     ----------
-    column_to_filter : pandas series
+    column_to_filter : polars expression
         The column to be filtered.
     waste_codes_filter : dict
         The dictionary that contains the waste codes checked or half-checked on UI that will be used for filtering.
 
     Returns
     -------
-    pandas series or None
-        The filtered series of values from column_to_filter. None if all filters or none filter have been checked.
+    polars expression
+        The filtered expression from column_to_filter. None if all filters or none filter have been checked.
 
-    Examples
-    --------
-    >>> column = pd.Series(['10 01 03*', '14 01 01', '12 02 01', '10 01 03*'])
-    >>> waste_codes_filter = {
-        "checked": ["10", "10 01", "10 02", "10 01 01", "10 01 03*"],
-        "half_checked": ["all"]
-    }
-    >>> format_filter(column, waste_codes_filter)
-    0 True
-    1 False
-    2 False
-    3 True
-    dtype: bool
+   
     """
     series_filter = None
 

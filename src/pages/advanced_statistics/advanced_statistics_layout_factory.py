@@ -242,7 +242,6 @@ def create_input_output_elements(
 
     departement_filter_str = ""
 
-    bs_data_filtered = bs_data
     if (departement_filter is not None) and (departement_filter != "all"):
         departement_filter_str = geographical_data.filter(
             pl.col("code_departement") == departement_filter
@@ -265,7 +264,7 @@ def create_input_output_elements(
         ]
     else:
         return [
-            html.H4(f"Flux de déchet du département"),
+            html.H4("Flux de déchet du département"),
             html.Div(
                 "Veuillez sélectionner un département pour afficher les données",
                 id="departement-figure-no-data",
@@ -301,15 +300,15 @@ def create_input_output_elements(
                 [
                     add_callout(
                         number=bs_data_processed_locally_quantity,
-                        text=f"tonnes de déchets dangereux tracés et traités à l’intérieur du département",
+                        text="tonnes de déchets dangereux tracés et traités à l’intérieur du département",
                     ),
                     add_callout(
                         number=bs_data_processed_incoming_quantity,
-                        text=f"tonnes de déchets entrantes traités à l’intérieur du département",
+                        text="tonnes de déchets entrantes traités à l’intérieur du département",
                     ),
                     add_callout(
                         number=bs_data_processed_outgoing_quantity,
-                        text=f"tonnes de déchets sortantes traités à l’extérieur du département",
+                        text="tonnes de déchets sortantes traités à l’extérieur du département",
                     ),
                 ],
                 id="total-processed-figures",
@@ -318,4 +317,4 @@ def create_input_output_elements(
         ]
     )
 
-    return elements
+    return elements  # type: ignore
