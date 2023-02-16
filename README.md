@@ -39,6 +39,7 @@ pipenv run run.py
 **1.9 16/02/2023**
 - Les données 2023 sont maintenant affichées par défaut
 - La mise en page a été légèrement revue
+- Ajout de nouvelles courbes
 - Ajout d'une page de statistiques avancées (bêta)
 - Amélioration des performances et diminution de l'empreinte 
 mémoire en remplaçant pandas par Polars pour le traitement des données
