@@ -1,8 +1,7 @@
 """This module contains the callbacks for the home page.
 """
 
-from dash import (ALL, MATCH, Input, Output, State, callback, ctx, html,
-                  no_update)
+from dash import ALL, MATCH, Input, Output, State, callback, ctx, html, no_update
 from dash._callback import NoUpdate
 
 from src.pages.home.home_layout_factory import get_navbar_elements
@@ -40,7 +39,7 @@ def change_layout_for_year(n_clicks) -> tuple[list, html.Ul] | NoUpdate:
         return no_update
 
     if all(e is None for e in n_clicks):
-        year = 2022
+        year = 2023
     else:
         button_clicked = ctx.triggered_id
         year = button_clicked["index"]

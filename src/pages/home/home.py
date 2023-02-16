@@ -3,7 +3,7 @@
 from dash import dcc, html, register_page
 
 from src.pages.home.home_layout_factory import get_header_elements
-from src.pages.home.home_layouts import layout_2022
+from src.pages.home.home_layouts import layout_2023
 
 register_page(
     __name__,
@@ -15,7 +15,7 @@ register_page(
 
 def layout() -> html.Div:
     """
-    Creates initial layout for the home page. Currently the initial layout displays 2022 data.
+    Creates initial layout for the home page. Currently the initial layout displays 2023 data.
 
     Returns
     -------
@@ -26,7 +26,7 @@ def layout() -> html.Div:
         get_header_elements(),
         dcc.Loading(
             html.Div(
-                layout_2022,
+                layout_2023,
                 id="graph-container",
             ),
             style={"position": "absolute", "top": "25px"},
