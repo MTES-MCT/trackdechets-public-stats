@@ -1,8 +1,7 @@
 """
-Dash dash_app configuration
+Dash app configuration
 """
 from dash import Dash, html, page_container
-
 
 external_scripts = ["https://cdn.plot.ly/plotly-locale-fr-latest.js"]
 extra_config = {"locale": "fr"}

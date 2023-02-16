@@ -1,3 +1,6 @@
+"""
+This module contains all callbacks for "Advanced Statistics" page.
+"""
 from dash import Input, Output, State, callback
 from dash.development.base_component import Component
 
@@ -61,12 +64,14 @@ def create_waste_processed_numbers(
     waste_codes_filters_half_checked: list[str],
 ) -> list[Component]:
     """
-    Creates dash elements containing the three figures computed after data is filtered by given filter values:
+    Creates dash elements containing the three figures
+    computed after data is filtered by given filter values:
     - Total number of processed waste incoming
     - Total number of waste outgoing
     - Total number of waste created and processed inside the departement.
 
-    If no department value is selected, figures are not computed and instead an informational message is returned.
+    If no department value is selected,
+    figures are not computed and instead an informational message is returned.
 
     Parameters
     ----------

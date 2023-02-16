@@ -1,8 +1,10 @@
-"""This module contains the functions that allows to create the dash layout elements.
+"""This module contains the functions that allows to create the dash layout elements for home page.
 """
 
 from datetime import datetime
+
 import plotly.graph_objects as go
+import polars as pl
 from dash import dcc, html
 
 from src.data.data_processing import (
@@ -11,12 +13,12 @@ from src.data.data_processing import (
     get_total_bs_created,
     get_total_quantity_processed,
     get_waste_quantity_processed_by_processing_code_df,
-    get_waste_quantity_processed_df,
     get_weekly_aggregated_series,
     get_weekly_preprocessed_dfs,
     get_weekly_waste_quantity_processed_by_operation_code_df,
 )
 from src.data.datasets import (
+    ALL_BORDEREAUX_DATA,
     BSDA_DATA,
     BSDASRI_DATA,
     BSDD_DATA,
@@ -47,23 +49,25 @@ PLOTLY_PLOT_CONFIGS = {
 
 
 def get_header_elements() -> html.Div:
+    """It creates the header of the page, which contains the title, the last update date, a short
+    description of Trackdéchets, three callout elements with the total number of bordereaux created, the total
+    quantity of waste processed and the total number of companies created, and a navigation bar to
+    select the year of the data to display.
+
+    Returns
+    -------
+        A Div element containing the header of the page.
+
+    """
 
     # Load all needed data
-    bsdd_data_df = BSDD_DATA
-    bsda_data_df = BSDA_DATA
-    bsff_data_df = BSFF_DATA
-    bsdasri_data_df = BSDASRI_DATA
     company_data_df = COMPANY_DATA
 
-    total_bs_created = get_total_bs_created(
-        bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df, None
-    )
+    total_bs_created = get_total_bs_created(ALL_BORDEREAUX_DATA)
 
-    total_quantity_processed = get_total_quantity_processed(
-        bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df, None
-    )
+    total_quantity_processed = get_total_quantity_processed(ALL_BORDEREAUX_DATA)
 
-    total_companies_created = company_data_df.index.size
+    total_companies_created = company_data_df.height
 
     elements = [
         html.Div(
@@ -826,38 +830,14 @@ def get_layout_for_a_year(year: int = 2022) -> list:
     )
 
     # Waste weight processed weekly
-    bsdd_quantity_processed_weekly_series = (
+    quantity_processed_weekly_df = (
         get_weekly_waste_quantity_processed_by_operation_code_df(
-            bsdd_data_df, date_interval
+            ALL_BORDEREAUX_DATA, date_interval
         )
-    )
-    bsda_quantity_processed_weekly_series = (
-        get_weekly_waste_quantity_processed_by_operation_code_df(
-            bsda_data_df, date_interval
-        )
-    )
-    bsff_quantity_processed_weekly_series = (
-        get_weekly_waste_quantity_processed_by_operation_code_df(
-            bsff_data_df, date_interval
-        )
-    )
-    bsdasri_quantity_processed_weekly_series = (
-        get_weekly_waste_quantity_processed_by_operation_code_df(
-            bsdasri_data_df, date_interval
-        )
-    )
-
-    quantity_processed_weekly_df = get_waste_quantity_processed_df(
-        bsdd_quantity_processed_weekly_series,
-        bsda_quantity_processed_weekly_series,
-        bsff_quantity_processed_weekly_series,
-        bsdasri_quantity_processed_weekly_series,
     )
 
     # Total bordereaux created
-    bs_created_total = get_total_bs_created(
-        bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df, date_interval
-    )
+    bs_created_total = get_total_bs_created(ALL_BORDEREAUX_DATA, date_interval)
 
     # Waste weight processed weekly
     (
@@ -879,19 +859,19 @@ def get_layout_for_a_year(year: int = 2022) -> list:
     )
 
     quantity_processed_total = get_total_quantity_processed(
-        bsdd_data_df, bsda_data_df, bsff_data_df, bsdasri_data_df, date_interval
+        ALL_BORDEREAUX_DATA, date_interval
     )
 
     # Company and user section
-    company_data_df = COMPANY_DATA[
-        COMPANY_DATA["created_at"].between(*date_interval, inclusive="left")
-    ]
-    user_data_df = USER_DATA[
-        USER_DATA["created_at"].between(*date_interval, inclusive="left")
-    ]
+    company_data_df = COMPANY_DATA.filter(
+        pl.col("created_at").is_between(*date_interval, closed="left")
+    )
+    user_data_df = USER_DATA.filter(
+        pl.col("created_at").is_between(*date_interval, closed="left")
+    )
 
-    company_created_total_life = company_data_df.index.size
-    user_created_total_life = user_data_df.index.size
+    company_created_total_life = company_data_df.height
+    user_created_total_life = user_data_df.height
 
     company_created_weekly_df = get_weekly_aggregated_series(company_data_df)
     user_created_weekly_df = get_weekly_aggregated_series(user_data_df)
