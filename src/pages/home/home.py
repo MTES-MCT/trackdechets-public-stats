@@ -1,11 +1,9 @@
 """This module is where the home page is registered and its initial layout rendered.
 """
-from datetime import datetime
-from dash import html, register_page, dcc
+from dash import dcc, html, register_page
 
-
+from src.pages.home.home_layout_factory import get_header_elements
 from src.pages.home.home_layouts import layout_2022
-from src.pages.home.home_layout_factory import get_header_elements, get_navbar_elements
 
 register_page(
     __name__,
@@ -17,7 +15,7 @@ register_page(
 
 def layout() -> html.Div:
     """
-    Creates initial layout. Currently the initial layout displays 2022 data.
+    Creates initial layout for the home page. Currently the initial layout displays 2022 data.
 
     Returns
     -------

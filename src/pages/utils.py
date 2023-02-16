@@ -1,3 +1,5 @@
+"""This module contains utility functions useful for all pages.
+"""
 import re
 
 import plotly.graph_objects as go
@@ -100,11 +102,10 @@ def add_callout(text: str, number: int = None) -> html.Div:
     return col
 
 
-def break_long_line(line: str, max_line_length: int = 26, max_length: int = 60) -> str:
+def break_long_line(line: str, max_line_length: int = 26) -> str:
     """Format a string to add HTML line breaks (<br>) if it exceeds max_line_length."""
     length = 0
 
-    # line = line[:max_length] + "..."
     new_pieces = []
     for piece in line.split(" "):
         length += len(piece)

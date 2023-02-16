@@ -1,9 +1,12 @@
+"""
+This module contains the functions used to create Dash layout elements.
+"""
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+import polars as pl
 from dash import dcc, html
 from dash.development.base_component import Component
-import polars as pl
 from feffery_antd_components.AntdTree import AntdTree
 
 from src.data.data_extract import (

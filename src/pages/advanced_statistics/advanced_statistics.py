@@ -3,9 +3,8 @@
 
 from dash import dcc, html, register_page
 
-from src.pages.advanced_statistics.advanced_statistics_layout_factory import (
-    create_filters_selects_elements,
-)
+from src.pages.advanced_statistics.advanced_statistics_layout_factory import \
+    create_filters_selects_elements
 
 register_page(
     __name__,

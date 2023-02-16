@@ -1,4 +1,4 @@
-"""This module contains the functions that allows to create the dash layout elements.
+"""This module contains the functions that allows to create the dash layout elements for home page.
 """
 
 from datetime import datetime
@@ -10,17 +10,30 @@ from dash import dcc, html
 from src.data.data_processing import (
     get_company_counts_by_naf_dfs,
     get_recovered_and_eliminated_quantity_processed_by_week_series,
-    get_total_bs_created, get_total_quantity_processed,
+    get_total_bs_created,
+    get_total_quantity_processed,
     get_waste_quantity_processed_by_processing_code_df,
-    get_weekly_aggregated_series, get_weekly_preprocessed_dfs,
-    get_weekly_waste_quantity_processed_by_operation_code_df)
-from src.data.datasets import (ALL_BORDEREAUX_DATA, BSDA_DATA, BSDASRI_DATA,
-                               BSDD_DATA, BSFF_DATA, COMPANY_DATA, USER_DATA)
+    get_weekly_aggregated_series,
+    get_weekly_preprocessed_dfs,
+    get_weekly_waste_quantity_processed_by_operation_code_df,
+)
+from src.data.datasets import (
+    ALL_BORDEREAUX_DATA,
+    BSDA_DATA,
+    BSDASRI_DATA,
+    BSDD_DATA,
+    BSFF_DATA,
+    COMPANY_DATA,
+    USER_DATA,
+)
 from src.data.utils import get_data_date_interval_for_year
 from src.pages.figures_factory import (
-    create_quantity_processed_sunburst_figure, create_treemap_companies_figure,
-    create_weekly_created_figure, create_weekly_quantity_processed_figure,
-    create_weekly_scatter_figure)
+    create_quantity_processed_sunburst_figure,
+    create_treemap_companies_figure,
+    create_weekly_created_figure,
+    create_weekly_quantity_processed_figure,
+    create_weekly_scatter_figure,
+)
 from src.pages.utils import add_callout, add_figure
 
 PLOTLY_PLOT_CONFIGS = {
@@ -36,6 +49,16 @@ PLOTLY_PLOT_CONFIGS = {
 
 
 def get_header_elements() -> html.Div:
+    """It creates the header of the page, which contains the title, the last update date, a short
+    description of Trackdéchets, three callout elements with the total number of bordereaux created, the total
+    quantity of waste processed and the total number of companies created, and a navigation bar to
+    select the year of the data to display.
+
+    Returns
+    -------
+        A Div element containing the header of the page.
+
+    """
 
     # Load all needed data
     company_data_df = COMPANY_DATA

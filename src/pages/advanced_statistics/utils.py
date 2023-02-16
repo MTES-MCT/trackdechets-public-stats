@@ -1,3 +1,5 @@
+"""This module contains utility functions for advanced statistics page.
+"""
 import polars as pl
 
 
@@ -9,8 +11,8 @@ def format_filter(
 
     The filtering is done in three levels based on the length of the code: 2, 5, and longer than 5.
     The waste_codes_filter input is a dictionary that contains two keys: "checked" and "half_checked".
-    The "checked" key holds a list of codes to be fully checked for filtering,
-    while "half_checked" holds a list of codes to be partially checked for filtering.
+    The "checked" key holds a list of codes that are fully checked,
+    while "half_checked" holds a list of codes to are partially checked.
 
     Parameters
     ----------

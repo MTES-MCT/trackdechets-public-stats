@@ -5,7 +5,6 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List, Tuple
 
-import pandas as pd
 import polars as pl
 
 from .data_extract import get_processing_operation_codes_data

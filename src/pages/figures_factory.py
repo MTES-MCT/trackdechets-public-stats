@@ -1,10 +1,11 @@
-from datetime import timedelta, datetime
+"""This modules contains all the functions to create the Plotly figure needed or the App.
+"""
+from datetime import datetime, timedelta
 from typing import Dict, List
 
-import pandas as pd
-import polars as pl
 import plotly.graph_objects as go
 import plotly.io as pio
+import polars as pl
 
 from src.pages.utils import break_long_line, format_number
 
@@ -521,7 +522,7 @@ def create_treemap_companies_figure(
         ]
         + (
             company_counts_by_section["libelle_section"].apply(
-                break_long_line, max_line_length=14, max_length=55
+                break_long_line, max_line_length=14
             )
             + " - <b>"
             + company_counts_by_section["num_entreprises"].apply(
@@ -531,7 +532,7 @@ def create_treemap_companies_figure(
         ).tolist()
         + (
             company_counts_by_division["libelle_division"].apply(
-                break_long_line, max_line_length=14, max_length=55
+                break_long_line, max_line_length=14
             )
             + " - <b>"
             + company_counts_by_division["num_entreprises"].apply(

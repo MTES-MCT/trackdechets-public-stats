@@ -3,13 +3,9 @@ The datasets are loaded in memory to be reusable by other functions.
 """
 import polars as pl
 
-from src.data.data_extract import (
-    get_bs_data,
-    get_company_data,
-    get_user_data,
-    get_departement_geographical_data,
-)
-
+from src.data.data_extract import (get_bs_data, get_company_data,
+                                   get_departement_geographical_data,
+                                   get_user_data)
 
 # Load all needed data
 BSDD_DATA = get_bs_data(
