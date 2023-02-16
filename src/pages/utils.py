@@ -81,7 +81,8 @@ def add_callout(text: str, number: int = None) -> html.Div:
     """
     text_class = "number-text" if number else "fr-callout__text"
     number_class = "callout-number small-number"
-    if number:
+    elements = []
+    if number is not None:
         # Below 1M
         if number < 1000000:
             number_class = "callout-number"
@@ -90,12 +91,13 @@ def add_callout(text: str, number: int = None) -> html.Div:
             number_class = "callout-number smaller-number"
         # From 1M to 10M-1
         # don't change initial value
+        elements.append(html.P(format_number(number), className=number_class))
 
+    elements.append(
+        dcc.Markdown(text, className=text_class),
+    )
     col = html.Div(
-        [
-            html.P(format_number(number), className=number_class) if number else None,
-            dcc.Markdown(text, className=text_class),
-        ],
+        elements,
         className="fr-callout",
     )
 

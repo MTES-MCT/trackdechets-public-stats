@@ -232,10 +232,11 @@ def get_recovered_and_eliminated_quantity_processed_by_week_series(
     for regex in [r"^R.*", r"^D.*"]:
         series = (
             quantity_processed_weekly_df.filter(
-                pl.col("processing_operation").str.contains(regex)
+                pl.col("processing_operation").is_not_null()
+                & pl.col("processing_operation").str.contains(regex)
             )
             .groupby("processed_at", maintain_order=True)
-            .agg(pl.col("quantity").sum().round(0))
+            .agg(pl.col("quantity").sum())
         )
 
         res.append(series)

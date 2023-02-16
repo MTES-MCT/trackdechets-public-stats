@@ -122,6 +122,10 @@ Copied and renamed from DSFR core CSS */
     width: 100%;
 }
 
+.fr-callout__text {
+    margin-top: 1em;
+}
+
 .callout-number {
     font-size: 2.5rem;
     font-family: "Marianne-Bold", sans-serif;

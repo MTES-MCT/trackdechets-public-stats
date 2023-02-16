@@ -181,7 +181,7 @@ def create_filtered_waste_processed_figure(
                 pl.col("code_departement") == departement_filter
             )["libelle"].item()
         )
-        bs_data_filtered = bs_data.filter(
+        bs_data_filtered = bs_data_filtered.filter(
             pl.col("destination_departement") == departement_filter
         )
 
@@ -245,6 +245,26 @@ def create_input_output_elements(
 
     departement_filter_str = ""
 
+    date_interval = (
+        datetime(2022, 1, 3, tzinfo=ZoneInfo("Europe/Paris")),
+        datetime.now(tz=ZoneInfo("Europe/Paris")),
+    )
+    bs_data = bs_data.filter(
+        pl.col("processed_at").is_between(*date_interval, closed="left")
+        & pl.col("processing_operation")
+        .is_in(
+            [
+                "D 9",
+                "D 13",
+                "D 14",
+                "D 15",
+                "R 12",
+                "R 13",
+            ]
+        )
+        .is_not()
+        & pl.col("status").is_in(["PROCESSED", "FOLLOWED_WITH_PNTTD"])
+    )
     if (departement_filter is not None) and (departement_filter != "all"):
         departement_filter_str = geographical_data.filter(
             pl.col("code_departement") == departement_filter
