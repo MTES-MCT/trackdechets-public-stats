@@ -43,6 +43,10 @@ body {
     cursor: pointer;
 }
 
+#header-nav-elements-container {
+    justify-content: center;
+}
+
 #bordereaux-counts-section {
     margin-bottom: 3em;
 }

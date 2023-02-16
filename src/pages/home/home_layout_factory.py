@@ -277,6 +277,10 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             className="row",
             id="operation-type-section",
         ),
+        html.Div(
+            "*tous déchets dangereux et/ou POP (Polluants Organiques Persistants)",
+            className="fr-text--xs",
+        ),
         html.H4(["Détail par types de déchets dangereux"]),
         html.Div(
             "Astuce : vous pouvez cliquer sur les textes de la légende pour faire disparaître ou apparaître les différentes courbes.",
@@ -517,10 +521,6 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             ),
             id="bordereaux-counts-section",
         ),
-        html.Div(
-            "*tous déchets dangereux et/ou POP (Polluants Organiques Persistants)",
-            className="fr-text--xs",
-        ),
         html.H4("Établissements et utilisateurs"),
         html.Div(
             [
@@ -694,7 +694,9 @@ def get_navbar_elements(years: list[int], year_selected: int) -> html.Ul:
             )
         )
 
-    return html.Ul(elements, className="fr-nav__list")
+    return html.Ul(
+        elements, className="fr-nav__list", id="header-nav-elements-container"
+    )
 
 
 def get_layout_for_a_year(year: int = 2022) -> list:
