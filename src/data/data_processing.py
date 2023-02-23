@@ -132,7 +132,6 @@ def get_weekly_preprocessed_dfs(
         ("processed_at", True),
         ("processed_at", False),
     ]:
-
         bs_datasets["counts"].append(
             get_weekly_aggregated_series(
                 bs_data,

@@ -8,7 +8,6 @@ import polars as pl
 from dash import dcc, html
 
 from src.data.data_processing import (
-    get_company_counts_by_naf_dfs,
     get_recovered_and_eliminated_quantity_processed_by_week_series,
     get_total_bs_created,
     get_total_quantity_processed,
@@ -45,6 +44,7 @@ PLOTLY_PLOT_CONFIGS = {
         "scale": 1,  # Multiply title/legend/axis/canvas sizes by this factor
     },
     "displaylogo": False,
+    "locale": "fr",
 }
 
 
@@ -672,7 +672,6 @@ def get_navbar_elements(years: list[int], year_selected: int) -> html.Ul:
     elements = []
 
     for year in years:
-
         if year_selected == year:
             link_element = html.Span(
                 f"Année {year}",
@@ -881,13 +880,7 @@ def get_layout_for_a_year(year: int = 2022) -> list:
     company_created_weekly = create_weekly_created_figure(company_created_weekly_df)
     user_created_weekly = create_weekly_created_figure(user_created_weekly_df)
 
-    (
-        company_counts_by_section,
-        company_counts_by_division,
-    ) = get_company_counts_by_naf_dfs(company_data_df)
-    treemap_companies_figure = create_treemap_companies_figure(
-        company_counts_by_section, company_counts_by_division
-    )
+    treemap_companies_figure = create_treemap_companies_figure(company_data_df)
 
     # generate
     elements = get_graph_elements_for_a_year(
