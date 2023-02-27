@@ -8,6 +8,7 @@ import polars as pl
 from dash import dcc, html
 
 from src.data.data_processing import (
+    get_quantities_by_naf,
     get_recovered_and_eliminated_quantity_processed_by_week_series,
     get_total_bs_created,
     get_total_quantity_processed,
@@ -23,6 +24,7 @@ from src.data.datasets import (
     BSDD_DATA,
     BSFF_DATA,
     COMPANY_DATA,
+    NAF_NOMENCLATURE_DATA,
     USER_DATA,
 )
 from src.data.utils import get_data_date_interval_for_year
@@ -176,6 +178,7 @@ def get_graph_elements_for_a_year(
     bsda_quantities_weekly: go.Figure,
     bsff_quantities_weekly: go.Figure,
     bsdasri_quantities_weekly: go.Figure,
+    produced_quantity_by_category: go.Figure,
     company_created_total_life: int,
     user_created_total_life: int,
     company_created_weekly: go.Figure,
@@ -266,7 +269,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     "bsdd_processed_by_operation",
                     "Quantité de déchets dangereux* tracés et traités par opération de traitement",
                     (
-                        "Le coeur du graphique représente la part de déchets valorisés et éliminés, "
+                        "Le cœur du graphique représente la part de déchets valorisés et éliminés, "
                         "les sections autour permettent d'avoir une idée de la part de déchets par type d'opération de traitement."
                     ),
                 ),
@@ -520,6 +523,22 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                 ],
             ),
             id="bordereaux-counts-section",
+        ),
+        html.Div(
+            [
+                add_figure(
+                    produced_quantity_by_category,
+                    "produced_quantity_by_category",
+                    "Quels sont les catégories d'entreprises qui produisent le plus de déchets ?",
+                    (
+                        "La Nomenclature des Activités Françaises permet de catégoriser "
+                        "les différents établissements qui produisent des déchets tracés sur Trackdéchets."
+                        "Les établissements qui reçoivent des déchets ont été exclus pour "
+                        "être certain de ne pas prendre en compte les établissements faisant du Tri, Transit, Regroupement (TTR)."
+                        "</br>Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
+                    ),
+                )
+            ]
         ),
         html.H4("Établissements et utilisateurs"),
         html.Div(
@@ -882,6 +901,14 @@ def get_layout_for_a_year(year: int = 2022) -> list:
 
     treemap_companies_figure = create_treemap_companies_figure(company_data_df)
 
+    all_bordereaux_with_naf = get_quantities_by_naf(
+        ALL_BORDEREAUX_DATA, NAF_NOMENCLATURE_DATA, date_interval
+    )
+
+    produced_quantity_by_category = create_treemap_companies_figure(
+        all_bordereaux_with_naf, use_quantity=True
+    )
+
     # generate
     elements = get_graph_elements_for_a_year(
         quantity_processed_total=quantity_processed_total,
@@ -896,6 +923,7 @@ def get_layout_for_a_year(year: int = 2022) -> list:
         bsda_quantities_weekly=bsda_quantities_weekly_fig,
         bsff_quantities_weekly=bsff_quantities_weekly_fig,
         bsdasri_quantities_weekly=bsdasri_quantities_weekly_fig,
+        produced_quantity_by_category=produced_quantity_by_category,
         company_created_total_life=company_created_total_life,
         user_created_total_life=user_created_total_life,
         company_created_weekly=company_created_weekly,

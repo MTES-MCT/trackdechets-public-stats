@@ -417,3 +417,31 @@ def get_total_quantity_processed(
         )
 
     return quantity_processed_total
+
+
+def get_quantities_by_naf(
+    all_bordereaux_data_df: pl.DataFrame,
+    naf_nomenclature_data: pl.DataFrame,
+    date_interval: Tuple[datetime, datetime] | None = None,
+) -> pl.DataFrame:
+    all_bordereaux_data_df_with_naf = all_bordereaux_data_df.join(
+        naf_nomenclature_data,
+        left_on="emitter_naf",
+        right_on="code_sous_classe",
+        how="left",
+    )
+
+    all_bordereaux_data_df_with_naf = all_bordereaux_data_df_with_naf.filter(
+        pl.col("emitter_siret").is_in(pl.col("destination_siret")).is_not()
+    )
+
+    if date_interval is not None:
+        all_bordereaux_data_df_with_naf = all_bordereaux_data_df_with_naf.filter(
+            pl.col("sent_at").is_between(*date_interval, closed="left")
+        )
+
+    all_bordereaux_data_df_with_naf = all_bordereaux_data_df_with_naf.with_columns(
+        pl.col("emitter_naf").alias("code_sous_classe")
+    )
+
+    return all_bordereaux_data_df_with_naf

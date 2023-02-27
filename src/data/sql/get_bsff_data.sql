@@ -10,10 +10,14 @@ select id,
     END as "quantity",
     "destination_operation_code" as "processing_operation",
     "waste_code",
+    "emitter_company_siret" as "emitter_siret",
     emitter_departement,
     emitter_region,
+    emitter_naf,
+    destination_company_siret,
     destination_departement,
-    destination_region
+    destination_region,
+    destination_naf
 from "refined_zone_enriched"."bsff_enriched"
 where "is_deleted" = false
     and "created_at" >= '2022-01-03'

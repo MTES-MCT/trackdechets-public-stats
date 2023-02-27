@@ -45,7 +45,7 @@ def get_bs_data(
     started_time = time.time()
 
     sql_query = (SQL_PATH / query_filename).read_text()
-  
+
     bs_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
 
     date_columns = ["created_at", "sent_at", "received_at", "processed_at"]
@@ -176,8 +176,16 @@ def get_waste_nomenclature_data() -> pd.DataFrame:
 
 
 def get_waste_code_hierarchical_nomenclature() -> list[dict]:
-
     with (STATIC_DATA_PATH / "waste_codes.json").open() as f:
         waste_code_hierarchy = json.load(f)
 
     return format_waste_codes(waste_code_hierarchy, add_top_level=True)
+
+
+def get_naf_nomenclature_data() -> pl.DataFrame:
+    data = pl.read_sql(
+        "SELECT * FROM trusted_zone_insee.nomenclature_activites_francaises",
+        connection_uri=DATABASE_URL,
+    )
+
+    return data

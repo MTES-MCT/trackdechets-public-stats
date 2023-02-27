@@ -29,7 +29,7 @@ def create_weekly_created_figure(
     data = data.to_dict(as_series=False)
 
     texts = []
-    texts += [""] * (len(data) - 1) + [format_number(data["count"][-1])]
+    texts += [""] * (len(data["count"]) - 1) + [format_number(data["count"][-1])]
 
     hovertexts = [
         f"Semaine du {at-timedelta(days=6):%d/%m} au {at:%d/%m}<br><b>{format_number(count)}</b> créations"
@@ -441,7 +441,7 @@ def create_quantity_processed_sunburst_figure(
 
 
 def create_treemap_companies_figure(
-    company_data: pl.DataFrame,
+    company_data: pl.DataFrame, use_quantity: bool = False
 ) -> go.Figure:
     """Creates the figure showing the number of companies by NAF category.
 
@@ -459,16 +459,48 @@ def create_treemap_companies_figure(
     """
 
     df = company_data
-    total_companies = df.height
 
-    df = df.drop_nulls()
+    df = df.with_columns(
+        [
+            pl.col("code_section").fill_null("NAF inconnu"),
+            pl.col("libelle_section").fill_null("NAF inconnu"),
+        ]
+    )
+
+    # Init values
+    total = df.height
+    value_expr = pl.col("id").count().alias("value")
+    value_suffix = pl.lit("</b>")
+    hover_expr_str = "</b> établissements inscrits dans la {label} NAF "
+    hover_expr_lit_end = pl.lit(
+        "%</b> du total des établissements inscrits.<extra></extra>"
+    )
+    labels = [f"Tous les établissements - <b>{total/1000:.2f}k</b>"]
+    hover_texts = [f"Tous les établissements - <b>{total/1000:.2f}k</b><extra></extra>"]
+    if use_quantity:
+        total = df.select(pl.col("quantity").sum()).item()
+        value_expr = pl.col("quantity").sum().alias("value")
+        value_suffix = pl.lit("t</b>")
+        hover_expr_str = (
+            " tonnes</b> produites par des établissements inscrits dans la {label} NAF "
+        )
+        hover_expr_lit_end = pl.lit(
+            "%</b> de la quantité totale produite.<extra></extra>"
+        )
+        labels = [f"Tous les établissements - <b>{total/1000:.2f}kt</b>"]
+        hover_texts = [
+            f"Tous les établissements - <b>{total/1000:.2f}kt</b><extra></extra>"
+        ]
+
     categories = ["sous_classe", "classe", "groupe", "division", "section"]
 
     # build dfs at each granularity
     dfs = []
     for i, cat in enumerate(categories):
+        temp_df = df.drop_nulls(f"libelle_{cat}")
+
         agg_exprs = [
-            pl.col("id").count().alias("count"),
+            value_expr,
             pl.col(f"libelle_{cat}").max(),
         ]
 
@@ -481,7 +513,7 @@ def create_treemap_companies_figure(
         id_exprs.append(pl.col(f"libelle_{cat}").max())
         agg_exprs.append(pl.concat_str(id_exprs, sep=id_sep).alias("ids"))
 
-        temp_df = df.groupby(f"code_{cat}", maintain_order=True).agg(agg_exprs)
+        temp_df = temp_df.groupby(f"code_{cat}", maintain_order=True).agg(agg_exprs)
 
         parent_exp = (
             pl.col("ids")
@@ -497,43 +529,50 @@ def create_treemap_companies_figure(
             [
                 pl.col(f"libelle_{cat}").apply(lambda x: break_long_line(x, 14)),
                 pl.lit(" - <b>"),
-                pl.col("count").apply(
-                    lambda x: f"{x/1000:.1f}k" if x > 1000 else str(x)
+                pl.col("value").apply(
+                    lambda x: f"{x/1000:.1f}k" if x > 1000 else f"{x:.1f}"
                 ),
-                pl.lit("</b>"),
+                value_suffix,
             ]
         ).alias("labels")
 
-        hover_exp = pl.concat_str(
+        hover_expr_prefix = pl.lit(hover_expr_str.format(label=cat.replace("_", " ")))
+        hover_expr_code = pl.col(f"code_{cat}")
+        hover_expr_label = pl.format(" - <i>{}</i>", pl.col(f"libelle_{cat}"))
+        if cat == "section":
+            when_expr = pl.when(pl.col("code_section") == "NAF inconnu")
+            hover_expr_prefix = when_expr.then(
+                pl.lit("</b> établissements inscrits ayant un code NAF inconnu ")
+            ).otherwise(hover_expr_prefix)
+            hover_expr_code = when_expr.then(pl.lit("")).otherwise(hover_expr_code)
+            hover_expr_label = when_expr.then(pl.lit("")).otherwise(hover_expr_label)
+
+        hover_expr = pl.concat_str(
             [
                 pl.lit("<b>"),
-                pl.col("count").apply(format_number),
-                pl.lit("</b> établissements inscrits dans la section NAF "),
-                pl.col(f"code_{cat}"),
-                pl.lit(" - <i>"),
-                pl.col(f"libelle_{cat}"),
-                pl.lit("</i><br>soit <b>"),
-                (100 * pl.col("count") / total_companies).round(2).cast(pl.Utf8),
-                pl.lit("%</b> du total des établissements inscrits.<extra></extra>"),
+                pl.col("value").apply(format_number),
+                hover_expr_prefix,
+                hover_expr_code,
+                hover_expr_label,
+                pl.lit("<br>soit <b>"),
+                (100 * pl.col("value") / total).round(2).cast(pl.Utf8),
+                hover_expr_lit_end,
             ]
         ).alias("hover_texts")
 
-        dfs.append(temp_df.with_columns([labels_expr, hover_exp, parent_exp]))
+        dfs.append(temp_df.with_columns([labels_expr, hover_expr, parent_exp]))
 
     # Build plotly necessaries lists
     ids = ["Tous les établissements"]
-    labels = [f"Tous les établissements - <b>{total_companies/1000:.2f}k</b>"]
+
     parents = [""]
-    values = [total_companies]
-    hover_texts = [
-        f"Tous les établissements - <b>{total_companies/1000:.2f}k</b><extra></extra>"
-    ]
+    values = [total]
     for df in reversed(dfs):
         json = df.to_dict(as_series=False)
         ids.extend(json["ids"])
         labels.extend(json["labels"])
         parents.extend(json["parents"])
-        values.extend(json["count"])
+        values.extend(json["value"])
         hover_texts.extend(json["hover_texts"])
 
     fig = go.Figure(
@@ -553,7 +592,7 @@ def create_treemap_companies_figure(
         )
     )
     fig.update_layout(
-        margin={"l": 5, "r": 5, "t": 35, "b": 5},
+        margin={"l": 15, "r": 15, "t": 35, "b": 25},
         height=800,
         template="seaborn",
         paper_bgcolor="rgba(0,0,0,0)",

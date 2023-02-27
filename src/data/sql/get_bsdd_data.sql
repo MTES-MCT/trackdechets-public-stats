@@ -12,10 +12,14 @@ SELECT
     "processing_operation_done" AS "processing_operation",
     "waste_details_code" AS "waste_code",
     "waste_details_pop" AS "waste_pop",
+    "emitter_company_siret" as "emitter_siret",
     emitter_departement,
     emitter_region,
+    emitter_naf,
+    recipient_company_siret as destination_siret,
     recipient_departement as "destination_departement",
-    recipient_region as "destination_region"
+    recipient_region as "destination_region",
+    recipient_naf as "destination_naf"
 FROM
     "refined_zone_enriched"."bsdd_enriched"
 WHERE
