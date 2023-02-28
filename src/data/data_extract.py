@@ -176,6 +176,14 @@ def get_waste_nomenclature_data() -> pd.DataFrame:
 
 
 def get_waste_code_hierarchical_nomenclature() -> list[dict]:
+    """
+    Returns waste code nomenclature in a hierarchical way, to use with tree components.
+
+    Returns
+    --------
+    list of dicts
+        Each dict contains the data necessary for the TreeComponent along with childrens.
+    """
     with (STATIC_DATA_PATH / "waste_codes.json").open() as f:
         waste_code_hierarchy = json.load(f)
 
@@ -183,6 +191,14 @@ def get_waste_code_hierarchical_nomenclature() -> list[dict]:
 
 
 def get_naf_nomenclature_data() -> pl.DataFrame:
+    """
+    Returns the NAF nomenclature.
+
+    Returns
+    --------
+    DataFrame
+        DataFrame with NAF nomenclature data.
+    """
     data = pl.read_sql(
         "SELECT * FROM trusted_zone_insee.nomenclature_activites_francaises",
         connection_uri=DATABASE_URL,

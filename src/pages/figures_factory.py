@@ -163,7 +163,7 @@ def create_weekly_scatter_figure(
             suffix = f"{bs_type} {suffix}"
 
         hover_texts = [
-            f"Semaine du {e[0]:%d/%m} au {e[0]+timedelta(days=6):%d/%m}<br><b>{format_number(e[1],1)}</b> {suffix}"
+            f"Semaine du {e[0]:%d/%m} au {e[0]+timedelta(days=6):%d/%m}<br><b>{format_number(e[1], 1)}</b> {suffix}"
             for e in data.iter_rows()
         ]
 
@@ -441,16 +441,16 @@ def create_quantity_processed_sunburst_figure(
 
 
 def create_treemap_companies_figure(
-    company_data: pl.DataFrame, use_quantity: bool = False
+    data_with_naf: pl.DataFrame, use_quantity: bool = False
 ) -> go.Figure:
     """Creates the figure showing the number of companies by NAF category.
 
     Parameters
     ----------
-    company_counts_by_section: DataFrame
-        DataFrame containing the company counts by section.
-    company_counts_by_division: DataFrame
-        DataFrame containing the company counts by division
+    data_with_naf: DataFrame
+        DataFrame containing data, including NAF categories to aggregate.
+    use_quantity: boolean
+        IF true, aggregation is done on column `quantity`. Default False.
 
     Returns
     -------
@@ -458,7 +458,101 @@ def create_treemap_companies_figure(
         Figure object ready to be plotted.
     """
 
-    df = company_data
+    colors = pl.DataFrame(
+        [
+            [
+                "Activités de services administratifs et de soutien",
+                "rgba(97, 49, 107, 1)",
+            ],
+            [
+                "Arts, spectacles et activités récréatives",
+                "rgba(112, 111, 211, 1)",
+            ],
+            [
+                "Activités financières et d'assurance",
+                "rgba(247, 241, 227, 1)",
+            ],
+            [
+                "Hébergement et restauration",
+                "rgba(52, 172, 224, 1)",
+            ],
+            [
+                "Santé humaine et action sociale",
+                "rgba(51, 217, 178, 1)",
+            ],
+            [
+                "Enseignement",
+                "rgba(44, 44, 84, 1)",
+            ],
+            [
+                "Construction",
+                "rgba(71, 71, 135, 1)",
+            ],
+            [
+                "Transports et entreposage",
+                "rgba(170, 166, 157, 1)",
+            ],
+            [
+                "Autres activités de services",
+                "rgba(255, 121, 63, 1)",
+            ],
+            [
+                "Activités des ménages en tant qu'employeurs ; activités indifférenciées des ménages en tant que producteurs de biens et services pour usage propre",
+                "rgba(33, 140, 116, 1)",
+            ],
+            [
+                "Information et communication",
+                "rgba(255, 82, 82, 1)",
+            ],
+            [
+                "Industrie manufacturière",
+                "rgba(34, 112, 147, 1)",
+            ],
+            [
+                "Activités spécialisées, scientifiques et techniques",
+                "rgba(209, 204, 192, 1)",
+            ],
+            [
+                "Administration publique",
+                "rgba(255, 177, 66, 1)",
+            ],
+            [
+                "Production et distribution d'eau ; assainissement, gestion des déchets et dépollution",
+                "rgba(255, 218, 121, 1)",
+            ],
+            [
+                "Commerce ; réparation d'automobiles et de motocycles",
+                "rgba(179, 57, 57, 1)",
+            ],
+            [
+                "Activités immobilières",
+                "rgba(132, 129, 122, 1)",
+            ],
+            [
+                "Industries extractives",
+                "rgba(204, 142, 53, 1)",
+            ],
+            [
+                "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné",
+                "rgba(204, 174, 98, 1)",
+            ],
+            [
+                "Activités extra-territoriales",
+                "rgba(205, 97, 51, 1)",
+            ],
+            [
+                "Agriculture, sylviculture et pêche",
+                "rgba(77, 52, 42, 1)",
+            ],
+            [
+                "NAF inconnu",
+                "rgba(183, 21, 64, 1)",
+            ],
+        ],
+        schema=["libelle_section", "color"],
+    )
+
+    df = data_with_naf
 
     df = df.with_columns(
         [
@@ -472,6 +566,9 @@ def create_treemap_companies_figure(
     value_expr = pl.col("id").count().alias("value")
     value_suffix = pl.lit("</b>")
     hover_expr_str = "</b> établissements inscrits dans la {label} NAF "
+    hover_expr_lit_nulls = pl.lit(
+        "</b> établissements inscrits ayant un code NAF inconnu "
+    )
     hover_expr_lit_end = pl.lit(
         "%</b> du total des établissements inscrits.<extra></extra>"
     )
@@ -483,6 +580,9 @@ def create_treemap_companies_figure(
         value_suffix = pl.lit("t</b>")
         hover_expr_str = (
             " tonnes</b> produites par des établissements inscrits dans la {label} NAF "
+        )
+        hover_expr_lit_nulls = pl.lit(
+            " tonnes</b> produites par des établissements ayant un code NAF inconnu "
         )
         hover_expr_lit_end = pl.lit(
             "%</b> de la quantité totale produite.<extra></extra>"
@@ -513,7 +613,12 @@ def create_treemap_companies_figure(
         id_exprs.append(pl.col(f"libelle_{cat}").max())
         agg_exprs.append(pl.concat_str(id_exprs, sep=id_sep).alias("ids"))
 
+        temp_colors = colors
+        if cat != "section":
+            agg_exprs.append(pl.col("libelle_section").max())
+
         temp_df = temp_df.groupby(f"code_{cat}", maintain_order=True).agg(agg_exprs)
+        temp_df = temp_df.join(temp_colors, on="libelle_section", how="left")
 
         parent_exp = (
             pl.col("ids")
@@ -530,7 +635,7 @@ def create_treemap_companies_figure(
                 pl.col(f"libelle_{cat}").apply(lambda x: break_long_line(x, 14)),
                 pl.lit(" - <b>"),
                 pl.col("value").apply(
-                    lambda x: f"{x/1000:.1f}k" if x > 1000 else f"{x:.1f}"
+                    lambda x: f"{x/1000:.1f}k" if x > 1000 else format_number(x, 1)
                 ),
                 value_suffix,
             ]
@@ -541,9 +646,9 @@ def create_treemap_companies_figure(
         hover_expr_label = pl.format(" - <i>{}</i>", pl.col(f"libelle_{cat}"))
         if cat == "section":
             when_expr = pl.when(pl.col("code_section") == "NAF inconnu")
-            hover_expr_prefix = when_expr.then(
-                pl.lit("</b> établissements inscrits ayant un code NAF inconnu ")
-            ).otherwise(hover_expr_prefix)
+            hover_expr_prefix = when_expr.then(hover_expr_lit_nulls).otherwise(
+                hover_expr_prefix
+            )
             hover_expr_code = when_expr.then(pl.lit("")).otherwise(hover_expr_code)
             hover_expr_label = when_expr.then(pl.lit("")).otherwise(hover_expr_label)
 
@@ -564,9 +669,9 @@ def create_treemap_companies_figure(
 
     # Build plotly necessaries lists
     ids = ["Tous les établissements"]
-
     parents = [""]
     values = [total]
+    colors = ["rgba(238, 238, 238, 0)"]
     for df in reversed(dfs):
         json = df.to_dict(as_series=False)
         ids.extend(json["ids"])
@@ -574,6 +679,7 @@ def create_treemap_companies_figure(
         parents.extend(json["parents"])
         values.extend(json["value"])
         hover_texts.extend(json["hover_texts"])
+        colors.extend(json["color"])
 
     fig = go.Figure(
         go.Treemap(
@@ -581,20 +687,25 @@ def create_treemap_companies_figure(
             labels=labels,
             values=values,
             parents=parents,
-            branchvalues="total",
             hovertemplate=hover_texts,
+            marker_colors=colors,
+            branchvalues="total",
             pathbar_thickness=35,
             textposition="middle center",
             tiling_packing="squarify",
             insidetextfont_size=300,
-            tiling_pad=3,
+            tiling_pad=7,
             maxdepth=2,
+            marker_line_width=0,
+            marker_depthfade="reversed",
         )
     )
     fig.update_layout(
         margin={"l": 15, "r": 15, "t": 35, "b": 25},
         height=800,
-        template="seaborn",
         paper_bgcolor="rgba(0,0,0,0)",
+        modebar_bgcolor="rgba(0,0,0,0)",
+        modebar_color="rgba(146, 146, 146, 0.7)",
+        modebar_activecolor="rgba(146, 146, 146, 0.7)",
     )
     return fig

@@ -424,6 +424,23 @@ def get_quantities_by_naf(
     naf_nomenclature_data: pl.DataFrame,
     date_interval: Tuple[datetime, datetime] | None = None,
 ) -> pl.DataFrame:
+    """Takes a DataFrame of bordereaux data, a DataFrame with NAF nomenclature data, and an optional date
+    interval, and returns a DataFrame of bordereaux data with the naf nomenclature data joined to it using emitter SIRET as join key.
+
+    Parameters
+    ----------
+    all_bordereaux_data_df : pl.DataFrame
+        a DataFrame containing all the "bordereaux" data
+    naf_nomenclature_data : pl.DataFrame
+        a DataFrame containing the NAF nomenclature
+    date_interval : Tuple[datetime, datetime] | None
+        Tuple[datetime, datetime] | None = None
+
+    Returns
+    -------
+        A DataFrame with "bordereaux" data joined with NAF nomenclature.
+
+    """
     all_bordereaux_data_df_with_naf = all_bordereaux_data_df.join(
         naf_nomenclature_data,
         left_on="emitter_naf",
