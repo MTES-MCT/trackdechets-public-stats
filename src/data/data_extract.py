@@ -48,14 +48,6 @@ def get_bs_data(
 
     bs_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
 
-    date_columns = ["created_at", "sent_at", "received_at", "processed_at"]
-    bs_data_df = bs_data_df.with_columns(
-        [
-            pl.col(col_name).dt.with_time_zone(tz="Europe/Paris").dt.offset_by("-1h")
-            for col_name in date_columns
-        ]
-    )
-
     if not include_drafts:
         bs_data_df = bs_data_df.filter(pl.col("status") != "DRAFT")
     if include_only_dangerous_waste:
@@ -71,7 +63,7 @@ def get_bs_data(
             )
 
     # Depending on the type of 'bordereau', the processing operations codes can contain space or not, so we normalize it :
-    bs_data_df = bs_data_df.with_column(
+    bs_data_df = bs_data_df.with_columns(
         pl.col("processing_operation").str.replace(r"([RD])([0-9]{1,2})", value="$1 $2")
     )
 
@@ -94,10 +86,6 @@ def get_company_data() -> pl.DataFrame:
     sql_query = (SQL_PATH / "get_company_data.sql").read_text()
     company_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
 
-    company_data_df = company_data_df.with_column(
-        pl.col("created_at").dt.with_time_zone(tz="Europe/Paris").dt.offset_by("-1h")
-    )
-
     print(f"get_company_data duration: {time.time()-started_time} ")
 
     return company_data_df
@@ -116,10 +104,6 @@ def get_user_data() -> pl.DataFrame:
 
     sql_query = (SQL_PATH / "get_user_data.sql").read_text()
     user_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
-
-    user_data_df = user_data_df.with_column(
-        pl.col("created_at").dt.with_time_zone(tz="Europe/Paris").dt.offset_by("-1h")
-    )
 
     print(f"get_user_data duration: {time.time()-started_time} ")
 

@@ -89,7 +89,7 @@ def get_weekly_aggregated_series(
         raise ValueError("Choose between sum or count aggfunc")
 
     df = (
-        data.with_column(pl.col(aggregate_column).dt.truncate("1w"))
+        data.with_columns(pl.col(aggregate_column).dt.truncate("1w"))
         .sort(aggregate_column)
         .groupby(aggregate_column, maintain_order=True)
         .agg(agg_expression)
@@ -199,7 +199,7 @@ def get_weekly_waste_quantity_processed_by_operation_code_df(
     )
 
     df = (
-        df.with_column(pl.col("processed_at").dt.truncate("1w"))
+        df.with_columns(pl.col("processed_at").dt.truncate("1w"))
         .sort("processed_at")
         .groupby(["processed_at", "processing_operation"], maintain_order=True)
         .agg(pl.col("quantity").sum())
@@ -271,7 +271,7 @@ def get_waste_quantity_processed_by_processing_code_df(
         ]
     )
 
-    agg_data = agg_data.with_column(
+    agg_data = agg_data.with_columns(
         pl.col("processing_operation")
         .apply(lambda x: "Déchet valorisé" if x.startswith("R") else "Déchet éliminé")
         .alias("type_operation")
