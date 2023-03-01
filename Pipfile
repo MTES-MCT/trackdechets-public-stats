@@ -15,7 +15,7 @@ gunicorn = "*"
 dash-extensions = "*"
 sqlalchemy = "~=1.4"
 feffery-antd-components = "==0.1.16"
-polars = "==0.16.2"
+polars = "*"
 connectorx = ">=0.2.0a3"
 pyarrow = "*"
 

@@ -139,31 +139,25 @@ def create_weekly_scatter_figure(
     metric_name = "count" if "count" in bs_created_data.columns else "quantity"
     y_title = "Quantité (en tonnes)" if metric_name == "quantity" else None
     legend_title = "Statut :" if metric_name == "quantity" else "Statut du bordereau :"
-
-    for config in plot_configs:
+    for i, config in enumerate(plot_configs):
         data = config["data"]
 
         if len(data) == 0:
             continue
         name = config["name"]
         suffix = config["suffix"]
+
         # Creates a list of text to only show value on last point of the line
         texts = []
-
         last_value = data[-1, 1]
-
         texts = [""] * (len(data) - 1) if len(data) > 1 else []
-        custom_data = texts.copy()
-
         texts += [format_number(last_value)]
-
-        custom_data += [format_number(last_value)]
 
         if metric_name == "count":
             suffix = f"{bs_type} {suffix}"
 
         hover_texts = [
-            f"Semaine du {e[0]:%d/%m} au {e[0]+timedelta(days=6):%d/%m}<br><b>{format_number(e[1], 1)}</b> {suffix}"
+            f"Semaine du {e[0]:%d/%m} au {e[0]+timedelta(days=6):%d/%m}<br><b>{format_number(e[1], 2)}</b> {suffix}"
             for e in data.iter_rows()
         ]
 
@@ -182,7 +176,6 @@ def create_weekly_scatter_figure(
                 line_shape="spline",
                 line_smoothing=0.3,
                 line_width=3,
-                customdata=custom_data,
                 visible=config.get("visible", True),
             )
         )
@@ -191,7 +184,7 @@ def create_weekly_scatter_figure(
 
     fig.update_layout(
         paper_bgcolor="#fff",
-        margin=dict(t=25, r=70, l=15),
+        margin=dict(t=25, r=90, l=25),
         legend=dict(
             orientation="v",
             y=1.2,
@@ -203,7 +196,11 @@ def create_weekly_scatter_figure(
         ),
         uirevision=True,
     )
-    fig.update_xaxes(tick0="2022-01-03")
+
+    min_x = min(e["data"]["at"][0] for e in plot_configs if len(e["data"]) != 0)
+    max_x = max(e["data"]["at"][-1] for e in plot_configs if len(e["data"]) != 0)
+    delta = max_x - min_x
+    fig.update_xaxes(range=[min_x - timedelta(days=5), max_x + delta * 0.1])
     fig.update_yaxes(side="right", title=y_title)
 
     return fig
@@ -490,7 +487,7 @@ def create_treemap_companies_figure(
             ],
             [
                 "Transports et entreposage",
-                "rgba(170, 166, 157, 1)",
+                "rgba(113, 87, 87, 1)",
             ],
             [
                 "Autres activités de services",
@@ -526,7 +523,7 @@ def create_treemap_companies_figure(
             ],
             [
                 "Activités immobilières",
-                "rgba(132, 129, 122, 1)",
+                "rgba(100, 98, 93, 1)",
             ],
             [
                 "Industries extractives",
@@ -635,7 +632,7 @@ def create_treemap_companies_figure(
                 pl.col(f"libelle_{cat}").apply(lambda x: break_long_line(x, 14)),
                 pl.lit(" - <b>"),
                 pl.col("value").apply(
-                    lambda x: f"{x/1000:.1f}k" if x > 1000 else format_number(x, 1)
+                    lambda x: f"{x/1000:.0f}k" if x > 1000 else format_number(x, 1)
                 ),
                 value_suffix,
             ]
@@ -694,10 +691,12 @@ def create_treemap_companies_figure(
             textposition="middle center",
             tiling_packing="squarify",
             insidetextfont_size=300,
+            pathbar_textfont_size=50,
             tiling_pad=7,
             maxdepth=2,
             marker_line_width=0,
             marker_depthfade="reversed",
+            marker_pad={"t": 80, "r": 20, "b": 20, "l": 20},
         )
     )
     fig.update_layout(

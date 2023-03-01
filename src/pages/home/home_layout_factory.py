@@ -460,18 +460,6 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                                     "year": year,
                                 },
                             ),
-                            html.H4(
-                                ["Quantités de Fluides Frigorigènes tracés par semaine"]
-                            ),
-                            dcc.Graph(
-                                figure=bsff_quantities_weekly,
-                                config=PLOTLY_PLOT_CONFIGS,
-                                id={
-                                    "type": "counts-figure",
-                                    "index": "bsff-quantities",
-                                    "year": year,
-                                },
-                            ),
                         ],
                         id="tabpanel-406-panel",
                         className="fr-tabs__panel",
@@ -529,7 +517,7 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                 add_figure(
                     produced_quantity_by_category,
                     "produced_quantity_by_category",
-                    "Quels sont les catégories d'entreprises qui produisent le plus de déchets ?",
+                    "Quels sont les catégories d'entreprises qui produisent le plus de déchets dangereux* ?",
                     (
                         "La Nomenclature des Activités Françaises permet de catégoriser "
                         "les différents établissements qui produisent des déchets tracés sur Trackdéchets."
@@ -814,17 +802,17 @@ def get_layout_for_a_year(year: int = 2022) -> list:
         },
         {
             "name": "Traitée",
-            "suffix": "marqués comme traités",
+            "suffix": "tonnes traitées",
             "text_position": "bottom center",
         },
         {
             "name": "Traitée (traitement intermédiaire)",
-            "suffix": "en traitement intermédiaire",
+            "suffix": "tonnes traitées en traitement intermédiaire",
             "text_position": "bottom center",
         },
         {
             "name": "Traitée (traitement final)",
-            "suffix": "en traitement final",
+            "suffix": "tonnes traitées en traitement final",
             "text_position": "bottom center",
         },
     ]
