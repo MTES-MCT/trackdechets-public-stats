@@ -63,7 +63,7 @@ def get_bs_data(
             )
 
     # Depending on the type of 'bordereau', the processing operations codes can contain space or not, so we normalize it :
-    bs_data_df = bs_data_df.with_column(
+    bs_data_df = bs_data_df.with_columns(
         pl.col("processing_operation").str.replace(r"([RD])([0-9]{1,2})", value="$1 $2")
     )
 

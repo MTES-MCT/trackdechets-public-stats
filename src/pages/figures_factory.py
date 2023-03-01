@@ -348,7 +348,7 @@ def create_quantity_processed_sunburst_figure(
         pl.col("processing_operation").is_in(other_processing_operations_codes).is_not()
     ).sort("quantity", reverse=True)
 
-    agg_data_without_other = agg_data_without_other.with_column(
+    agg_data_without_other = agg_data_without_other.with_columns(
         pl.col("type_operation")
         .apply(
             lambda x: "rgb(102, 103, 61, 0.7)"

@@ -176,7 +176,6 @@ def get_graph_elements_for_a_year(
     bsdasri_counts_weekly: go.Figure,
     bsdd_quantities_weekly: go.Figure,
     bsda_quantities_weekly: go.Figure,
-    bsff_quantities_weekly: go.Figure,
     bsdasri_quantities_weekly: go.Figure,
     produced_quantity_by_category: go.Figure,
     company_created_total_life: int,
@@ -826,11 +825,6 @@ def get_layout_for_a_year(year: int = 2022) -> list:
         bs_type="BSDA",
         lines_configs=lines_configs,
     )
-    bsff_quantities_weekly_fig = create_weekly_scatter_figure(
-        *bsff_weekly_processed_dfs["quantity"],
-        bs_type="BSFF",
-        lines_configs=lines_configs,
-    )
     bsdasri_quantities_weekly_fig = create_weekly_scatter_figure(
         *bsdasri_weekly_processed_dfs["quantity"],
         bs_type="BSDASRI",
@@ -909,7 +903,6 @@ def get_layout_for_a_year(year: int = 2022) -> list:
         bsdasri_counts_weekly=bsdasri_counts_weekly_fig,
         bsdd_quantities_weekly=bsdd_quantities_weekly_fig,
         bsda_quantities_weekly=bsda_quantities_weekly_fig,
-        bsff_quantities_weekly=bsff_quantities_weekly_fig,
         bsdasri_quantities_weekly=bsdasri_quantities_weekly_fig,
         produced_quantity_by_category=produced_quantity_by_category,
         company_created_total_life=company_created_total_life,
