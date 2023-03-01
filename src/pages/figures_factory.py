@@ -139,7 +139,7 @@ def create_weekly_scatter_figure(
     metric_name = "count" if "count" in bs_created_data.columns else "quantity"
     y_title = "Quantité (en tonnes)" if metric_name == "quantity" else None
     legend_title = "Statut :" if metric_name == "quantity" else "Statut du bordereau :"
-    for i, config in enumerate(plot_configs):
+    for config in plot_configs:
         data = config["data"]
 
         if len(data) == 0:
