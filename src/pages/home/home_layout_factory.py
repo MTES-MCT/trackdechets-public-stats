@@ -520,9 +520,9 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     (
                         "La Nomenclature des Activités Françaises permet de catégoriser "
                         "les différents établissements qui produisent des déchets tracés sur Trackdéchets."
-                        "Les établissements qui reçoivent des déchets ont été exclus pour "
+                        " Les établissements qui reçoivent des déchets ont été exclus pour "
                         "être certain de ne pas prendre en compte les établissements faisant du Tri, Transit, Regroupement (TTR)."
-                        "</br>Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
+                        " Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
                     ),
                 )
             ]
