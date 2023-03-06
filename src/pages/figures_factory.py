@@ -25,16 +25,34 @@ def create_weekly_created_figure(
     Plotly Figure Object
         Figure object ready to be plotted.
     """
+    # Filter out data from previous year:
+    current_year = data["at"].max().year
+    data = data.filter(pl.col("at").dt.year() == current_year)
 
     data = data.to_dict(as_series=False)
 
     texts = []
-    texts += [""] * (len(data) - 1) + [format_number(data["count"][-1])]
+    texts += [""] * (len(data["count"]) - 1) + [format_number(data["count"][-1])]
 
     hovertexts = [
-        f"Semaine du {at-timedelta(days=6):%d/%m} au {at:%d/%m}<br><b>{format_number(count)}</b> créations"
-        for at, count in zip(data["at"], data["count"])
+        f"Semaine du {at:%d/%m} au {at+timedelta(days=6):%d/%m}<br><b>{format_number(count)}</b> créations"
+        for at, count in zip(data["at"][:-1], data["count"][:-1])
     ]
+
+    current_year = max(data["at"]).year
+
+    # Handle case when last data point is last week of the year
+    last_point_date = data["at"][-1]
+    last_point_value = data["count"][-1]
+    if (last_point_date + timedelta(days=6)).year != current_year:
+        last_point = datetime(current_year, 12, 31)
+        hovertexts.append(
+            f"Période du {last_point_date:%d/%m} au {last_point:%d/%m}<br><b>{format_number(last_point_value)}</b> créations"
+        )
+    else:
+        hovertexts.append(
+            f"Semaine du {last_point_date:%d/%m} au {last_point_date+timedelta(days=6):%d/%m}<br><b>{format_number(last_point_value)}</b> créations"
+        )
 
     fig = go.Figure(
         [
@@ -54,13 +72,28 @@ def create_weekly_created_figure(
         ]
     )
 
+    # handle ticks to start at first day of the first complete week of the year
+    min_x = min(data["at"])
+    max_x = max(data["at"])
+
+    breaks = []
+    for i in range(1, min_x.day):
+        breaks.append(datetime(current_year, 1, i))
+
     fig.update_layout(
         xaxis_title="Semaine de création",
         showlegend=False,
         paper_bgcolor="#fff",
-        margin=dict(t=20, r=50, l=5),
+        margin=dict(t=20, r=50, l=25),
     )
     fig.update_yaxes(side="right")
+
+    delta = max_x - min_x
+
+    fig.update_xaxes(
+        range=[min_x - max(delta * 0.05, timedelta(days=2)), max_x + delta * 0.1],
+        rangebreaks=[dict(values=breaks)],
+    )
 
     return fig
 
@@ -139,34 +172,55 @@ def create_weekly_scatter_figure(
     metric_name = "count" if "count" in bs_created_data.columns else "quantity"
     y_title = "Quantité (en tonnes)" if metric_name == "quantity" else None
     legend_title = "Statut :" if metric_name == "quantity" else "Statut du bordereau :"
-
+    min_x = None
+    max_x = None
     for config in plot_configs:
-
         data = config["data"]
 
         if len(data) == 0:
             continue
+
+        # Filter out data from previous year:
+        current_year = data.select("at").max().item().year
+        data = data.filter(pl.col("at").dt.year() == current_year)
+
+        min_at = data["at"][0]
+        if min_x is None or min_at < min_x:
+            min_x = min_at
+
+        max_at = data["at"][-1]
+        if max_x is None or max_at > max_x:
+            max_x = max_at
+
         name = config["name"]
         suffix = config["suffix"]
+
         # Creates a list of text to only show value on last point of the line
         texts = []
-
         last_value = data[-1, 1]
-
         texts = [""] * (len(data) - 1) if len(data) > 1 else []
-        custom_data = texts.copy()
-
         texts += [format_number(last_value)]
-
-        custom_data += [format_number(last_value)]
 
         if metric_name == "count":
             suffix = f"{bs_type} {suffix}"
 
         hover_texts = [
-            f"Semaine du {e[0]:%d/%m} au {e[0]+timedelta(days=6):%d/%m}<br><b>{format_number(e[1],1)}</b> {suffix}"
-            for e in data.iter_rows()
+            f"Semaine du {e[0]:%d/%m} au {e[0]+timedelta(days=6):%d/%m}<br><b>{format_number(e[1], 2)}</b> {suffix}"
+            for e in data[:-1].iter_rows()
         ]
+
+        # Handle case when last data point is last week of the year
+        last_point_date = data[-1]["at"].item()
+        last_point_value = data[-1][metric_name].item()
+        if (last_point_date + timedelta(days=6)).year != current_year:
+            last_point = datetime(current_year, 12, 31)
+            hover_texts.append(
+                f"Période du {last_point_date:%d/%m} au {last_point:%d/%m}<br><b>{format_number(last_point_value, 2)}</b> {suffix}"
+            )
+        else:
+            hover_texts.append(
+                f"Semaine du {last_point_date:%d/%m} au {last_point_date+timedelta(days=6):%d/%m}<br><b>{format_number(last_point_value, 2)}</b> {suffix}"
+            )
 
         scatter_list.append(
             go.Scatter(
@@ -183,7 +237,6 @@ def create_weekly_scatter_figure(
                 line_shape="spline",
                 line_smoothing=0.3,
                 line_width=3,
-                customdata=custom_data,
                 visible=config.get("visible", True),
             )
         )
@@ -192,10 +245,10 @@ def create_weekly_scatter_figure(
 
     fig.update_layout(
         paper_bgcolor="#fff",
-        margin=dict(t=25, r=70, l=15),
+        margin=dict(t=45, r=90, l=5),
         legend=dict(
-            orientation="v",
-            y=1.2,
+            orientation="h",
+            y=1.15,
             x=-0.06,
             font_size=13,
             itemwidth=40,
@@ -204,7 +257,18 @@ def create_weekly_scatter_figure(
         ),
         uirevision=True,
     )
-    fig.update_xaxes(tick0="2022-01-03")
+
+    delta = max_x - min_x
+
+    # handle ticks to start at first day of the first complete week of the year
+    breaks = []
+    for i in range(1, min_x.day):
+        breaks.append(datetime(current_year, 1, i))
+
+    fig.update_xaxes(
+        range=[min_x - delta * 0.05, max_x + delta * 0.1],
+        rangebreaks=[dict(values=breaks)],
+    )
     fig.update_yaxes(side="right", title=y_title)
 
     return fig
@@ -213,7 +277,6 @@ def create_weekly_scatter_figure(
 def create_weekly_quantity_processed_figure(
     quantity_recovered: pl.Series,
     quantity_destroyed: pl.Series,
-    date_axis_interval: tuple[datetime, datetime] | None = None,
 ) -> go.Figure:
     """Creates the figure showing the weekly waste quantity processed by type of process (destroyed or recovered).
 
@@ -245,25 +308,55 @@ def create_weekly_quantity_processed_figure(
         },
     ]
 
+    min_x, max_x = None, None
     traces = []
     for conf in data_conf:
+        data = conf["data"]
 
-        data = conf["data"].to_dict(as_series=False)
+        # Filter out data from previous year:
+        current_year = data.select("processed_at").max().item().year
+        data = data.filter(pl.col("processed_at").dt.year() == current_year)
+
+        data = data.to_dict(as_series=False)
+
+        min_at = data["processed_at"][0]
+        if min_x is None or min_at < min_x:
+            min_x = min_at
+
+        max_at = data["processed_at"][-1]
+        if max_x is None or max_at > max_x:
+            max_x = max_at
+
+        hover_texts = [
+            conf["text"].format(
+                processed_at,
+                processed_at + timedelta(days=6),
+                format_number(quantity),
+            )
+            for processed_at, quantity in zip(
+                data["processed_at"][:-1], data["quantity"][:-1]
+            )
+        ]
+
+        # Handle case when last data point is last week of the year
+        last_point_date = data["processed_at"][-1]
+        last_point_value = data["quantity"][-1]
+        if (last_point_date + timedelta(days=6)).year != current_year:
+            last_point = datetime(current_year, 12, 31)
+            hover_texts.append(
+                f"Période du {last_point_date:%d/%m} au {last_point:%d/%m}<br><b>{format_number(last_point_value)}</b> tonnes de {conf['name'].lower()}."
+            )
+        else:
+            hover_texts.append(
+                f"Semaine du {last_point_date:%d/%m} au {last_point_date+timedelta(days=6):%d/%m}<br><b>{format_number(last_point_value)}</b> {conf['name'].lower()}"
+            )
+
         traces.append(
             go.Bar(
                 x=data["processed_at"],
                 y=data["quantity"],
                 name=conf["name"],
-                hovertext=[
-                    conf["text"].format(
-                        processed_at - timedelta(days=6),
-                        processed_at,
-                        format_number(quantity),
-                    )
-                    for processed_at, quantity in zip(
-                        data["processed_at"], data["quantity"]
-                    )
-                ],
+                hovertext=hover_texts,
                 hoverinfo="text",
                 texttemplate="%{y:.2s} tonnes",
                 marker_color=conf["color"],
@@ -293,8 +386,17 @@ def create_weekly_quantity_processed_figure(
     )
     fig.update_yaxes(side="right")
 
-    if date_axis_interval is not None:
-        fig.update_xaxes(range=date_axis_interval)
+    delta = max_x - min_x
+
+    # handle ticks to start at first day of the first complete week of the year
+    breaks = []
+    for i in range(1, min_x.day):
+        breaks.append(datetime(current_year, 1, i))
+
+    fig.update_xaxes(
+        range=[min_x - timedelta(days=7), max_x + timedelta(days=7)],
+        rangebreaks=[dict(values=breaks)],
+    )
 
     return fig
 
@@ -351,9 +453,9 @@ def create_quantity_processed_sunburst_figure(
     )
     agg_data_without_other = agg_data.filter(
         pl.col("processing_operation").is_in(other_processing_operations_codes).is_not()
-    ).sort("quantity", reverse=True)
+    ).sort("quantity", descending=True)
 
-    agg_data_without_other = agg_data_without_other.with_column(
+    agg_data_without_other = agg_data_without_other.with_columns(
         pl.col("type_operation")
         .apply(
             lambda x: "rgb(102, 103, 61, 0.7)"
@@ -443,16 +545,16 @@ def create_quantity_processed_sunburst_figure(
 
 
 def create_treemap_companies_figure(
-    company_counts_by_section: pl.DataFrame, company_counts_by_division: pl.DataFrame
+    data_with_naf: pl.DataFrame, use_quantity: bool = False
 ) -> go.Figure:
     """Creates the figure showing the number of companies by NAF category.
 
     Parameters
     ----------
-    company_counts_by_section: DataFrame
-        DataFrame containing the company counts by section.
-    company_counts_by_division: DataFrame
-        DataFrame containing the company counts by division
+    data_with_naf: DataFrame
+        DataFrame containing data, including NAF categories to aggregate.
+    use_quantity: boolean
+        IF true, aggregation is done on column `quantity`. Default False.
 
     Returns
     -------
@@ -460,153 +562,228 @@ def create_treemap_companies_figure(
         Figure object ready to be plotted.
     """
 
-    colors = [
-        "rgba(64, 64, 122,0.4)",
-        "rgba(112, 111, 211,0.4)",
-        "rgba(247, 241, 227,0.4)",
-        "rgba(52, 172, 224,0.4)",
-        "rgba(51, 217, 178,0.4)",
-        "rgba(44, 44, 84,0.4)",
-        "rgba(71, 71, 135,0.4)",
-        "rgba(170, 166, 157,0.4)",
-        "rgba(34, 112, 147,0.4)",
-        "rgba(33, 140, 116,0.4)",
-        "rgba(255, 82, 82,0.4)",
-        "rgba(255, 121, 63,0.4)",
-        "rgba(209, 204, 192,0.4)",
-        "rgba(255, 177, 66,0.4)",
-        "rgba(255, 218, 121,0.4)",
-        "rgba(179, 57, 57,0.4)",
-        "rgba(132, 129, 122,0.4)",
-        "rgba(204, 142, 53,0.4)",
-        "rgba(204, 174, 98,0.4)",
-        "rgba(205, 97, 51,0.4)",
-        "rgba(77, 52, 42,0.4)",
-    ]
-
-    company_counts_by_section = company_counts_by_section.to_pandas()
-    company_counts_by_division = company_counts_by_division.to_pandas()
-
-    company_counts_by_section["colors"] = colors[
-        : company_counts_by_section.code_section.nunique()
-    ]
-
-    company_counts_by_division["colors"] = company_counts_by_division[
-        "libelle_section"
-    ].apply(
-        lambda x: company_counts_by_section.loc[
-            company_counts_by_section.libelle_section == x, "colors"
-        ].item()[:-4]
-        + "1)",
-    )
-
-    company_counts_by_division = company_counts_by_division[
-        company_counts_by_division["libelle_section"] != "Section NAF non renseignée."
-    ]
-    ids = (
-        ["Tous les établissements"]
-        + (
-            "Tous les établissements/" + company_counts_by_section["libelle_section"]
-        ).tolist()
-        + (
-            "Tous les établissements/"
-            + company_counts_by_division["libelle_section"]
-            + "/"
-            + company_counts_by_division["libelle_division"]
-        ).to_list()
-    )
-
-    labels = (
+    colors = pl.DataFrame(
         [
-            f"Tous les établissements - <b>{company_counts_by_section.num_entreprises.sum()/1000:.2f}k</b>"
-        ]
-        + (
-            company_counts_by_section["libelle_section"].apply(
-                break_long_line, max_line_length=14
-            )
-            + " - <b>"
-            + company_counts_by_section["num_entreprises"].apply(
-                lambda x: f"{x/1000:.1f}k" if x > 1000 else str(x)
-            )
-            + "</b>"
-        ).tolist()
-        + (
-            company_counts_by_division["libelle_division"].apply(
-                break_long_line, max_line_length=14
-            )
-            + " - <b>"
-            + company_counts_by_division["num_entreprises"].apply(
-                lambda x: f"{x/1000:.2f}k" if x > 1000 else str(x)
-            )
-            + "</b>"
-        ).tolist()
+            [
+                "Activités de services administratifs et de soutien",
+                "rgba(97, 49, 107, 1)",
+            ],
+            [
+                "Arts, spectacles et activités récréatives",
+                "rgba(112, 111, 211, 1)",
+            ],
+            [
+                "Activités financières et d'assurance",
+                "rgba(247, 241, 227, 1)",
+            ],
+            [
+                "Hébergement et restauration",
+                "rgba(52, 172, 224, 1)",
+            ],
+            [
+                "Santé humaine et action sociale",
+                "rgba(51, 217, 178, 1)",
+            ],
+            [
+                "Enseignement",
+                "rgba(44, 44, 84, 1)",
+            ],
+            [
+                "Construction",
+                "rgba(71, 71, 135, 1)",
+            ],
+            [
+                "Transports et entreposage",
+                "rgba(113, 87, 87, 1)",
+            ],
+            [
+                "Autres activités de services",
+                "rgba(255, 121, 63, 1)",
+            ],
+            [
+                "Activités des ménages en tant qu'employeurs ; activités indifférenciées des ménages en tant que producteurs de biens et services pour usage propre",
+                "rgba(33, 140, 116, 1)",
+            ],
+            [
+                "Information et communication",
+                "rgba(255, 82, 82, 1)",
+            ],
+            [
+                "Industrie manufacturière",
+                "rgba(34, 112, 147, 1)",
+            ],
+            [
+                "Activités spécialisées, scientifiques et techniques",
+                "rgba(209, 204, 192, 1)",
+            ],
+            [
+                "Administration publique",
+                "rgba(255, 177, 66, 1)",
+            ],
+            [
+                "Production et distribution d'eau ; assainissement, gestion des déchets et dépollution",
+                "rgba(255, 218, 121, 1)",
+            ],
+            [
+                "Commerce ; réparation d'automobiles et de motocycles",
+                "rgba(179, 57, 57, 1)",
+            ],
+            [
+                "Activités immobilières",
+                "rgba(100, 98, 93, 1)",
+            ],
+            [
+                "Industries extractives",
+                "rgba(204, 142, 53, 1)",
+            ],
+            [
+                "Production et distribution d'électricité, de gaz, de vapeur et d'air conditionné",
+                "rgba(204, 174, 98, 1)",
+            ],
+            [
+                "Activités extra-territoriales",
+                "rgba(205, 97, 51, 1)",
+            ],
+            [
+                "Agriculture, sylviculture et pêche",
+                "rgba(77, 52, 42, 1)",
+            ],
+            [
+                "NAF inconnu",
+                "rgba(183, 21, 64, 1)",
+            ],
+        ],
+        schema=["libelle_section", "color"],
     )
 
-    parents = (
-        [""]
-        + ["Tous les établissements"] * len(company_counts_by_section)
-        + (
-            "Tous les établissements/" + company_counts_by_division["libelle_section"]
-        ).tolist()
-    )
+    df = data_with_naf
 
-    values = (
-        [company_counts_by_section["num_entreprises"].sum()]
-        + company_counts_by_section["num_entreprises"].tolist()
-        + company_counts_by_division["num_entreprises"].to_list()
-    )
-
-    custom_data = (
-        [""]
-        + company_counts_by_section["code_section"].tolist()
-        + company_counts_by_division["code_division"].to_list()
-    )
-
-    hover_texts = (
+    df = df.with_columns(
         [
-            f"Tous les établissements - <b>{company_counts_by_section.num_entreprises.sum()/1000:.2f}k</b><extra></extra>"
+            pl.col("code_section").fill_null("NAF inconnu"),
+            pl.col("libelle_section").fill_null("NAF inconnu"),
         ]
-        + (
-            "<b>"
-            + company_counts_by_section["num_entreprises"].apply(format_number)
-            + "</b> établissements inscrits dans la section NAF "
-            + company_counts_by_section["code_section"]
-            + " - <i>"
-            + company_counts_by_section["libelle_section"]
-            + "</i><br>soit <b>"
-            + (
-                100
-                * company_counts_by_section["num_entreprises"]
-                / company_counts_by_section["num_entreprises"].sum()
-            )
-            .round(2)
-            .astype(str)
-            + "%</b> du total des établissements inscrits.<extra></extra>"
-        ).tolist()
-        + (
-            "<b>"
-            + company_counts_by_division["num_entreprises"].apply(format_number)
-            + "</b> établissements inscrits dans la division NAF "
-            + company_counts_by_division["code_division"]
-            + " - <i>"
-            + company_counts_by_division["libelle_division"]
-            + "</i><br>soit <b>"
-            + (
-                100
-                * company_counts_by_division["num_entreprises"]
-                / company_counts_by_division["num_entreprises"].sum()
-            )
-            .round(2)
-            .astype(str)
-            + "%</b> du total des établissements inscrits.<extra></extra>"
-        ).tolist()
     )
 
-    colors = (
-        ["#eeeeee"]
-        + company_counts_by_section.colors.tolist()
-        + company_counts_by_division.colors.tolist()
+    # Init values
+    total = df.height
+    value_expr = pl.col("id").count().alias("value")
+    value_suffix = pl.lit("</b>")
+    hover_expr_str = "</b> établissements inscrits dans la {label} NAF "
+    hover_expr_lit_nulls = pl.lit(
+        "</b> établissements inscrits ayant un code NAF inconnu "
     )
+    hover_expr_lit_end = pl.lit(
+        "%</b> du total des établissements inscrits.<extra></extra>"
+    )
+    labels = [f"Tous les établissements - <b>{total/1000:.2f}k</b>"]
+    hover_texts = [f"Tous les établissements - <b>{total/1000:.2f}k</b><extra></extra>"]
+    if use_quantity:
+        total = df.select(pl.col("quantity").sum()).item()
+        value_expr = pl.col("quantity").sum().alias("value")
+        value_suffix = pl.lit("t</b>")
+        hover_expr_str = (
+            " tonnes</b> produites par des établissements inscrits dans la {label} NAF "
+        )
+        hover_expr_lit_nulls = pl.lit(
+            " tonnes</b> produites par des établissements ayant un code NAF inconnu "
+        )
+        hover_expr_lit_end = pl.lit(
+            "%</b> de la quantité totale produite.<extra></extra>"
+        )
+        labels = [f"Tous les établissements - <b>{total/1000:.2f}kt</b>"]
+        hover_texts = [
+            f"Tous les établissements - <b>{total/1000:.2f}kt</b><extra></extra>"
+        ]
+
+    categories = ["sous_classe", "classe", "groupe", "division", "section"]
+
+    # build dfs at each granularity
+    dfs = []
+    for i, cat in enumerate(categories):
+        temp_df = df.drop_nulls(f"libelle_{cat}")
+
+        agg_exprs = [
+            value_expr,
+            pl.col(f"libelle_{cat}").max(),
+        ]
+
+        id_sep = "#"
+
+        id_exprs = [pl.lit("Tous les établissements")]
+        if i < (len(categories) - 1):
+            for tmp_cat in reversed(categories[i + 1 :]):
+                id_exprs.append(pl.col(f"libelle_{tmp_cat}").max())
+        id_exprs.append(pl.col(f"libelle_{cat}").max())
+        agg_exprs.append(pl.concat_str(id_exprs, sep=id_sep).alias("ids"))
+
+        temp_colors = colors
+        if cat != "section":
+            agg_exprs.append(pl.col("libelle_section").max())
+
+        temp_df = temp_df.groupby(f"code_{cat}", maintain_order=True).agg(agg_exprs)
+        temp_df = temp_df.join(temp_colors, on="libelle_section", how="left")
+
+        parent_exp = (
+            pl.col("ids")
+            .str.split(id_sep)
+            .arr.reverse()
+            .arr.slice(1)
+            .arr.reverse()
+            .arr.join(id_sep)
+            .alias("parents")
+        )
+
+        labels_expr = pl.concat_str(
+            [
+                pl.col(f"libelle_{cat}").apply(lambda x: break_long_line(x, 14)),
+                pl.lit(" - <b>"),
+                pl.col("value").apply(
+                    lambda x: f"{x/1000:.0f}k" if x > 1000 else format_number(x, 1)
+                ),
+                value_suffix,
+            ]
+        ).alias("labels")
+
+        hover_expr_prefix = pl.lit(hover_expr_str.format(label=cat.replace("_", " ")))
+        hover_expr_code = pl.col(f"code_{cat}")
+        hover_expr_label = pl.format(" - <i>{}</i>", pl.col(f"libelle_{cat}"))
+        if cat == "section":
+            when_expr = pl.when(pl.col("code_section") == "NAF inconnu")
+            hover_expr_prefix = when_expr.then(hover_expr_lit_nulls).otherwise(
+                hover_expr_prefix
+            )
+            hover_expr_code = when_expr.then(pl.lit("")).otherwise(hover_expr_code)
+            hover_expr_label = when_expr.then(pl.lit("")).otherwise(hover_expr_label)
+
+        hover_expr = pl.concat_str(
+            [
+                pl.lit("<b>"),
+                pl.col("value").apply(format_number),
+                hover_expr_prefix,
+                hover_expr_code,
+                hover_expr_label,
+                pl.lit("<br>soit <b>"),
+                (100 * pl.col("value") / total).round(2).cast(pl.Utf8),
+                hover_expr_lit_end,
+            ]
+        ).alias("hover_texts")
+
+        dfs.append(temp_df.with_columns([labels_expr, hover_expr, parent_exp]))
+
+    # Build plotly necessaries lists
+    ids = ["Tous les établissements"]
+    parents = [""]
+    values = [total]
+    colors = ["rgba(238, 238, 238, 0)"]
+    for df in reversed(dfs):
+        json = df.to_dict(as_series=False)
+        ids.extend(json["ids"])
+        labels.extend(json["labels"])
+        parents.extend(json["parents"])
+        values.extend(json["value"])
+        hover_texts.extend(json["hover_texts"])
+        colors.extend(json["color"])
 
     fig = go.Figure(
         go.Treemap(
@@ -614,21 +791,27 @@ def create_treemap_companies_figure(
             labels=labels,
             values=values,
             parents=parents,
-            branchvalues="total",
             hovertemplate=hover_texts,
-            customdata=custom_data,
-            pathbar_thickness=35,
             marker_colors=colors,
+            branchvalues="total",
+            pathbar_thickness=35,
             textposition="middle center",
             tiling_packing="squarify",
             insidetextfont_size=300,
-            tiling_pad=3,
+            pathbar_textfont_size=50,
+            tiling_pad=7,
             maxdepth=2,
+            marker_line_width=0,
+            marker_depthfade="reversed",
+            marker_pad={"t": 80, "r": 20, "b": 20, "l": 20},
         )
     )
     fig.update_layout(
-        margin={"l": 5, "r": 5, "t": 35, "b": 5},
+        margin={"l": 15, "r": 15, "t": 35, "b": 25},
         height=800,
-        # uniformtext=dict(minsize=8, mode="hide"),
+        paper_bgcolor="rgba(0,0,0,0)",
+        modebar_bgcolor="rgba(0,0,0,0)",
+        modebar_color="rgba(146, 146, 146, 0.7)",
+        modebar_activecolor="rgba(146, 146, 146, 0.7)",
     )
     return fig

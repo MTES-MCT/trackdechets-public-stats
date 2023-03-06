@@ -1,9 +1,9 @@
 SELECT
     id,
-    "created_at" at time zone 'UTC' as created_at,
-    "sent_at" at time zone 'UTC' as sent_at,
-    "received_at" at time zone 'UTC' as received_at,
-    "processed_at" at time zone 'UTC' as processed_at,
+    "created_at" as created_at,
+    "sent_at" as sent_at,
+    "received_at" as received_at,
+    "processed_at" as processed_at,
     status,
     CASE
         WHEN "quantity_received" > 60 THEN "quantity_received" / 1000
@@ -12,10 +12,14 @@ SELECT
     "processing_operation_done" AS "processing_operation",
     "waste_details_code" AS "waste_code",
     "waste_details_pop" AS "waste_pop",
+    "emitter_company_siret" as "emitter_siret",
     emitter_departement,
     emitter_region,
+    emitter_naf,
+    recipient_company_siret as destination_siret,
     recipient_departement as "destination_departement",
-    recipient_region as "destination_region"
+    recipient_region as "destination_region",
+    recipient_naf as "destination_naf"
 FROM
     "refined_zone_enriched"."bsdd_enriched"
 WHERE

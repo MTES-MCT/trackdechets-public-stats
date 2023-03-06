@@ -1,6 +1,7 @@
 SELECT
     id,
-    "created_at",
+    siret,
+    created_at,
     code_sous_classe,
     libelle_sous_classe,
     libelle_classe,

@@ -23,6 +23,9 @@ pyarrow = "*"
 jupyter = "*"
 black = "*"
 ipykernel = "*"
+notebook = ">=5.3"
+ipywidgets = ">=7.5"
+kaleido = "*"
 
 [requires]
 python_version = "3.10"

@@ -187,7 +187,6 @@ def create_filtered_waste_processed_figure(
 
     waste_filter_formatted = format_filter(pl.col("waste_code"), waste_codes_filter)
     if waste_filter_formatted is not None:
-
         bs_data_filtered = bs_data_filtered.filter(waste_filter_formatted)
 
     date_interval = (
@@ -296,7 +295,6 @@ def create_input_output_elements(
 
     waste_filter_formatted = format_filter(pl.col("waste_code"), waste_codes_filter)
     if waste_filter_formatted is not None:
-
         bs_data_processed_incoming_filtered = (
             bs_data_processed_incoming_filtered.filter(waste_filter_formatted)
         )

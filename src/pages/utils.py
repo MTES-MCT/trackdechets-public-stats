@@ -26,7 +26,9 @@ def add_figure(
     elements = [html.H4(children=[figure_title])]
 
     if figure_subtitle is not None:
-        elements.append(html.Div(figure_subtitle, className="figure-subtitle fr-text"))
+        elements.append(
+            dcc.Markdown(figure_subtitle, className="figure-subtitle fr-text")
+        )
 
     elements.append(
         dcc.Graph(
