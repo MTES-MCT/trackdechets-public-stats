@@ -280,6 +280,24 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             id="operation-type-section",
         ),
         html.Div(
+            [
+                add_figure(
+                    produced_quantity_by_category,
+                    "produced_quantity_by_category",
+                    "Quels sont les catégories d'entreprises qui produisent le plus de déchets dangereux* ?",
+                    (
+                        "La Nomenclature des Activités Françaises permet de catégoriser "
+                        "les différents établissements qui produisent des déchets dangereux* tracés sur Trackdéchets.  \r"
+                        "Les établissements qui traitent les déchets (établissements exutoires ou faisant du Tri, Transit, Regroupement) "
+                        "ont été exclus pour ne conserver que les établissements producteurs.  \r"
+                        "Ces données ne comprennent donc pas les bordereaux émis après rupture de traçabilité ni les déchets issus "
+                        "de l'exploitation des établissements exutoires ou faisant du Tri, Transit, Regroupement.  "
+                        "Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
+                    ),
+                )
+            ]
+        ),
+        html.Div(
             "*tous déchets dangereux et/ou POP (Polluants Organiques Persistants)",
             className="fr-text--xs",
         ),
@@ -511,22 +529,6 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
             ),
             id="bordereaux-counts-section",
         ),
-        html.Div(
-            [
-                add_figure(
-                    produced_quantity_by_category,
-                    "produced_quantity_by_category",
-                    "Quels sont les catégories d'entreprises qui produisent le plus de déchets dangereux* ?",
-                    (
-                        "La Nomenclature des Activités Françaises permet de catégoriser "
-                        "les différents établissements qui produisent des déchets tracés sur Trackdéchets."
-                        " Les établissements qui reçoivent des déchets ont été exclus pour "
-                        "être certain de ne pas prendre en compte les établissements faisant du Tri, Transit, Regroupement (TTR)."
-                        " Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
-                    ),
-                )
-            ]
-        ),
         html.H4("Établissements et utilisateurs"),
         html.Div(
             [
@@ -641,8 +643,8 @@ Ainsi la réutilisation, le recyclage ou la valorisation sont considérés comme
                     "Nombre d'entreprises inscrites pour chaque catégorie de code NAF",
                     (
                         "La Nomenclature des Activités Françaises permet de catégoriser "
-                        "les différents établissements qui s'inscrivent sur Trackdéchets."
-                        " Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
+                        "les différents établissements qui s'inscrivent sur Trackdéchets.  \r"
+                        "Un clic sur une des catégories permet de visualiser la hiérarchie suivante."
                     ),
                 )
             ]
