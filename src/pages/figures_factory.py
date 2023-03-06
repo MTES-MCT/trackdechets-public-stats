@@ -139,11 +139,26 @@ def create_weekly_scatter_figure(
     metric_name = "count" if "count" in bs_created_data.columns else "quantity"
     y_title = "Quantité (en tonnes)" if metric_name == "quantity" else None
     legend_title = "Statut :" if metric_name == "quantity" else "Statut du bordereau :"
+    min_x = None
+    max_x = None
     for config in plot_configs:
         data = config["data"]
 
         if len(data) == 0:
             continue
+
+        # Filter out data from previous year:
+        current_year = data.select("at").max().item().year
+        data = data.filter(pl.col("at").dt.year() == current_year)
+
+        min_at = data["at"][0]
+        if min_x is None or min_at < min_x:
+            min_x = min_at
+
+        max_at = data["at"][-1]
+        if max_x is None or max_at > max_x:
+            max_x = max_at
+
         name = config["name"]
         suffix = config["suffix"]
 
@@ -158,8 +173,21 @@ def create_weekly_scatter_figure(
 
         hover_texts = [
             f"Semaine du {e[0]:%d/%m} au {e[0]+timedelta(days=6):%d/%m}<br><b>{format_number(e[1], 2)}</b> {suffix}"
-            for e in data.iter_rows()
+            for e in data[:-1].iter_rows()
         ]
+
+        # Handle case when last data point is last week of the year
+        last_point_date = data[-1]["at"].item()
+        last_point_value = data[-1][metric_name].item()
+        if (last_point_date + timedelta(days=6)).year != current_year:
+            last_point = datetime(current_year, 12, 31)
+            hover_texts.append(
+                f"Période du {last_point_date:%d/%m} au {last_point:%d/%m}<br><b>{format_number(last_point_value, 2)}</b> {suffix}"
+            )
+        else:
+            hover_texts.append(
+                f"Semaine du {last_point_date:%d/%m} au {last_point_date+timedelta(days=6):%d/%m}<br><b>{format_number(last_point_value, 2)}</b> {suffix}"
+            )
 
         scatter_list.append(
             go.Scatter(
@@ -197,10 +225,16 @@ def create_weekly_scatter_figure(
         uirevision=True,
     )
 
-    min_x = min(e["data"]["at"][0] for e in plot_configs if len(e["data"]) != 0)
-    max_x = max(e["data"]["at"][-1] for e in plot_configs if len(e["data"]) != 0)
     delta = max_x - min_x
-    fig.update_xaxes(range=[min_x - timedelta(days=5), max_x + delta * 0.1])
+
+    # handle ticks to start at first day of the first complete week of the year
+    breaks = []
+    for i in range(1, min_x.day):
+        breaks.append(datetime(current_year, 1, i))
+    fig.update_xaxes(
+        range=[min_x - timedelta(days=5), max_x + delta * 0.1],
+        rangebreaks=[dict(values=breaks)],
+    )
     fig.update_yaxes(side="right", title=y_title)
 
     return fig
