@@ -25,6 +25,9 @@ def create_weekly_created_figure(
     Plotly Figure Object
         Figure object ready to be plotted.
     """
+    # Filter out data from previous year:
+    current_year = data["at"].max().year
+    data = data.filter(pl.col("at").dt.year() == current_year)
 
     data = data.to_dict(as_series=False)
 
@@ -32,9 +35,24 @@ def create_weekly_created_figure(
     texts += [""] * (len(data["count"]) - 1) + [format_number(data["count"][-1])]
 
     hovertexts = [
-        f"Semaine du {at-timedelta(days=6):%d/%m} au {at:%d/%m}<br><b>{format_number(count)}</b> créations"
-        for at, count in zip(data["at"], data["count"])
+        f"Semaine du {at:%d/%m} au {at+timedelta(days=6):%d/%m}<br><b>{format_number(count)}</b> créations"
+        for at, count in zip(data["at"][:-1], data["count"][:-1])
     ]
+
+    current_year = max(data["at"]).year
+
+    # Handle case when last data point is last week of the year
+    last_point_date = data["at"][-1]
+    last_point_value = data["count"][-1]
+    if (last_point_date + timedelta(days=6)).year != current_year:
+        last_point = datetime(current_year, 12, 31)
+        hovertexts.append(
+            f"Période du {last_point_date:%d/%m} au {last_point:%d/%m}<br><b>{format_number(last_point_value)}</b> créations"
+        )
+    else:
+        hovertexts.append(
+            f"Semaine du {last_point_date:%d/%m} au {last_point_date+timedelta(days=6):%d/%m}<br><b>{format_number(last_point_value)}</b> créations"
+        )
 
     fig = go.Figure(
         [
@@ -54,13 +72,28 @@ def create_weekly_created_figure(
         ]
     )
 
+    # handle ticks to start at first day of the first complete week of the year
+    min_x = min(data["at"])
+    max_x = max(data["at"])
+
+    breaks = []
+    for i in range(1, min_x.day):
+        breaks.append(datetime(current_year, 1, i))
+
     fig.update_layout(
         xaxis_title="Semaine de création",
         showlegend=False,
         paper_bgcolor="#fff",
-        margin=dict(t=20, r=50, l=5),
+        margin=dict(t=20, r=50, l=25),
     )
     fig.update_yaxes(side="right")
+
+    delta = max_x - min_x
+
+    fig.update_xaxes(
+        range=[min_x - max(delta * 0.05, timedelta(days=2)), max_x + delta * 0.1],
+        rangebreaks=[dict(values=breaks)],
+    )
 
     return fig
 
@@ -212,10 +245,10 @@ def create_weekly_scatter_figure(
 
     fig.update_layout(
         paper_bgcolor="#fff",
-        margin=dict(t=25, r=90, l=25),
+        margin=dict(t=45, r=90, l=5),
         legend=dict(
-            orientation="v",
-            y=1.2,
+            orientation="h",
+            y=1.15,
             x=-0.06,
             font_size=13,
             itemwidth=40,
@@ -231,8 +264,9 @@ def create_weekly_scatter_figure(
     breaks = []
     for i in range(1, min_x.day):
         breaks.append(datetime(current_year, 1, i))
+
     fig.update_xaxes(
-        range=[min_x - timedelta(days=5), max_x + delta * 0.1],
+        range=[min_x - delta * 0.05, max_x + delta * 0.1],
         rangebreaks=[dict(values=breaks)],
     )
     fig.update_yaxes(side="right", title=y_title)
@@ -243,7 +277,6 @@ def create_weekly_scatter_figure(
 def create_weekly_quantity_processed_figure(
     quantity_recovered: pl.Series,
     quantity_destroyed: pl.Series,
-    date_axis_interval: tuple[datetime, datetime] | None = None,
 ) -> go.Figure:
     """Creates the figure showing the weekly waste quantity processed by type of process (destroyed or recovered).
 
@@ -275,24 +308,55 @@ def create_weekly_quantity_processed_figure(
         },
     ]
 
+    min_x, max_x = None, None
     traces = []
     for conf in data_conf:
-        data = conf["data"].to_dict(as_series=False)
+        data = conf["data"]
+
+        # Filter out data from previous year:
+        current_year = data.select("processed_at").max().item().year
+        data = data.filter(pl.col("processed_at").dt.year() == current_year)
+
+        data = data.to_dict(as_series=False)
+
+        min_at = data["processed_at"][0]
+        if min_x is None or min_at < min_x:
+            min_x = min_at
+
+        max_at = data["processed_at"][-1]
+        if max_x is None or max_at > max_x:
+            max_x = max_at
+
+        hover_texts = [
+            conf["text"].format(
+                processed_at,
+                processed_at + timedelta(days=6),
+                format_number(quantity),
+            )
+            for processed_at, quantity in zip(
+                data["processed_at"][:-1], data["quantity"][:-1]
+            )
+        ]
+
+        # Handle case when last data point is last week of the year
+        last_point_date = data["processed_at"][-1]
+        last_point_value = data["quantity"][-1]
+        if (last_point_date + timedelta(days=6)).year != current_year:
+            last_point = datetime(current_year, 12, 31)
+            hover_texts.append(
+                f"Période du {last_point_date:%d/%m} au {last_point:%d/%m}<br><b>{format_number(last_point_value)}</b> tonnes de {conf['name'].lower()}."
+            )
+        else:
+            hover_texts.append(
+                f"Semaine du {last_point_date:%d/%m} au {last_point_date+timedelta(days=6):%d/%m}<br><b>{format_number(last_point_value)}</b> {conf['name'].lower()}"
+            )
+
         traces.append(
             go.Bar(
                 x=data["processed_at"],
                 y=data["quantity"],
                 name=conf["name"],
-                hovertext=[
-                    conf["text"].format(
-                        processed_at - timedelta(days=6),
-                        processed_at,
-                        format_number(quantity),
-                    )
-                    for processed_at, quantity in zip(
-                        data["processed_at"], data["quantity"]
-                    )
-                ],
+                hovertext=hover_texts,
                 hoverinfo="text",
                 texttemplate="%{y:.2s} tonnes",
                 marker_color=conf["color"],
@@ -322,8 +386,17 @@ def create_weekly_quantity_processed_figure(
     )
     fig.update_yaxes(side="right")
 
-    if date_axis_interval is not None:
-        fig.update_xaxes(range=date_axis_interval)
+    delta = max_x - min_x
+
+    # handle ticks to start at first day of the first complete week of the year
+    breaks = []
+    for i in range(1, min_x.day):
+        breaks.append(datetime(current_year, 1, i))
+
+    fig.update_xaxes(
+        range=[min_x - timedelta(days=7), max_x + timedelta(days=7)],
+        rangebreaks=[dict(values=breaks)],
+    )
 
     return fig
 
