@@ -277,6 +277,7 @@ def create_weekly_scatter_figure(
 def create_weekly_quantity_processed_figure(
     quantity_recovered: pl.Series,
     quantity_destroyed: pl.Series,
+    date_interval: tuple[datetime, datetime] | None = None,
 ) -> go.Figure:
     """Creates the figure showing the weekly waste quantity processed by type of process (destroyed or recovered).
 
@@ -315,7 +316,13 @@ def create_weekly_quantity_processed_figure(
 
         # Filter out data from previous year:
         current_year = data.select("processed_at").max().item().year
-        data = data.filter(pl.col("processed_at").dt.year() == current_year)
+
+        date_filter = pl.col("processed_at").dt.year() == current_year
+        if date_interval is not None:
+            date_filter = pl.col("processed_at").is_between(
+                *date_interval, closed="left"
+            )
+        data = data.filter(date_filter)
 
         data = data.to_dict(as_series=False)
 

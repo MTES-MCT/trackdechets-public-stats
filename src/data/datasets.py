@@ -1,6 +1,8 @@
 """This module contains the raw datasets. 
 The datasets are loaded in memory to be reusable by other functions.
 """
+from datetime import datetime
+
 import polars as pl
 
 from src.data.data_extract import (
@@ -10,6 +12,7 @@ from src.data.data_extract import (
     get_naf_nomenclature_data,
     get_user_data,
 )
+
 
 # Load all needed data
 BSDD_DATA = get_bs_data(
@@ -34,3 +37,5 @@ USER_DATA = get_user_data()
 
 DEPARTEMENTS_GEOGRAPHICAL_DATA = get_departement_geographical_data()
 NAF_NOMENCLATURE_DATA = get_naf_nomenclature_data()
+
+DATA_UPDATE_DATE = datetime.now()
