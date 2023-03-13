@@ -12,6 +12,7 @@ SELECT
     "processing_operation_done" AS "processing_operation",
     "waste_details_code" AS "waste_code",
     "waste_details_pop" AS "waste_pop",
+    "waste_details_is_dangerous",
     "emitter_company_siret" as "emitter_siret",
     emitter_departement,
     emitter_region,
