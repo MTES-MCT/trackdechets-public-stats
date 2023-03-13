@@ -24,6 +24,7 @@ from src.data.datasets import (
     BSDD_DATA,
     BSFF_DATA,
     COMPANY_DATA,
+    DATA_UPDATE_DATE,
     NAF_NOMENCLATURE_DATA,
     USER_DATA,
 )
@@ -61,7 +62,6 @@ def get_header_elements() -> html.Div:
         A Div element containing the header of the page.
 
     """
-
     # Load all needed data
     company_data_df = COMPANY_DATA
 
@@ -77,7 +77,7 @@ def get_header_elements() -> html.Div:
                 html.H1("Statistiques de Trackdéchets"),
                 html.P(
                     [
-                        f"Dernière mise à jour des données le {datetime.now().strftime('%d/%m/%Y')}"
+                        f"Dernière mise à jour des données le {DATA_UPDATE_DATE.strftime('%d/%m/%Y')}"
                     ],
                     className="fr-badge fr-badge--info",
                     id="update-date",
