@@ -51,16 +51,12 @@ def get_bs_data(
     if not include_drafts:
         bs_data_df = bs_data_df.filter(pl.col("status") != "DRAFT")
     if include_only_dangerous_waste:
+        waste_filter = pl.col("waste_code").str.contains(pattern=r".*\*$")
         if "waste_pop" in bs_data_df.columns:
-            bs_data_df = bs_data_df.filter(
-                (pl.col("waste_code").str.contains(pattern=r".*\*$"))
-                | pl.col("waste_pop")
-            )
+            waste_filter = waste_filter | pl.col("waste_pop")
 
-        else:
-            bs_data_df = bs_data_df.filter(
-                pl.col("waste_code").str.contains(pattern=r".*\*$")
-            )
+        if "waste_details_is_dangerous" in bs_data_df.columns:
+            waste_filter = waste_filter | pl.col("waste_details_is_dangerous")
 
     # Depending on the type of 'bordereau', the processing operations codes can contain space or not, so we normalize it :
     bs_data_df = bs_data_df.with_columns(
