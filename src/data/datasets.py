@@ -9,6 +9,7 @@ from src.data.data_extract import (
     get_departement_geographical_data,
     get_naf_nomenclature_data,
     get_user_data,
+    get_icpe_data
 )
 
 # Load all needed data
@@ -31,6 +32,8 @@ ALL_BORDEREAUX_DATA = pl.concat(
 
 COMPANY_DATA = get_company_data()
 USER_DATA = get_user_data()
+
+ICPE_DATA = get_icpe_data()
 
 DEPARTEMENTS_GEOGRAPHICAL_DATA = get_departement_geographical_data()
 NAF_NOMENCLATURE_DATA = get_naf_nomenclature_data()

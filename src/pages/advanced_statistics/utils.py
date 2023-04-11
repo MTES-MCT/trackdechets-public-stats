@@ -26,20 +26,18 @@ def format_filter(
     polars expression
         The filtered expression from column_to_filter. None if all filters or none filter have been checked.
 
-   
+
     """
     series_filter = None
 
     checked = waste_codes_filter["checked"]
-    if (checked != ["all"]) and (len(checked) > 0):
-
+    if checked and (checked != ["all"]):
         first_level_filters = [e for e in checked if len(e) == 2]
         series_filter = column_to_filter.str.slice(0, 2).is_in(first_level_filters)
 
         half_checked = waste_codes_filter["half_checked"]
         half_checked = [e for e in half_checked if e != "all"]
         if len(half_checked) != 0:
-
             half_checked_first_level = [e for e in half_checked if len(e) == 2]
             second_level_filters = [
                 e

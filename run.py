@@ -11,5 +11,5 @@ if __name__ == "__main__":
 
     # Scalingo requires 0.0.0.0 as host, instead of the default 127.0.0.1
     app.run_server(
-        debug=bool(getenv("DEVELOPMENT", "True")), host="0.0.0.0", port=int(port)
+        debug=bool(getenv("DEVELOPMENT", "True")), port=int(port)
     )

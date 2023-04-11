@@ -61,6 +61,7 @@ def get_bs_data(
             bs_data_df = bs_data_df.filter(
                 pl.col("waste_code").str.contains(pattern=r".*\*$")
             )
+        
 
     # Depending on the type of 'bordereau', the processing operations codes can contain space or not, so we normalize it :
     bs_data_df = bs_data_df.with_columns(
@@ -109,6 +110,24 @@ def get_user_data() -> pl.DataFrame:
 
     return user_data_df
 
+
+def get_icpe_data() -> pl.DataFrame:
+    """
+    Queries the configured database for ICPE data.
+
+    Returns
+    --------
+    DataFrame
+        dataframe of users for a given period of time, with their creation date
+    """
+    started_time = time.time()
+
+    sql_query = (SQL_PATH / "get_icpe_data.sql").read_text()
+    icpe_data_df = pl.read_sql(sql_query, connection_uri=DATABASE_URL)
+
+    print(f"get_icpe_data duration: {time.time()-started_time} ")
+
+    return icpe_data_df
 
 def get_processing_operation_codes_data() -> pl.DataFrame:
     """

@@ -3,8 +3,10 @@
 
 from dash import dcc, html, register_page
 
-from src.pages.advanced_statistics.advanced_statistics_layout_factory import \
-    create_filters_selects_elements
+from src.pages.advanced_statistics.advanced_statistics_layout_factory import (
+    create_filters_selects_elements,
+    create_icpe_map,
+)
 
 register_page(
     __name__,
@@ -26,17 +28,32 @@ def layout() -> html.Div:
     elements = [
         create_filters_selects_elements(),
         html.Div(
-            dcc.Loading(
-                [
-                    html.Div(
-                        className="fr-callout", id="total-processed-figures-container"
-                    ),
-                    html.Div(id="waste-processed-fig", className="fr-callout"),
-                ],
-                style={"position": "absolute", "top": "25px"},
-                color="rgb(0, 0, 145)",
-                type="circle",
-            ),
+            [
+                dcc.Loading(
+                    [
+                        html.Div(
+                            className="fr-callout",
+                            id="total-processed-figures-container",
+                        ),
+                    ],
+                    style={"position": "absolute", "top": "25px"},
+                    color="rgb(0, 0, 145)",
+                    type="circle",
+                ),
+                dcc.Loading(
+                    [
+                        html.Div(id="waste-processed-fig", className="fr-callout"),
+                    ],
+                    style={"position": "absolute", "top": "25px"},
+                    color="rgb(0, 0, 145)",
+                    type="circle",
+                ),
+                html.Div(
+                    create_icpe_map(),
+                    className="fr-callout",
+                    id="icpe-map-container",
+                ),
+            ]
         ),
     ]
 

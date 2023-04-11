@@ -2,12 +2,15 @@
 This module contains the functions used to create Dash layout elements.
 """
 from datetime import datetime
+import random
 from zoneinfo import ZoneInfo
 
 import polars as pl
 from dash import dcc, html
 from dash.development.base_component import Component
 from feffery_antd_components.AntdTree import AntdTree
+import dash_leaflet as dl
+import dash_leaflet.express as dlx
 
 from src.data.data_extract import (
     get_departement_geographical_data,
@@ -17,7 +20,11 @@ from src.data.data_processing import (
     get_recovered_and_eliminated_quantity_processed_by_week_series,
     get_weekly_waste_quantity_processed_by_operation_code_df,
 )
-from src.data.datasets import ALL_BORDEREAUX_DATA, DEPARTEMENTS_GEOGRAPHICAL_DATA
+from src.data.datasets import (
+    ALL_BORDEREAUX_DATA,
+    DEPARTEMENTS_GEOGRAPHICAL_DATA,
+    ICPE_DATA,
+)
 from src.pages.advanced_statistics.utils import format_filter
 from src.pages.figures_factory import create_weekly_quantity_processed_figure
 from src.pages.utils import add_callout
@@ -173,7 +180,7 @@ def create_filtered_waste_processed_figure(
 
     departement_filter_str = ""
 
-    bs_data_filtered = bs_data
+    bs_data_filtered = bs_data.filter(pl.col("processed_at") < datetime.now())
     if (departement_filter is not None) and (departement_filter != "all"):
         departement_filter_str = (
             "- "
@@ -206,7 +213,7 @@ def create_filtered_waste_processed_figure(
     )
 
     fig = create_weekly_quantity_processed_figure(
-        df_recovered, df_eliminated, date_interval
+        df_recovered, df_eliminated, filter_to_current_year=False
     )
 
     elements = [
@@ -339,3 +346,56 @@ def create_input_output_elements(
     )
 
     return elements  # type: ignore
+
+
+def create_icpe_map() -> list:
+    icpe_data = ICPE_DATA.to_dicts()
+    geodata = dlx.geojson_to_geobuf(
+        dlx.dicts_to_geojson(
+            icpe_data, lat="latitude_etablissement", lon="longitude_etablissement"
+        )
+    )
+
+    geojson = dl.GeoJSON(
+        data=geodata,
+        format="geobuf",
+        cluster=True,
+        id="icpe-markers",
+        zoomToBoundsOnClick=True,
+        spiderfyOnMaxZoom=True,
+    )
+    return [
+        dl.Map(
+            [dl.TileLayer(), geojson],
+            center=(46.22, 2.21),
+            zoom=5,
+            id="icpe-map",
+        ),
+        html.Div(
+            "Cliquez sur une installation pour afficher ces informations.",
+            id="icpe-info-container",
+        ),
+    ]
+
+
+def create_icpe_info_components(icpe_facility_data: dict) -> list[Component]:
+    rubriques_items = [
+        html.Li(e, className="icpe-info-rubrique-item")
+        for e in icpe_facility_data["rubriques_autorisees"].split(",")
+    ]
+
+    components = [
+        html.Div(icpe_facility_data["nom_etablissement"], id="icpe-info-facility-name"),
+        html.Div(
+            icpe_facility_data["code_commune_etablissement"], id="icpe-info-address"
+        ),
+        html.Div(
+            [
+                html.Div("Rubriques autorisées :"),
+                html.Ul(rubriques_items, id="icpe-info-rubriques-list"),
+            ],
+            id="icpe-info-rubriques-container",
+        ),
+    ]
+
+    return components

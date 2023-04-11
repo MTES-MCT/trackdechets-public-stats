@@ -161,6 +161,18 @@ Copied and renamed from DSFR core CSS */
     margin-bottom: 1em;
 }
 
+#icpe-map-container {
+    display: flex;
+    width: 100%;
+    height: 500px;
+}
+
+#icpe-info-container {
+    width: 30%;
+    height: 500px;
+    margin: 5px;
+}
+
 /*
 Breakpoints
 

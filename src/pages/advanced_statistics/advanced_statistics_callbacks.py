@@ -1,12 +1,13 @@
 """
 This module contains all callbacks for "Advanced Statistics" page.
 """
-from dash import Input, Output, State, callback
+from dash import Input, Output, State, callback, no_update
 from dash.development.base_component import Component
 
 from src.pages.advanced_statistics.advanced_statistics_layout_factory import (
     create_filtered_waste_processed_figure,
     create_input_output_elements,
+    create_icpe_info_components,
 )
 
 
@@ -93,3 +94,12 @@ def create_waste_processed_numbers(
         "half_checked": waste_codes_filters_half_checked,
     }
     return create_input_output_elements(departement_filter, waste_codes_filters)
+
+
+@callback(
+    Output("icpe-info-container", "children"), [Input("icpe-markers", "click_feature")]
+)
+def populate_icpe_infos(feature) -> list[Component]:
+    if feature is None or feature["properties"]["cluster"]:
+        return no_update
+    return create_icpe_info_components(feature["properties"])

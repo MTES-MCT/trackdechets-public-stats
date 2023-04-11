@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-dash = "*"
+dash = "==2.6.0"
 plotly = "*"
 pandas = "*"
 psycopg2-binary = "*"
@@ -15,9 +15,11 @@ gunicorn = "*"
 dash-extensions = "*"
 sqlalchemy = "~=1.4"
 feffery-antd-components = "==0.1.16"
-polars = "*"
+polars = "==0.16.9"
 connectorx = ">=0.2.0a3"
 pyarrow = "*"
+protobuf = "~=3.20.0"
+dash-leaflet = "*"
 
 [dev-packages]
 jupyter = "*"
