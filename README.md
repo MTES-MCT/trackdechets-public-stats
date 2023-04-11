@@ -36,6 +36,13 @@ pipenv run run.py
 
 ### Notes de versions
 
+**1.11 - 11/04/2023**
+- Ajout des déchets avec codes non dangereux mais dont la case "ce déchet est dangereux"
+a été cochée sur le bordereau
+- Modification du calcul de la quantité totale de déchets traités, la date de traitement est maintenant utilisée plutôt que la date de création du bordereau
+- Correction du calcul de la date de mise à jour
+- Prise en compte de l'uniformisation des codes opérations de traitement
+
 **1.10 - 06/03/2023**
 - Amélioration de la lisibilité des graphiques hebdomadaires
 - Ajout d'un graphique TreeMap pour la quantité de déchets traités par code NAF
