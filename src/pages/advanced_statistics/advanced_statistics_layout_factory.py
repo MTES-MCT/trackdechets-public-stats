@@ -253,12 +253,12 @@ def create_input_output_elements(
         & pl.col("processing_operation")
         .is_in(
             [
-                "D 9",
-                "D 13",
-                "D 14",
-                "D 15",
-                "R 12",
-                "R 13",
+                "D9",
+                "D13",
+                "D14",
+                "D15",
+                "R12",
+                "R13",
             ]
         )
         .is_not()
