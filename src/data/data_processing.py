@@ -55,12 +55,12 @@ def get_weekly_aggregated_series(
         )
 
     non_final_processing_operation_codes = [
-        "D 9",
-        "D 13",
-        "D 14",
-        "D 15",
-        "R 12",
-        "R 13",
+        "D9",
+        "D13",
+        "D14",
+        "D15",
+        "R12",
+        "R13",
     ]
     match (aggregate_column, only_non_final_processing_operation):
         case ("processed_at", False):
@@ -186,12 +186,12 @@ def get_weekly_waste_quantity_processed_by_operation_code_df(
         & pl.col("processing_operation")
         .is_in(
             [
-                "D 9",
-                "D 13",
-                "D 14",
-                "D 15",
-                "R 12",
-                "R 13",
+                "D9",
+                "D13",
+                "D14",
+                "D15",
+                "R12",
+                "R13",
             ]
         )
         .is_not()
@@ -377,16 +377,16 @@ def get_total_quantity_processed(
     if date_interval is not None:
         quantity_processed_total = (
             all_bordereaux_data.filter(
-                pl.col("created_at").is_between(*date_interval, closed="left")
+                pl.col("processed_at").is_between(*date_interval, closed="left")
                 & pl.col("processing_operation")
                 .is_in(
                     [
-                        "D 9",
-                        "D 13",
-                        "D 14",
-                        "D 15",
-                        "R 12",
-                        "R 13",
+                        "D9",
+                        "D13",
+                        "D14",
+                        "D15",
+                        "R12",
+                        "R13",
                     ]
                 )
                 .is_not()
@@ -401,12 +401,12 @@ def get_total_quantity_processed(
                 pl.col("processing_operation")
                 .is_in(
                     [
-                        "D 9",
-                        "D 13",
-                        "D 14",
-                        "D 15",
-                        "R 12",
-                        "R 13",
+                        "D9",
+                        "D13",
+                        "D14",
+                        "D15",
+                        "R12",
+                        "R13",
                     ]
                 )
                 .is_not()
