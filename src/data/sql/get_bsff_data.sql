@@ -1,5 +1,6 @@
 select id,
     "created_at",
+    "is_draft",
     "transporter_transport_taken_over_at" as "sent_at",
     "destination_reception_date" as "received_at",
     "destination_operation_signature_date" as "processed_at",

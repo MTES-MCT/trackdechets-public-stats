@@ -1,6 +1,6 @@
 # Statistiques publiques Trackdéchets
 
-**version 1.10**
+**version 1.12**
 
 > Application basée sur Plotly Dash consacrée à la publication d'un tableau de bord illustrant l'activité de [l'application
 > Trackdéchets](https://app.trackdechets.beta.gouv.fr/). Ce tableau de bord vise à donner au grand public aux
@@ -35,6 +35,9 @@ pipenv run run.py
 ```
 
 ### Notes de versions
+
+**1.12 - 31/05/2023**
+- Amélioration du filtrage des brouillons qui n'était pas appliqué sur les autre types de bordereaux que BSDD
 
 **1.11 - 11/04/2023**
 - Ajout des déchets avec codes non dangereux mais dont la case "ce déchet est dangereux"
