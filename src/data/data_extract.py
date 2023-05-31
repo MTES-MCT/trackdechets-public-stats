@@ -50,6 +50,8 @@ def get_bs_data(
 
     if not include_drafts:
         bs_data_df = bs_data_df.filter(pl.col("status") != "DRAFT")
+        if "is_draft" in bs_data_df.columns:
+            bs_data_df = bs_data_df.filter(pl.col("is_draft").is_not())
     if include_only_dangerous_waste:
         waste_filter = pl.col("waste_code").str.contains(pattern=r".*\*$")
         if "waste_pop" in bs_data_df.columns:
